@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "deployment": "benevolent-jackal-41",
+  "startedAt": "2026-10-25T13:33:31.063Z",
+  "finishedAt": "2026-10-25T13:33:45.687Z",
+  "authEvidence": "Convex admin impersonation with synthetic seed identities; NOT Clerk sign-in or browser/WebSocket verification.",
+  "inputProvenance": "Canonical main fixture through seed.fromFixture and production mutation helpers; seeded synthetic inputs.",
+  "modelEvidence": "Live runtime required; no simulated fallback, no fabricated proposals or human-request answers.",
+  "pass": false,
+  "stages": [
+    {
+      "stage": "configuration",
+      "at": "2026-10-25T13:33:34.724Z",
+      "agentMode": "live",
+      "tier": "dev",
+      "pinnedModelAvailable": true
+    },
+    {
+      "stage": "canonical_setup",
+      "at": "2026-10-25T13:33:37.172Z",
+      "roomId": "m17a23dkwskbyrmtthp23e4f918gz9nb",
+      "status": "setup",
+      "existingCommitmentCents": 400000
+    },
+    {
+      "stage": "stopped",
+      "at": "2026-10-25T13:33:44.586Z",
+      "code": "verification.failed",
+      "check": "Backend verification failed; inspect safe server error codes."
+    },
+    {
+      "stage": "measured_usage",
+      "at": "2026-10-25T13:33:45.687Z",
+      "scope": "Deployment-wide measurement window; not a provider-facing export.",
+      "tokens": {
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "input": 0,
+        "n": 0,
+        "output": 0,
+        "thinking": 0
+      },
+      "estimate": {
+        "asOf": "2026-10-06",
+        "estimate": true,
+        "microUsd": 0,
+        "n": 0,
+        "unknownCost": 0
+      },
+      "turnLatency": {
+        "groups": [],
+        "n": 0,
+        "p50": null,
+        "p95": null
+      }
+    }
+  ],
+  "roomId": "m17a23dkwskbyrmtthp23e4f918gz9nb",
+  "followUpRoomId": null,
+  "errorCode": "verification.failed"
+}

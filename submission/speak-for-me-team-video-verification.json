@@ -1,0 +1,30 @@
+{
+  "file": "speak-for-me-team-demo.mp4",
+  "duration_seconds": 177.0,
+  "resolution": [
+    1920,
+    1080
+  ],
+  "fps": 30,
+  "codec": "H.264 / AAC",
+  "bytes": 9272711,
+  "sha256": "c8ce7f16503594f704ebc08ac57482887c271e271ba265dac19682796251d898",
+  "full_decode": "passed",
+  "visual_review": "passed: prior unchanged scenes reviewed; updated Google architecture and shifted closing frames re-inspected after rerender",
+  "subtitle_timing_validation": "passed",
+  "narration": "English synthetic voice, en-US-AriaNeural",
+  "audio_integrated_lufs": "-15.89",
+  "audio_true_peak_db": "-1.43",
+  "visual_provenance": "Actual canonical React components rendered with role-projected synthetic fixtures; animated illustrative workflow. Not a live cloud screencast or customer testimonial.",
+  "source_branch": "DevEngers27/speak-for-me final_product",
+  "canonical_main_commit": "df738c69392d4f40357b4c9cc5958fe31fef7fdc",
+  "backend_evidence": "probe-results/2026-10-25-release-human-recovery.json",
+  "uploaded_to_video_platform": false,
+  "examples": [
+    "Software launch: SSO and audit exports essential; optional dashboard",
+    "Cap5000->4800 invalidates900proposal approvals; explicit customerchoice800 thenfreshapprovals",
+    "Separate infeasible4700cap needs Finance human decision",
+    "Completed room remains terminal; follow-up room requires confirmed baseline"
+  ],
+  "identity_update": "The architecture card labels the user-facing Google identity. The released application uses Google sign-in through Clerk; direct Google Identity Services migration is deferred and not part of the release."
+}

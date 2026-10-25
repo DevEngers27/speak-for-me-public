@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "deployment": "benevolent-jackal-41",
+  "url": "https://speak-for-me-calhacks.lgc783656618.chatgpt.site",
+  "checkedAt": "2026-10-25T14:02:00Z",
+  "method": "Computer-use browser interaction on published cloud application",
+  "identityEvidence": "One actual existing Clerk account authenticated through Google; no synthetic admin impersonation for these UI steps. No email or account subject exported.",
+  "checks": [
+    {
+      "check": "clerk_login",
+      "status": "passed"
+    },
+    {
+      "check": "decision_inbox",
+      "status": "passed"
+    },
+    {
+      "check": "create_provider_room",
+      "status": "passed",
+      "roomId": "m17175fbc9a8sx3vsqnmjpgv798gyggm",
+      "title": "Release verification \u2014 SSO rollout (test)"
+    },
+    {
+      "check": "provider_brief_editor_loads",
+      "status": "passed"
+    },
+    {
+      "check": "private_notes_save_and_reload",
+      "status": "passed",
+      "priorBlocker": "Native confirmation required user handling; user confirmed it.",
+      "observed": "Confirm provider brief showed Saved and Confirmed brief v1; reloading preserved v1 and the exact synthetic private note."
+    },
+    {
+      "check": "three_independent_authenticated_members",
+      "status": "not_run"
+    },
+    {
+      "check": "postfix_invite_seat_projection",
+      "status": "passed",
+      "observed": "Actual Provider room defaults to Customer; Provider option disabled and labeled filled in freshly loaded published UI."
+    }
+  ],
+  "observedIssues": [
+    "Invite role default selected occupied Provider seat",
+    "Provider private-notes-only save incorrectly warned about other unsaved sections"
+  ],
+  "noModelCallsStarted": true,
+  "fixCommit": "3dca2b279e84b105eea94044cd6bbf246c86a57d",
+  "focusedRegressionTestsPassed": 7,
+  "latestCheckedAt": "2026-10-25T14:37:38.409688+00:00"
+}

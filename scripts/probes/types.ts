@@ -1,0 +1,3 @@
+/** Wire DTOs for the dev-only concurrency endpoints (no backend runtime imports). */
+export type ProbeFixture = { roomId: string; runId: string | null; proposalId: string | null; constraintsVersion: number; termsKey: string; plannedTasks: number; capCents: number; issuer: string; subjects: string[]; tokens: string[] };
+export type ProbeObservation = { executions: number; ledgerCommits: number; changeOrders: number; tasks: number; executedEvents: number; followUps: number; writeSeq: number; activeRuns: number; firstAttempts: number; members: number; providerMembers: number; maxMembersPerUser: number; maxApprovalsPerUser: number; executionIds: string[]; unsafeExecutedDecision: boolean };

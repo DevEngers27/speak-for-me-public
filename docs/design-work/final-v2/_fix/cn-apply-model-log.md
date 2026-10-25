@@ -1,0 +1,24 @@
+# CN 裁定套用记录 · model 组（02-domain-model*、03-schema*、00-invariants*）
+
+依据：_changes/CN-001 … CN-004（2026-10-24）。规则：canon 优先；canon 沉默时归属章节优先；再否则取更严格 / fail-closed 读法。标 "needs ruling" 的事项不动。只改本组文件；正文不加 CN 编号痕迹，各章"与 canon 的对照"小节各补一行。
+
+格式：条目 | 状态 | 文件与位置 | 改动摘要
+
+CN-002 #9（INV-74 措辞） | applied | 00-invariants-part6.md §1.9 INV-74；00-invariants-part9.md CE-079（反例电池） | 现稿已是"escalate(infeasible) → 按 relaxationOrder 选收件人的 infeasible 请求"（修订轮 CN002-2/3 已改，核对，不重复）；本次只把 counter 反馈收紧为"只带 counter 的 candidateKey、不带 customer 快照里的 O 标号，provider 看到的 O 标号在其新快照构建时分配"（05 §5.8.3 第 4 行、07 DX-11 / DX-13）。电池中引用 INV-74 的 CE-079 / CE-080 / CE-092 不复述反馈与 infeasible 措辞，标题无需随改；CE-079 因 INV-22 同步改写（见 CN-003 #2）。代码侧：battery 测试标题若逐字复述 INV-74，须与采用新文本的代码同一提交一起改（CN-002 #9 末句）。
+CN-002 #10 / CN-004 #6 · pass_to_next { toRole } | already_present | 03-schema-part7.md §3.9 requestEffectV | 联合已含 `pass_to_next { toRole }`（仅 infeasible、末位没有、每 (from, to) 一次、不 bump），§3.21 D15 行已登记。
+CN-002 #10 / CN-004 #6 · disclose { field, toRoles } | already_present（附带修一句过时说明） | 03-schema-part7.md §3.9 requestEffectV 与其后说明第 3 条 | 联合已是 `disclose { field, toRoles }`；把"canon D15 写作 disclose { field }，toRoles 只是把受众显式化…（3.20 Q12）"改为"canon D15 现文同为 disclose { field, toRoles }（3.20 Q12 已关闭）"，与 canon D15 现文及 §3.20 Q12 一致。
+CN-004 #6 · run_cap | already_present | 03-schema-part5.md §3.8 turns.waitingReason | 已有 `run_cap`（每房间 24h run_starts 桶、10 B6a、带 beginFnId）。
+CN-004 #6 · priceChanged / hardChanged | applied | 03-schema-part9.md §3.11.1 事件目录 `brief_confirmed`、`catalog_item_confirmed` 两行；§3.11.3 新增一段；03-schema-part12.md §3.21 D12 行 | 04 与 canon 未出现这两个字段名（canon D12 ⑥ 只定义三个每房间 24h 桶），字段由 12 §12.2 第 7 条与 07 DX-2 作为计数源定义，03 的封闭 `eventPayloadV` 因此补齐：`brief_confirmed.hardChanged`（本版 hardFields 与上一版不同；含 setCap 与约束类 answer；只改软字段 / 披露为 false；渲染不读）、`catalog_item_confirmed.priceChanged`（本批任一行 revision 变化为 true；只改 title / taskTemplates 为 false）；§3.11.3 写明 price_writes / 硬字段子桶 / run_starts 的计数源与 run_cap 停泊，读法与阈值以 12 §12.2 第 7 条为唯一定义。
+CN-004 #6 · turn_failed.failureKind / approval_recorded.reasonKey 进 room payload | skipped_needs_ruling | 03-schema-part9.md §3.11.1 | CN 标 needs ruling，未动。附注：新增的 `hardChanged` 由 07 DX-2 / 12 指定放在 payload，若该裁定把私密细节移出 room payload，应一并复核。
+CN-004 #6 · retired 终态 vs §1.2 / D05 重新上架 | skipped_needs_ruling | 03-schema-part4.md §3.7 | CN 标 needs ruling，未动。
+CN-003 #2（INV-22 counter 规则） | applied | 00-invariants-part3.md §1.2 INV-22；00-invariants-part9.md CE-078、CE-079 | INV-22 改为"传入的 evaluate 快照已排除 base（05 §5.7.2），快照 n ≥ 1 才保留 counter（n = 0 去掉，等价 canon 按含 base 计数的 n < 2），counter 枚举因此天然不含 base"；CE-078 改为"evaluate 快照已排除 base，counter 枚举天然不含它"，CE-079 改为"customer evaluate 快照去掉 base 后 n = 0 → 去掉 counter"。02-domain-model-part5 INV-22 已是"快照空则无 propose / counter"（核对，不改）。T14-R04 在 14（别组）。
+CN-003 #3 / CN-004 #7 · CE-006 / CE-045 用 preferredItemKeys | already_present | 00-invariants-part7.md CE-006；00-invariants-part8.md CE-045 | 两行已用 `preferredItemKeys` / 未披露 `requiredItemKeys`，CE-006 注明 v1 没有 preferredDate。
+CN-004 #7 · INV-08 列 DX-1…DX-13 | applied | 02-domain-model-part5.md INV-08；00-invariants-part2.md §1.1 INV-08 | 02 的"DX-1…DX-10"改为"DX-1…DX-13"（07 §7.8.6 显式解密清单现有 DX-1…DX-13）；00 的 INV-08 原只举例，补"DX-1…DX-13（如可行性 1 bit、"等谁"）"。
+CN-004 #7 · INV-01 / 02 / 19 以 sharedFacts 为可见性来源 | applied | 00-invariants-part2.md INV-01、INV-02、INV-19；02-domain-model-part5.md INV-02、INV-19 | 00：INV-01 改为"未经 sharedFacts 向其披露的键（(fromRole, field) 最新行 value ≠ null 且查看者 ∈ audience；历史值按 briefVersion ≤ 值所属版本的最新行，07 §7.8.3）；他方投影从不读 briefs 行"，机制列改为 sharedFacts（briefs.disclosures 经 materializeDisclosures 写入，07 PV-05）；INV-02 customer 条件改为 finance 该字段 sharedFacts 最新行（版本绑定）受众含 customer；INV-19 改为"只经 sharedFacts 最新行（版本绑定）读出，行只由所有者显式披露写入（briefs.confirm 勾选、sharedFacts.add、humanRequests.answer 的 disclose）"。02：INV-01 已名 sharedFacts 与 PV-05（核对）；INV-02、INV-19 同步改写。
+CN-004 #7 · briefVersion → null 范围、D12 ① vs 07 §7.9.3 历史 stale 状态 | skipped_needs_ruling | — | CN 标 needs ruling，未动。
+CN-004 #1（INV-06 用 projectChecks） | applied | 00-invariants-part2.md INV-06 机制列；00-invariants-part7.md CE-035；02-domain-model-part5.md INV-06；02-domain-model-part7.md §2.12 矩阵行 | `projectRuleCheck` 一律改为 `projectChecks`（07 §7.11 XP-5）；不改其余语义（06 §8 的改写归别组）。
+CN-004 #4 · CE-010 标题 / 文本 | already_present | 00-invariants-part7.md CE-010 | 已是"provider → finance；customer → finance、finance → customer 同一话题；任何角色的话题表都无该项 → output.unknown_reference"；00-invariants-part2 INV-11 已写"任何角色的 clarify 话题表都不含 option_fits_constraints"（核对）。
+CN-004 #4 · TC-PRIV-20 | not_found | 应落在 16-testing-part5.md TC-PRIV-20（别组） | 本组文件无 TC-PRIV-20；只读核对：16-testing-part5 现稿已写"L0 遍历全部 ≤ 152 个 schema 变体，断言任何角色的 clarify.topicKey 都无 fit 类话题（canon D12 ③）"。
+
+与 canon 的对照（各补一行，不加 CN 痕迹）：00-invariants.md "本次修订对齐表"末行；02-domain-model-part7.md §2.15 D11 / D13 行；03-schema-part12.md §3.21 D12 行。
+校验：编辑后逐行核对表格列数与所在表表头一致（INV-01/02/06/08/19/22/74、CE-035/078/079、03 §3.11.1 两行、§3.21 D12、§2.15、§2.12）。

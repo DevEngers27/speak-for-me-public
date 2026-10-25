@@ -1,0 +1,80 @@
+name: CI
+on:
+  push:
+    branches: [main, final_product]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+  CLERK_TELEMETRY_DISABLED: "1"
+  # Dependency install must not download Playwright browsers. The e2e job installs Chromium only when secrets are present.
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      CLERK_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - run: npm install --global pnpm@11.25.0
+      - run: pnpm install --frozen-lockfile
+      - name: Generated Convex code is committed and current
+        run: |
+          pnpm codegen
+          git diff --exit-code -- convex/_generated
+      - run: pnpm policy:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      # pnpm test includes scripts/check-boundaries.mjs (node builtins, unclassified imports) plus convex-test and ops tests.
+      - run: pnpm test
+      # No secrets: proves the credential-free build path.
+      - run: pnpm build
+      - run: pnpm test:build-artifacts
+      - run: pnpm cloud:typecheck
+      - run: pnpm cloud:build
+      - run: pnpm test:cloud-artifacts
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - id: gate
+        env:
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          E2E_BASE_URL: ${{ secrets.E2E_BASE_URL }}
+        run: |
+          if [ -z "$CLERK_SECRET_KEY" ] || [ -z "$E2E_BASE_URL" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "e2e secrets absent; skipping browser install and smoke tests"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.gate.outputs.run == 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - if: steps.gate.outputs.run == 'true'
+        run: npm install --global pnpm@11.25.0
+      - if: steps.gate.outputs.run == 'true'
+        run: pnpm install --frozen-lockfile
+      - if: steps.gate.outputs.run == 'true'
+        run: pnpm exec playwright install --with-deps chromium
+      - if: steps.gate.outputs.run == 'true'
+        env:
+          CI: "1"
+          BASE_URL: ${{ secrets.E2E_BASE_URL }}
+          E2E_AUTH: clerk
+          E2E_ROLE_CUSTOMER_IDENTIFIER: ${{ vars.E2E_ROLE_CUSTOMER_IDENTIFIER }}
+          E2E_ROLE_PROVIDER_IDENTIFIER: ${{ vars.E2E_ROLE_PROVIDER_IDENTIFIER }}
+          E2E_ROLE_FINANCE_IDENTIFIER: ${{ vars.E2E_ROLE_FINANCE_IDENTIFIER }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.CLERK_DEV_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "0"
+        run: pnpm exec playwright test --project=smoke

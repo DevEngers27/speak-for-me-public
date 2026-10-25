@@ -1,0 +1,25 @@
+{
+  "name": "@speak-for-me/model-call",
+  "version": "0.1.0",
+  "private": true,
+  "description": "callStructured(): one structured-output Claude call with explicit stop_reason handling, error classification, a single retry budget, usage capture, and an injectable transport.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "env -u ANTHROPIC_API_KEY -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_PROFILE -u ANTHROPIC_BASE_URL node --test test/*.test.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.1.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "6.0.3"
+  }
+}

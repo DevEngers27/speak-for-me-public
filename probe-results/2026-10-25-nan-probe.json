@@ -1,0 +1,5 @@
+{
+  "pass": true,
+  "expectedCode": "amount.out_of_range",
+  "observedCode": "amount.out_of_range"
+}

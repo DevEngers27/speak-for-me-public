@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Speak for Me — Ledger prototype</title>
+  <!-- 账本与对比优先的可点击原型。纯静态，双击打开即可，不联网。 -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Speak for Me <small>Ledger &amp; compare prototype</small></div>
+    <div class="roleswitch" id="roleswitch"></div>
+  </header>
+  <div class="simbar">Simulated data. Every person, company, amount and record on this page is fictional (simulated). Internal records only: no payment, transfer or e-signature happens.</div>
+  <main id="app"></main>
+  <div id="live" class="sr-only" aria-live="polite" style="position:absolute;left:-9999px"></div>
+  <div id="proto"></div>
+  <script src="data.js"></script>
+  <script src="engine.js"></script>
+  <script src="engine-actions.js"></script>
+  <script src="components.js"></script>
+  <script src="views-work.js"></script>
+  <script src="views-brief.js"></script>
+  <script src="views-compare.js"></script>
+  <script src="views-ledger.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

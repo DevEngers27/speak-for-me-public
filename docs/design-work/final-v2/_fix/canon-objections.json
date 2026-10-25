@@ -1,0 +1,250 @@
+[
+ {
+  "from": "02-domain-model+03-schema",
+  "objection": "canon §1.1's entity table omits `constraintRevisions`, but part6 (the 09 must_absorb) requires one row per cv. 09 §9.3 and 03-part4 add the table. §1.1 should list it."
+ },
+ {
+  "from": "02-domain-model+03-schema",
+  "objection": "canon D04 says an executed room rejects 'any write', but canon §1.3 requires that a task can be marked open → done by its assignee, and tasks only exist after execution. `rooms.startFollowUp` also has to start from an executed room. 03, 04 and 07 treat `tasks.markDone` and `startFollowUp` as explicit exceptions, implemented with openRoomTx({ allow: ['executed'] }). D04's wording should say 'negotiation, constraint and approval writes'."
+ },
+ {
+  "from": "02-domain-model+03-schema",
+  "objection": "canon §1.1 defines catalogItem as append-only on `(itemKey, revision)`, but D05 puts revision in the hard projection and also requires that changing only title or taskTemplates does not bump. Both can hold only if revision is a pricing revision. Following 09 §9.1.3, 03 adds `editNo`: (itemKey, revision) no longer identifies a single row, and logical uniqueness is on (roomId, itemKey, revision, editNo)."
+ },
+ {
+  "from": "02-domain-model+03-schema",
+  "objection": "canon D14 lists only briefs, humanRequests, attempts and ledgerEntries as restrictedRef targets. That is not enough to implement D14's own per-audience rendering of constraints_changed (it needs cause and changing role from constraintRevisions), the author-only approval note, sharedFacts visibility, or the G701 chain for finance. 03-part9 extends the set to 8 tables, all of which are already role-controlled rows."
+ },
+ {
+  "from": "02-domain-model+03-schema",
+  "objection": "canon is ambiguous about what `isExecutable` covers. D02 ('run isExecutable before approve') and D03 ('recompute isExecutable inside the execution transaction') only make sense if it excludes the approval set. D19's wording ('isExecutable also used to mean checks passed') reads as if it includes the set, and 04 §4.1.1 and 08 A4 include it. 02 follows 00-invariants INV-35: isExecutable = state + rules, with allApproved as a separate function. canon should settle this in one sentence."
+ },
+ {
+  "from": "02-domain-model+03-schema",
+  "objection": "The approval.* list in canon §1.5 does not include `approval.not_executable`, which D02 itself uses, or the code for 'nothing to withdraw' (08 uses approval.nothing_to_withdraw, 04 uses approval.not_current). Codes used by sibling chapters — input.invalid, auth.*, invite.*, item.limit_exceeded — also need to be registered in the reasonCodes single source."
+ },
+ {
+  "from": "不变量精修（Fable）",
+  "objection": "D06 内部时序不自洽：先写『其 active 提案 → stale』，又写预检保留时『新 run 直接 pending_approval、currentProposalId 指向同一 proposalId（不复制版本）』，而 §1.3 的提案状态只有 active→executed 与 superseded/rejected/stale，没有 stale→active 回边。需二选一：(i) bump 只在预检失败的分支才把提案置 stale；(ii) 04 增加同事务 stale→active 迁移。INV-32 按事务结束状态写，两种实现都满足，但迁移表必须定。"
+ },
+ {
+  "from": "不变量精修（Fable）",
+  "objection": "§1.5 reasonCode 清单缺少四类必然出现的拒绝码：withdraw 时本人无有效 approve；reject 的 reasonKey 不在场景枚举；回答已非 open 的请求或非法 optionKey；场景未注册/配置无效。建议 approval.nothing_to_withdraw、approval.invalid_reason、request.not_open / request.invalid_option、config.invalid；本文件暂以 run.invalid_state / internal 占位（INV-29、INV-34、INV-45）。"
+ },
+ {
+  "from": "不变量精修（Fable）",
+  "objection": "D22 以『目录 validUntil 已过』作为 clock 翻转的例子，但 §1.1 catalogItems 字段表没有 validUntil，且 D26 把报价有效期列入 17。两处冲突；本文件按 §1.1（v1 无 validUntil）写 INV-36，若保留 validUntil 则它必须进硬投影或 clock 翻转清单。"
+ },
+ {
+  "from": "不变量精修（Fable）",
+  "objection": "canon 没有定义 room.setup → open 的触发条件；D06/D12 的措辞（『若 room.status === open 且三方简报均已确认』）暗示 open 先于全部简报确认。INV-67/INV-75 按『三席就位即 open；三方简报已确认 ∧ 目录 ≥1 confirmed ∧ baseline 已录才自动 runs.start』写，需 04 确认。"
+ },
+ {
+  "from": "不变量精修（Fable）",
+  "objection": "D23 只在 budget.setCap / finance briefs.confirm 一侧守 cap ≥ committed；ledger.recordBaseline（setup 阶段）在 cap 已确认时没有对称守卫，『committed ≤ cap 恒成立』在 setup 阶段可被打破（candidates1 invariants 评委反例 2 的同类）。建议 recordBaseline 在 cap 已确认时守 baseline ≤ capCents。"
+ },
+ {
+  "from": "不变量精修（Fable）",
+  "objection": "D12 ⑥ 的『每用户每房间每小时 ≤ 6 次约束变更类写入，零依赖索引计数』没有指定计数来源表与索引；且第三份简报确认的自动 runs.start 是否计入配额未说明。INV-11/INV-75 假定计入；12 章需给出索引。"
+ },
+ {
+  "from": "04-state-machines+09-constraint-changes",
+  "objection": "D06 字面允许：被取代的 run 如果处在 negotiating 或 needs_input 且有 active 提案，新 run 预检通过就直接进入 pending_approval（09 V9）。这会跳过尚未完成的代理评估，包括 rounds_exhausted 时已被 customer 代理拒绝的版本。本章按字面实现，建议 canon 收窄为'仅被取代 run 处于 pending_approval 时的提案'（04 Q1 / 09 Q1）。"
+ },
+ {
+  "from": "04-state-machines+09-constraint-changes",
+  "objection": "§1.3 把提案的 superseded 定义为'同 run 被新版本替代'。但 run 不经 bump 而结束时（cancel / requestRenegotiation / end_run / 请求过期），它的 active 提案也要有去处，才能维持'active ⇒ 是唯一活跃 run 的当前提案'。本章（04 P2b）把 superseded 扩为'非因约束变化而不再是任何活跃 run 的当前提案'，canon 文字需同步。"
+ },
+ {
+  "from": "04-state-machines+09-constraint-changes",
+  "objection": "D04 写'执行后任何写入拒绝'。但 tasks.markDone（任务只由执行产生）和 rooms.startFollowUp 都必须在执行后可用，需要显式豁免（12 §12.25 Q3 同样处理）。"
+ },
+ {
+  "from": "04-state-machines+09-constraint-changes",
+  "objection": "§1.5 的 approval.* 列表里没有 D02 使用的 approval.not_executable，需补上。"
+ },
+ {
+  "from": "04-state-machines+09-constraint-changes",
+  "objection": "D05 的投影包含 catalog.revision，并要求'仅改标题不 bump'；D25 又用 lines[].revision 判 version.stale_source。三者只有在 revision 表示'定价修订号'时才自洽。本章（09 §9.1.3）引入 editNo 来记录只改标题的新行，03 与 06 已跟进。canon §1.1 的'(itemKey, revision) 只追加'需改为 (itemKey, revision, editNo)。"
+ },
+ {
+  "from": "04-state-machines+09-constraint-changes",
+  "objection": "part6 要求'每个 cv 一行 constraintRevisions'，但 §1.1 的实体表没有这张表，需补列（03 §3.7 已落地）。"
+ },
+ {
+  "from": "04-state-machines+09-constraint-changes",
+  "objection": "D27 写'3 条审批 stale'，这在本系统里不可达：第三票落下就会立即执行，所以实际只能是 2 条 stale_approve 加 finance pending。D27 写的'stub counter 只含必需项 $800'在 D08 的协议里也不会出现，因为被规则阻断的提案不进入评估回合。建议 14 按 09 §9.8.2 的说法写。"
+ },
+ {
+  "from": "04-state-machines+09-constraint-changes",
+  "objection": "D22 写'mutation / cron 用 todayInTimeZone 权威计算'，§1.2 写'localDate 只由调度 mutation 推进'。为保证显示与执行的结论一致，本章规定：规则在 query 和普通 mutation 里一律读 rooms.localDate，只有 clock.rollLocalDate 计算 today 并推进 localDate。canon 宜明确这一读法。"
+ },
+ {
+  "from": "04-state-machines+09-constraint-changes",
+  "objection": "canon 摘要说 PD-11 采纳为默认值（MAX_AUTO_RETRIES=3），但 D17 的 maxAttempts 公式按每回合 2 次计算。本章按 D17 写 MAX_ATTEMPTS_PER_TURN = 2，以 10 为准；canon 需在两者之间选一个。"
+ },
+ {
+  "from": "05-protocol+10-agent-runtime",
+  "objection": "§1.4 一方面写“schema 中不得出现任何金额 / 版本 / 身份属性名”，另一方面它自己的动作表里有 proposalVersion / baseProposalVersion。本章（05 §5.4.4）用属性名白名单把这两个字段列为显式例外，因为它们是提案引用。建议 canon 改成“不得出现约束版本、目录修订号等快照字段”。"
+ },
+ {
+  "from": "05-protocol+10-agent-runtime",
+  "objection": "D09 写“maxRetries: 1（只覆盖 429 / 连接错误）”，但 SDK 做不到只重试这两类：maxRetries=1 同样会重试 408/409/5xx/529 和拿到响应头前的超时。本章（10 R11/§10.10.1）解释为“流式下 SDK 只重试流开始前的瞬时失败”，这些都属于 SDK 层。如果必须严格限定为 429 和连接错误，就要改成 SDK maxRetries 0 加自写包装（foundation/model-call 的做法）。"
+ },
+ {
+  "from": "05-protocol+10-agent-runtime",
+  "objection": "D27 的两处措辞与 D03/D08/D10 冲突：(1) “stub counter 只含必需项 $800”——按本协议，新 run 第 1 轮 provider 先提 $900（v2，被阻断，不花评估调用），第 2 轮快照剔除它，再 propose $800（v3），所以这不是 counter，版本号也是 v3；(2) “3 条审批 stale”不可能出现，因为第三票会在同一 mutation 内执行（D03），最多只有两条审批会失效。建议 14 按 05 §5.15.1 的口径写。"
+ },
+ {
+  "from": "05-protocol+10-agent-runtime",
+  "objection": "D15 对 keep_as_is 的通用描述是“negotiating 下一轮（若轮次已尽则等价 end_run）”。用在 clarify 请求上时，本章（05 §5.9.2/§5.11.4）把它解释为“拒绝披露，并在同一轮重开发问方的回合”。否则一次被拒的 clarify 会白白消耗一轮，在最后一轮还会直接结束 run。请 canon 确认这个解释。"
+ },
+ {
+  "from": "05-protocol+10-agent-runtime",
+  "objection": "D17 写“draining 时 runs.start 拒绝”。本章只让公开入口 runs.start 返回 run.draining；09 react() 经 startRunInternal 开新 run 时照常建 run，只把首个回合停泊（10 §10.12.3），因为拒绝建 run 会把约束变更本身一起回滚（07 评委指出的“约束记录被运行限额绑死”）。请 canon 确认。"
+ },
+ {
+  "from": "05-protocol+10-agent-runtime",
+  "objection": "D09 写“schema 只随 (role, turnKind, n) 变化”。但落实 must_absorb 的 allowedActions 裁剪后，schema 还会随裁剪后的动作集和场景版本变化。它仍然与房间无关，全局最多 152 个变体（05 §5.5.3）。这是说明，不是偏离。"
+ },
+ {
+  "from": "05-protocol+10-agent-runtime",
+  "objection": "D12 ③ 只要求 provider 没有 option_fits_constraints。本章对所有角色都不提供这个话题：clarify 载荷里没有 optionKey，“哪些候选可行”这种回答对 customer 是逐候选的预算探针，对 finance 是 customer 私密截止日和必需项的探针。这比 canon 更严，不冲突，请 canon 知悉。"
+ },
+ {
+  "from": "05-protocol+10-agent-runtime",
+  "objection": "canon §1.5 的 run.* 码里没有每 run 美元上限对应的码。本章在 attempt 上限和美元上限两种情况下都用 run.call_limit，靠 humanRequests.questionKey（call_limit / spend_limit）区分文案。如果需要单独的码，建议在 §1.5 新增 run.spend_limit。"
+ },
+ {
+  "from": "06-rules-engine+14-scenario-scope-change",
+  "objection": "D27 says '3 approvals stale'. That cannot happen: under D02/D03 the last required approval executes in the same mutation, so before the cut there can be at most 2 approvals (customer and provider). 14 writes 2 stale approvals plus finance not yet approved."
+ },
+ {
+  "from": "06-rules-engine+14-scenario-scope-change",
+  "objection": "D27 says 'stub counter with only the required items, $800'. Under D08 (provider proposes first each round; a blocked proposal triggers no evaluation) and D10 (snapshot excludes keys already proposed in the run), the customer cannot counter in that position. 14 has the provider propose $800 in round 2 of the new run, after its round-1 $900 option is blocked, and the customer recommends accepting. Amounts and conclusions are the same as D27; only the action name differs."
+ },
+ {
+  "from": "06-rules-engine+14-scenario-scope-change",
+  "objection": "The canon §1.5 code list is missing two codes in use. approval.not_executable is already used by D02. item.limit_exceeded is needed for the catalog cap of 12 live items and 2 modifiers, and 03 already uses it. 06 adds both to REASON_CODES and marks them as additions."
+ },
+ {
+  "from": "07-permissions-privacy+16-testing",
+  "objection": "D12 ⑥ (≤ 6 constraint-changing writes per user per room per hour) cannot fully close the DX-2 channel (the one-bit feasibility signal from the pre-check). provider can tune catalog prices and watch whether the new run starts as negotiating or run_waiting. That lets it binary-search finance's headroom: at $1 resolution over $10k this needs about 14 bits, so roughly 2.3 hours. Suggest also capping price-affecting catalog.confirm calls per room per day (for example ≤ 12), or making the pre-check result indistinguishable to provider. Chapter 07 currently keeps this as a residual risk and open question."
+ },
+ {
+  "from": "07-permissions-privacy+16-testing",
+  "objection": "D04 says an executed room rejects 'any write' with run.invalid_state. That conflicts with task open → done (tasks.markDone) and with rooms.startFollowUp, both of which must work after execution. Chapters 07 and 12 treat these two as the only exceptions; canon's wording should say 'negotiation and constraint writes are rejected'."
+ },
+ {
+  "from": "07-permissions-privacy+16-testing",
+  "objection": "D14 says restrictedRef points to briefs / humanRequests / attempts / ledgerEntries. 03 has extended this to also cover approvals (note), constraintRevisions, sharedFacts and executions (amount chain). Canon should state that the list is illustrative or update it; chapter 07 follows 03's restrictedRefV."
+ },
+ {
+  "from": "07-permissions-privacy+16-testing",
+  "objection": "§1.4 says the output schema must contain no amount, version or identity property names, but the action set itself carries proposalVersion / baseProposalVersion / toRole. Canon should say these three are an explicit allowlist; chapter 16 TC-PRIV-19 implements it that way."
+ },
+ {
+  "from": "07-permissions-privacy+16-testing",
+  "objection": "§1.6 describes sharedFacts.add as passing a disclosure gate that scans canaries, amounts and dates, which implies a free value parameter. Chapters 07 and 03 removed the value parameter instead: the value is copied from the caller's current confirmed brief, so other roles' values cannot be carried across structurally, and the gate does not compare against other roles' secrets (the gate result would itself be an oracle). Suggest updating canon's wording; 12's signature still has the value parameter and needs to follow."
+ },
+ {
+  "from": "08-approval-execution",
+  "objection": "D27 写主线在上限降到 $4,800 后有'3 条审批 stale'。按 D03（最后一张必需 approve 当场执行），这在系统里不可达：finance 一旦批准就已执行。可达的状态是 customer、provider 两条 stale_approve 加 finance pending。'3×approval.stale'只是 protocol-rules spike 纯函数测试的产物。08 §8.10 按 2 条写。"
+ },
+ {
+  "from": "08-approval-execution",
+  "objection": "§1.5 的 reasonCode 清单缺 approval.not_executable（D02 明文使用），也没有 12 已登记、08 使用的 input.invalid 和 auth.*（auth.not_member / auth.role_forbidden / auth.unauthenticated / auth.user_not_provisioned）。建议补录。"
+ },
+ {
+  "from": "08-approval-execution",
+  "objection": "D02 写'不符返回 approval.stale 不写行'，'返回'既可理解为返回值也可理解为抛错。04/12/13 都按抛出处理，08 也跟随抛出。建议 canon 明确为'抛出 approval.stale（params.currentConstraintsVersion）'。"
+ },
+ {
+  "from": "08-approval-execution",
+  "objection": "D04 写'执行后任何写入拒绝 run.invalid_state'，与 §1.3 的 task open → done（被指派人在执行后勾选）和 rooms.startFollowUp 冲突；另外对已执行房间的审批写，04/12/08 实际用的是 approval.already_executed（已执行提案上的 approve 幂等返回 alreadyExecuted）。建议在 D04 里列出这两个写入例外和审批的码。"
+ },
+ {
+  "from": "08-approval-execution",
+  "objection": "D06 写 bump 时'active 提案 → stale'，随后预检保留时新 run 沿用同一 proposalId 进入 pending_approval，但没有写提案状态要变回 active；§1.3 的提案状态也没有 stale → active 这条边。04 R2 已经实现为同事务内 stale → active。建议 §1.3 补上这条迁移，或改写 D06 为'先预检、通过则不置 stale'。"
+ },
+ {
+  "from": "08-approval-execution",
+  "objection": "D02 写'approve 前在同事务跑 isExecutable'。按 §1.3 和 D19，isExecutable 包含审批集合已齐，在最后一票之前不可能为真；实际应跑的是规则部分 passesChecks。08 A4 按 passesChecks 写，建议 canon 改用这个词。"
+ },
+ {
+  "from": "08-approval-execution",
+  "objection": "D22 写'mutation / cron 用 todayInTimeZone(Date.now(), room.timeZone) 权威计算'，09 §9.6.7 解释为规则在 query 和 mutation 中一律读 room.localDate，只有推进 localDate 的 cron 才计算真实日期，08 跟随 09。建议 canon 改写措辞，避免实现者在 approve 里用真实日期判规则：那样在 cron 推进之前，界面显示可批而 approve 被纵深防御拒绝，且没有出口。"
+ },
+ {
+  "from": "08-approval-execution",
+  "objection": "人拒绝时 reasonKey 对谁可见，canon 没有规定。07 DX-6 定为房间里的人可见，05 §5.12 定为任何他方代理都不进，04 R10 写 provider 代理的反馈带 reasonKey，三章互相冲突。08 选择人可见、代理不进。建议在 D12 或 D13 里明确。"
+ },
+ {
+  "from": "08-approval-execution",
+  "objection": "§1.6 没有定任务勾选函数的名字（04 写 tasks.complete，03/12 写 tasks.markDone），也没有定审批历史查询（12 用 proposals.get.decisions）。建议补录，避免兄弟章各写各的。"
+ },
+ {
+  "from": "11-architecture+12-api+15-operations",
+  "objection": "§1.6 把 `ops.setDraining` 与 `seed.fromFixture` / `seed.reset` 并列标为 dev-only，但 D17 和 15 的发布排空需要在 prod 置位。本章把 `ops.setDraining` 定为所有层级都可用的 internal 函数，只能经 CLI 和部署 admin 权限调用；dev/preview-only 只适用于 `seed.*`（12 §12.20、§12.25 Q5）。"
+ },
+ {
+  "from": "11-architecture+12-api+15-operations",
+  "objection": "D04 写'执行后 runs.start / requestRenegotiation / 任何写入拒绝 run.invalid_state'，但 canon §1.3 规定 task 由被指派人在执行后从 open 改为 done，D04 自己的 `rooms.startFollowUp` 也必须在 executed 房间可用。本章把这两个函数作为唯一显式例外（`openRoomTx` 放行 executed），03、04、07 也同样处理（12 §12.25 Q3）。建议把 D04 的措辞改为'协商类写入'。"
+ },
+ {
+  "from": "11-architecture+12-api+15-operations",
+  "objection": "§1.5 的 reasonCode 清单缺少 API 层的域：auth.*、invite.*、request.*、input.* 和顶层 internal。它也没有列出 D02 已经在用的 `approval.not_executable`，以及 06 新增的 `item.limit_exceeded`。12 §12.4 把这些都加进了同一个 reasonCodes.ts，建议 canon §1.5 同步。"
+ },
+ {
+  "from": "11-architecture+12-api+15-operations",
+  "objection": "D18 说 seed 以 `--identity` 伪造三个身份去调用公开 mutation 链，§1.6 却把 `seed.fromFixture` 定义为 internal mutation，因为 `--preview-run` 和 dev 都需要一个可调用的函数。本章的做法：internal mutation 以 fixture 身份作为 actor，复用同一套入口逻辑和 helper，在一个事务内完成；真实部署上的探针仍用 `npx convex run --identity` 调公开函数（12 §12.25 Q14）。"
+ },
+ {
+  "from": "11-architecture+12-api+15-operations",
+  "objection": "D09 要求严格 schema 生成器住在 `core/engine/strictSchema.ts`（toStrictOutputSchema(zodSchema)），D21 又禁止 core 导入 Zod。本章的理解：core 里是从 JSON Schema 到严格 JSON Schema 的纯变换；按 (role, turnKind, n) 构造 Zod 并导出 JSON Schema 的那一步放在 convex/model/agents（11 §11.8 第 6 条）。"
+ },
+ {
+  "from": "11-architecture+12-api+15-operations",
+  "objection": "D20 的版本基线没有列 convex-helpers，而 techstack D08 已为构造器采纳 0.1.128。11 按 D08 加入并注明退路：受冷却期或兼容性阻塞时改用手写包装器。请 canon 明确列入或否决。"
+ },
+ {
+  "from": "11-architecture+12-api+15-operations",
+  "objection": "D21 只写依赖方向由 `no-restricted-imports` 强制。地基 dev-tooling 实测，基于正则的规则看不到别名指向，还会误伤名字里含 src 的目录，所以 11 在同一个 ESLint 内加了 eslint-plugin-boundaries 的 L3 作补漏（不是第二套工具）。若 canon 要求最少规则，可以删掉 L3，L1/L4/L10 仍然成立（11 §11.15 Q7）。"
+ },
+ {
+  "from": "11-architecture+12-api+15-operations",
+  "objection": "D24 写成员唯一性'由 invites.accept 单一写入口'保证，但 rooms.create（创建者席位）和 rooms.startFollowUp（预分配三席）也必须插入 members 行。按 03，真正的单一写入口是 helper `addMember`，由这三个函数共同调用；建议改为'由 addMember 单一写入口'。"
+ },
+ {
+  "from": "00-overview+01-product+13-frontend+17-roadmap+18-decisions-open-questions",
+  "objection": "D15's effect set has no 'hand off to another participant' option, but the part7 13-frontend must_absorb requires an 'escalate / hand off' exit (as does the CRITIQUES trade-off page). Suggest adding pass_to_next { toRole }: in the same transaction, mark this request answered and open the next relaxationOrder role's request, which still satisfies 'at most one open request per run'."
+ },
+ {
+  "from": "00-overview+01-product+13-frontend+17-roadmap+18-decisions-open-questions",
+  "objection": "D27's '3 approvals go stale' cannot happen in the real flow, because the third required approval executes in the same transaction. Its 'stub counter with only the required items, $800' also never occurs under D08, because a blocked provider proposal never reaches an evaluation turn. 01, 09 and 14 all write it as two stale_approve rows with finance still pending, and provider proposing $800 directly from the new snapshot. The D27 wording needs revising."
+ },
+ {
+  "from": "00-overview+01-product+13-frontend+17-roadmap+18-decisions-open-questions",
+  "objection": "§1.5's approval.* list is missing approval.not_executable, which D02 already uses. The code table as a whole is also missing approval.nothing_to_withdraw, item.limit_exceeded, input.invalid, auth.*, invite.*, request.*, and the write-time meaning of version.stale_constraints. Every chapter is currently following 12 §12.4; these should go into §1.5 and core/engine/reasonCodes.ts."
+ },
+ {
+  "from": "00-overview+01-product+13-frontend+17-roadmap+18-decisions-open-questions",
+  "objection": "D25 contradicts itself: the decision says version.stale_source compares lines[].revision, while its rejected list includes 'comparing source by revision (any renewal goes stale)'. D05 also says title-only edits don't bump. 03, 06 and 09 reconciled this with 'pricing revision + editNo'; canon §1.1 should add editNo to (itemKey, revision)."
+ },
+ {
+  "from": "00-overview+01-product+13-frontend+17-roadmap+18-decisions-open-questions",
+  "objection": "D04's 'any write after execution is rejected with run.invalid_state' needs explicit exemptions for tasks.markDone and rooms.startFollowUp. §1.6 marks ops.setDraining as dev-only, but D17 and the release draining process need it in prod."
+ },
+ {
+  "from": "00-overview+01-product+13-frontend+17-roadmap+18-decisions-open-questions",
+  "objection": "The definition of isExecutable is ambiguous: D02 runs isExecutable before approval, implying it is the rules part only; D19 says 08's isExecutable is not the same as 'checks pass'; 02 defines it as 'state + rules'. Canon should give one definition. 13 avoids the word and uses only passesChecks and allApproved."
+ },
+ {
+  "from": "00-overview+01-product+13-frontend+17-roadmap+18-decisions-open-questions",
+  "objection": "D12 ⑥ counts catalog.confirm toward the 6-per-hour limit on constraint-changing writes. With 12's single-item catalog.confirm, a provider confirming six catalog rows (plus the brief) during setup hits the limit. Canon should say whether setup-phase writes are exempt, or whether a batch confirm counts once (03 and 09 propose batching)."
+ },
+ {
+  "from": "00-overview+01-product+13-frontend+17-roadmap+18-decisions-open-questions",
+  "objection": "Canon part7's 16-testing must_absorb says 'counterexample battery CE-001…108 enters the test matrix after revision', but 00-invariants has since been rewritten with CE-001…170, while 16 still uses the old numbering (CE-001…118). Canon should name the single source for test numbering."
+ }
+]

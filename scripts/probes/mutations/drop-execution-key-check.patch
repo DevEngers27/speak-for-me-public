@@ -1,0 +1,12 @@
+--- a/convex/model/executions.ts
++++ b/convex/model/executions.ts
+@@ -33,7 +33,8 @@
+   if (!loaded.scenario || loaded.input.capCents === undefined) failInvariant('invariant.guard_bypassed');
+   if ((await ctx.db.query('executions').withIndex('by_room', q => q.eq('roomId', room._id)).take(1)).length) failInvariant('invariant.room_already_executed');
+   const executionKey = `exec:${proposal._id}`;
+-  if ((await ctx.db.query('executions').withIndex('by_executionKey', q => q.eq('executionKey', executionKey)).take(1)).length) failInvariant('invariant.duplicate_execution');
++  // CE-164: omit the by_executionKey duplicate guard.
++  void executionKey;
+   const result = computeChangeOrderChain({ entries: loaded.ledgerEntries, deltaCents: proposal.terms.amountCents, capCents: loaded.input.capCents });
+   if (!result.ok) failInvariant('invariant.guard_bypassed');
+   const plan = planExecutionRecords(asEngineProposal(proposal), result.chain);

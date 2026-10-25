@@ -1,0 +1,31 @@
+{
+  "checkedAt": "2026-10-25T15:13:03.377402+00:00",
+  "restoredCommit": "97c1417c0112723fa37b415d018dacce8aad0123",
+  "runtimeDiffEmpty": true,
+  "archive": "google-auth-preparation",
+  "restoredTrackedFiles": 60,
+  "archivedUntrackedFiles": 13,
+  "removedArchivedGoogleSourceFiles": 10,
+  "checks": {
+    "frozenInstall": "passed",
+    "dependencyPolicy": "passed",
+    "codegen": "passed; no generated diff",
+    "lint": "passed",
+    "typecheck": "passed",
+    "cloudTypecheck": "passed",
+    "nextBuild": "passed",
+    "nextBrowserArtifactScan": "passed;30 assets",
+    "cloudBuild": "passed",
+    "cloudBrowserArtifactScan": "passed;2 assets",
+    "architectureBoundaries": "passed"
+  },
+  "tests": {
+    "primaryPassed": 2112,
+    "primaryTodo": 39,
+    "primarySkippedFiles": 7,
+    "scriptPassed": 31,
+    "e2eHarnessUnitPassed": 11,
+    "totalPassed": 2154
+  },
+  "scope": "No real browser flow, model calls, deployments, commits or pushes performed by this restoration. Release docs, submission assets and probe receipts preserved. Direct Google identity implementation archived and inactive."
+}

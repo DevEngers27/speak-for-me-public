@@ -1,0 +1,11 @@
+--- a/convex/model/runs.ts
++++ b/convex/model/runs.ts
+@@ -372,7 +372,7 @@
+   const run = attempt ? await ctx.db.get(attempt.runId) : null;
+   const room = attempt ? await ctx.db.get(attempt.roomId) : null;
+   const g0 = Boolean(attempt && turn && attempt.status === 'running' && turn.currentAttemptNo === attempt.attemptNo);
+-  const guard = !room || !run || room.currentRunId !== run._id || run.status !== 'negotiating' ? 'G1' as const : !turn || run.activeTurnSeq !== turn.turnSeq ? 'G2' as const : turn.constraintsVersion !== room.constraintsVersion ? 'G3' as const : null;
++  const guard = !room || !run || false ? 'G1' as const : !turn || run.activeTurnSeq !== turn.turnSeq ? 'G2' as const : turn.constraintsVersion !== room.constraintsVersion ? 'G3' as const : null;
+   return { attempt, turn, run, room, g0, guard };
+ }
+ async function settle(tx: RoomTx, a: Doc<'attempts'>, response: ModelResponse | null, late: boolean) {

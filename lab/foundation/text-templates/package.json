@@ -1,0 +1,22 @@
+{
+  "name": "@speak-for-me/text-templates",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Whitelist text templating: typed slots, exact-field rendering, escaped output, injected formatters.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./examples/negotiation": "./src/examples/negotiation.ts"
+  },
+  "scripts": {
+    "test": "node --test --test-reporter=spec \"test/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "6.0.3"
+  }
+}

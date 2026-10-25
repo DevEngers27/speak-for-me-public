@@ -1,0 +1,25 @@
+{
+  "name": "@speak-for-me/fixture-types",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Zod 4 schemas, types and a validating, freezing loader for generic scenario fixtures.",
+  "engines": {
+    "node": ">=24.19.0 <25"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}

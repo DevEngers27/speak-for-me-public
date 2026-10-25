@@ -1,0 +1,20 @@
+{
+  "name": "convex-components-spike",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "dependencies": {
+    "@convex-dev/action-retrier": "^0.3.1",
+    "@convex-dev/rate-limiter": "^0.4.2",
+    "@convex-dev/workflow": "^0.4.10",
+    "@convex-dev/workpool": "^0.4.14",
+    "convex": "^1.48.0",
+    "convex-helpers": "^0.1.129",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@edge-runtime/vm": "^5.0.0",
+    "convex-test": "^0.0.65",
+    "vitest": "^5.0.5"
+  }
+}

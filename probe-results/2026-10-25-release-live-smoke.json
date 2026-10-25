@@ -1,0 +1,170 @@
+{
+  "version": 1,
+  "deployment": "benevolent-jackal-41",
+  "startedAt": "2026-10-25T13:35:14.924Z",
+  "finishedAt": "2026-10-25T13:36:20.412Z",
+  "authEvidence": "Convex admin impersonation with synthetic seed identities; NOT Clerk sign-in or browser/WebSocket verification.",
+  "inputProvenance": "Canonical main fixture through seed.fromFixture and production mutation helpers; seeded synthetic inputs.",
+  "modelEvidence": "Live runtime required; no simulated fallback, no fabricated proposals or human-request answers.",
+  "pass": false,
+  "stages": [
+    {
+      "stage": "configuration",
+      "at": "2026-10-25T13:35:17.439Z",
+      "agentMode": "live",
+      "tier": "dev",
+      "pinnedModelAvailable": true
+    },
+    {
+      "stage": "canonical_setup",
+      "at": "2026-10-25T13:35:19.804Z",
+      "roomId": "m177v7fjwd2dgzaah2rdvb46p18gy5wv",
+      "status": "setup",
+      "existingCommitmentCents": 400000
+    },
+    {
+      "stage": "authorization",
+      "at": "2026-10-25T13:35:28.873Z",
+      "anonymousAndNonmemberReadDenied": true,
+      "providerBudgetWriteDenied": true
+    },
+    {
+      "stage": "run_progress",
+      "at": "2026-10-25T13:35:31.277Z",
+      "runNo": 1,
+      "status": "negotiating",
+      "activeRole": "provider"
+    },
+    {
+      "stage": "run_progress",
+      "at": "2026-10-25T13:35:35.135Z",
+      "runNo": 1,
+      "status": "negotiating",
+      "activeRole": "customer"
+    },
+    {
+      "stage": "run_progress",
+      "at": "2026-10-25T13:35:38.303Z",
+      "runNo": 1,
+      "status": "negotiating",
+      "activeRole": "finance"
+    },
+    {
+      "stage": "run_progress",
+      "at": "2026-10-25T13:35:44.592Z",
+      "runNo": 1,
+      "status": "pending_approval",
+      "activeRole": null
+    },
+    {
+      "stage": "initial_proposal",
+      "at": "2026-10-25T13:36:01.303Z",
+      "proposalVersion": 1,
+      "amountCents": 90000,
+      "humanApprovals": 2,
+      "privacyChecks": "passed"
+    },
+    {
+      "stage": "budget_change",
+      "at": "2026-10-25T13:36:04.918Z",
+      "capCents": 480000,
+      "constraintsVersion": 2,
+      "staleApprovalRejected": true
+    },
+    {
+      "stage": "run_progress",
+      "at": "2026-10-25T13:36:06.079Z",
+      "runNo": 2,
+      "status": "negotiating",
+      "activeRole": "provider"
+    },
+    {
+      "stage": "run_progress",
+      "at": "2026-10-25T13:36:12.884Z",
+      "runNo": 2,
+      "status": "negotiating",
+      "activeRole": "customer"
+    },
+    {
+      "stage": "run_progress",
+      "at": "2026-10-25T13:36:16.053Z",
+      "runNo": 2,
+      "status": "negotiating",
+      "activeRole": "finance"
+    },
+    {
+      "stage": "run_progress",
+      "at": "2026-10-25T13:36:19.254Z",
+      "runNo": 2,
+      "status": "needs_input",
+      "activeRole": null
+    },
+    {
+      "stage": "requires_human_attention",
+      "at": "2026-10-25T13:36:19.254Z",
+      "runNo": 2,
+      "status": "needs_input",
+      "requestKind": "rounds_exhausted"
+    },
+    {
+      "stage": "stopped",
+      "at": "2026-10-25T13:36:19.255Z",
+      "code": "verification.failed",
+      "check": "Live run needs human attention; no automatic answer or simulated agreement was supplied."
+    },
+    {
+      "stage": "measured_usage",
+      "at": "2026-10-25T13:36:20.412Z",
+      "scope": "Deployment-wide measurement window; not a provider-facing export.",
+      "tokens": {
+        "cacheCreation": 8471,
+        "cacheRead": 6228,
+        "input": 5312,
+        "n": 7,
+        "output": 1100,
+        "thinking": 330
+      },
+      "estimate": {
+        "asOf": "2026-10-06",
+        "estimate": true,
+        "microUsd": 86849,
+        "n": 7,
+        "unknownCost": 0
+      },
+      "turnLatency": {
+        "groups": [
+          {
+            "kind": "propose",
+            "mode": "live",
+            "n": 3,
+            "p50": 4302,
+            "p95": 4448,
+            "role": "provider"
+          },
+          {
+            "kind": "evaluate",
+            "mode": "live",
+            "n": 2,
+            "p50": 3060,
+            "p95": 3703,
+            "role": "customer"
+          },
+          {
+            "kind": "evaluate",
+            "mode": "live",
+            "n": 2,
+            "p50": 3811,
+            "p95": 4106,
+            "role": "finance"
+          }
+        ],
+        "n": 7,
+        "p50": 4106,
+        "p95": 4448
+      }
+    }
+  ],
+  "roomId": "m177v7fjwd2dgzaah2rdvb46p18gy5wv",
+  "followUpRoomId": null,
+  "errorCode": "verification.failed"
+}

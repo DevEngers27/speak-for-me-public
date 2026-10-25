@@ -1,0 +1,101 @@
+[
+ {
+  "id": "names-18",
+  "severity": "medium",
+  "section": "00-invariants-part3.md",
+  "description": "00-invariants 的 cause 枚举与 03/04/09/12 定稿不一致：约束修订的 cause、run 的 cause，以及\"何时自动开 run\"的模型。08、14、05 中还另有几个散落的取值。",
+  "evidence": "INV-24 与 INV-57 的 constraintRevisions cause 是 `brief_confirmed / catalog_changed / request_answered / clock`，没有 `room_opened`；03 §3.7 与 09 §9.3 的 revisionCauseV 是 `room_opened | brief_confirmed | catalog_changed | human_answer | clock`；08 §8.10.1 追溯链写 \"cause `budget`\"。run cause：INV-75 写 `runs.start(cause: 'briefs_confirmed')`，并描述\"room 先 open、第三份简报才触发 start\"；03 §3.8、04 §4.3.1、12 §12.13 是 `room_opened | constraints_changed | renegotiation_requested | manual_start`，由 04 M2 `openIfReady` 在就绪（含三份简报）时一并 open 并开 run；14 S3 写 `cause: 'initial'`；05 §5.11.4 写 \"runs.start（cause `restart`）\"。",
+  "suggested_fix": "INV-24、INV-57 的 cause 列表改为 03/09 的五个值。INV-75 改写为\"就绪（04 §4.2.1）满足时，openIfReady 同事务 setup → open、bump(room_opened)、startRunTx(cause: 'room_opened')\"，并按此修订 INV-67 的就绪描述和 §4 Q4。08 §8.10.1 的 cause 改 `brief_confirmed`；14 S3、S13 的 `initial` 改 `room_opened`；05 §5.11.4 的 `restart` 改 `manual_start`。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-20",
+  "severity": "medium",
+  "section": "00-invariants-part4.md",
+  "description": "INV-42 把 `modelGateway` 放在 `core/engine/modelGateway.ts`。这违反 canon D21 的引擎纯度规则（core/engine 零依赖，禁 fetch，SDK 只能在 convex 边界），也与 10 的落点 `convex/agents/modelGateway.ts` 冲突。",
+  "evidence": "INV-42 落点列：\"core/engine/modelGateway.ts（唯一接缝 callModel，L1 用 vi.mock 替换）\"。canon D21：\"core/engine/（零依赖纯 TS…）…引擎纯度规则禁 Date / Intl / Math.random / fetch / convex/* / zod\"。10 §10.14.1：\"convex/agents/modelGateway.ts，只被 internal action 导入\"。",
+  "suggested_fix": "INV-42 的落点改为 `convex/agents/modelGateway.ts`（唯一接缝 `callModel`），并注明 core/engine 只放纯函数部分（strictSchema、budget 常量与不等式断言）。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-23",
+  "severity": "medium",
+  "section": "00-invariants-part3.md",
+  "description": "00-invariants 里的审批、请求、run 相关错误码和授权规则，与 04、08、12 的定稿不一致，其中有些码已被 canon §1.5 明令废弃。",
+  "evidence": "INV-31 与 CE-054：调用者角色不在 requiredApprovals 时报 `approval.missing_role`；04 A-G6、08 S7、12 §12.15 报 `auth.role_forbidden`，06 与 08 把 missing_role 用作 evaluateApprovalSet 的槽位原因。CE-068：非 creator 调 requestRenegotiation 报 `approval.missing_role`，12 报 `auth.not_creator`。INV-29 与 CE-055：没有可撤回的 approve 时\"拒绝\"；04 §4.7.2、08 A4、12 ⑧ 返回 `unchanged`。INV-45 与 CE-083：场景未注册报 `internal`；04 M1、08 S5 报 `run.invalid_state{guard:'scenario_version'}`。CE-132：\"reject 同事务…run.currentProposalId 清空\"；08 §8.5.4 第 5 条写\"run.currentProposalId 保留指向被拒提案（历史）\"。INV-73：\"runs.cancel 任一成员\"；04 §4.3.6、07 §7.12.2、12 §12.13 都限 creator。CE-001、CE-054 用 `NOT_FOUND`，CE-120 用 `INVITE_USED`，都是 canon §1.5 废弃的大写码。",
+  "suggested_fix": "按 12 §12.4 与 08 改写 00-invariants：INV-31、CE-054 的角色不符改 `auth.role_forbidden`；CE-068 改 `auth.not_creator`；INV-29、CE-055 改\"返回 unchanged、不插行\"；INV-45 改 `run.invalid_state{guard:'scenario_version'}`（与 04 M1 对齐）；CE-132 改\"proposal → rejected；currentProposalId 保留，守卫靠 proposal.status\"；INV-73 改\"runs.cancel 仅 creator\"；CE-001、CE-054 改 `auth.not_member` / null；CE-120 改 `invite.seat_taken`（或 `invite.invalid`）。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-24",
+  "severity": "medium",
+  "section": "00-invariants-part2.md",
+  "description": "00-invariants 引用的 helper 名和索引名在 03/04/10/12 中不存在或已改名，按 INV 编号查找落点会落空。",
+  "evidence": "INV-09、INV-68 写 `scheduleTurn`，04/12 为 `createTurnTx` + `beginAttempt`。INV-10、34、64 写 `openHumanRequest`，04/03 为 `openHumanRequestTx`。INV-34 写 `by_run_open`，03 为 `by_run_status`。INV-65 写 `humanRequests.expire`，03/12 为 `humanRequests.expireDue`。INV-67 写索引 `runs.by_room_status`，03 只有 `by_room_runNo` 与 `by_status`；INV-67 的\"进入终态时同事务清空 currentRunId\"与 03 §3.5、04 §4.3.3 的\"currentRunId 指向最新 run（任何状态）\"冲突（03 Q2 已点名）。INV-69 的 `assertAttemptLive` 与 INV-76 的 `finishRun` 在任何章都没有定义。INV-60、CE-151 写\"代码库唯一公开 action 是邀请 token 生成（invites.create…）\"，03/07/12 中这个 action 是 `invites.createLink`，`invites.create` 是 mutation。",
+  "suggested_fix": "按 03/04/12 的名字替换上述引用：scheduleTurn → createTurnTx/beginAttempt；openHumanRequest → openHumanRequestTx；by_run_open → by_run_status；humanRequests.expire → humanRequests.expireDue；runs.by_room_status → rooms.currentRunId + runs.by_room_runNo，INV-67 措辞改为\"非终态 run 至多一个且就是 currentRunId\"；assertAttemptLive、finishRun 改为引用 04 §4.5.2 的 G0–G3 守卫与 `setStatus`；INV-60、CE-151 改为 `invites.createLink`。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-25",
+  "severity": "medium",
+  "section": "00-invariants-part8.md",
+  "description": "00-invariants 反例电池里的若干条目与 03、05、09、14 定稿的取值或行为冲突，按原文写成用例会变红，或测到错误的行为。",
+  "evidence": "CE-003、CE-087、CE-088、CE-112 用 `REPORTS`、`AUDIT`、`LOGIN+REPORTS@rush`、`LOGIN`，不满足 03 的 itemKey 正则 `^[a-z][a-z0-9_]{1,39}$`，也不是 D27 的 fixture 键名。CE-046 写\"只改 title 或 taskTemplates（revision+1）\"，03 §3.7 与 09 §9.1.3 规定 revision 不变、editNo + 1。CE-128（$4,400）与 CE-167（$4,700）写\"按 relaxationOrder 先 customer drop_items\"；05 §5.15.2、09 V1、14 §11 A 与 canon D27 都是 customer 视图无法判定、被跳过，finance 收到 raise_cap。CE-075 写\"rationale 1,500 码点 → output.schema_violation，重试一次\"，05 §5.5.2 写\"截断到 1,200 并标注，不重试\"。CE-086 写开关 `OUTPUT_SCHEMA_MODE` / `sdk_transform`，05 §5.4.5 是 `OUTPUT_SCHEMA_TRANSFORM = sdk`。",
+  "suggested_fix": "CE-003、087、088、112 改用 fixture 键名（usage_dashboard、audit_log_export、`audit_log_export+usage_dashboard@rush`、sso_login）；CE-046 改为\"revision 不变、editNo + 1，不 bump\"；CE-128、CE-167 改为\"customer 被跳过 → finance raise_cap\"；CE-075 改为\"截断、不重试、记 rationaleTruncated\"；CE-086 改为 `OUTPUT_SCHEMA_TRANSFORM = sdk`。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-38",
+  "severity": "low",
+  "section": "00-canon.md",
+  "description": "canon 自身有若干缺口和内部不一致，各章已据此提出了偏离或 canon_objections（本返回结构没有 canon_objections 字段，故作为 issue 列出）。",
+  "evidence": "§1.5 的 approval.* 不含 `approval.not_executable`，D02 却使用它（04 Q6、06 §6.1、08 O3）；§1.5 也没有 auth.* / invite.* / request.* / input.* 与 item.limit_exceeded、date.before_lead_time。§1.6 缺 D12 ② 用到的 `rooms.previewChange`，也缺 `tasks.markDone`、`invites.createLink`、`humanRequests.expireDue`、`ops.livenessSweep`、`ops.activeAttemptCount`。§1.1 没有列出 part6 要求的 `constraintRevisions`、内部表 `rawOutputs` 与 catalogItems 的 `editNo`（09 Q2/Q3）。§1.2 的 candidateKey 示例 `LOGIN+REPORTS@rush` 与 D27 的小写键、03 的正则不符。§1.6 把 `ops.setDraining` 标为 dev-only，与 D17 的生产排空冲突（12 Q5）。D04\"任何写入拒绝\"没有豁免 tasks.markDone 与 startFollowUp（04 Q4、12 Q3）。D27 的\"3 条审批 stale\"与\"stub counter $800\"与 D02、D03、D08 矛盾（09 Q5/Q6、14 §16）。",
+  "suggested_fix": "canon §1.5 补录 approval.not_executable、item.limit_exceeded、date.before_lead_time 与 API 域；§1.6 补 rooms.previewChange、tasks.markDone、invites.createLink、humanRequests.expireDue、ops.livenessSweep、ops.activeAttemptCount，并把 ops.setDraining 改为全层级 internal；§1.1 补 constraintRevisions、rawOutputs 与 catalogItems 的 (itemKey, revision, editNo)；§1.2 示例改为 `audit_log_export+sso_login@rush`；D04 写明两个豁免；D27 改为\"2 条 stale_approve + finance pending\"与\"provider 第 2 轮提出 $800\"。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "invariants-09",
+  "severity": "medium",
+  "section": "00-invariants-part6.md",
+  "description": "INV-67 要求 run 进入终态时同事务清空 `rooms.currentRunId`，而 03/04/08 都让它指向最新的 run（任何状态）。04 的 R2 依赖 `cur` 拿到刚被取代的旧 run，才能比对 `currentProposalId`；derivePhase 也依赖它显示 canceled / no_agreement。照 INV-67 实现会让 R2 永不触发（CE-058、CE-129 失败），阶段显示也会错。02 Q2 已改用 04 的语义，但电池原文未改，16 仍从这里取编号。",
+  "evidence": "INV-67：\"`rooms.currentRunId` 至多指向一个 `status ∈ {negotiating, pending_approval, needs_input}` 的 run，进入终态时同事务清空\"；03 part3：\"`currentRunId: v.optional(v.id(\\\"runs\\\")), // 最新 run（任何状态）`\"；04 `startRunTx`：\"`if (p?.status === \\\"stale\\\" && cur?.currentProposalId === p._id && passesChecks(p, input).ok)`\"；08 X13：\"`currentRunId` 保持指向本 run\"；02 part7 Q2。",
+  "suggested_fix": "把 INV-67 改为：\"`rooms.currentRunId` 指向房间最新 run（任何状态，只由 `startRunTx` 写）；非终态 run 至多一个，且若存在必为 currentRunId 所指\"。落点改为 `startRunTx` 断言 cur 为空或已终态；删除\"进入终态时同事务清空\"。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-10",
+  "severity": "medium",
+  "section": "00-invariants-part3.md",
+  "description": "人拒绝后给 proposer 代理的反馈是否带 reasonKey，INV-30 与 04 R10 写带，05 与 08 写任何他方代理都不带。canon C28 规定同侧也不默认共享；finance 的 `price_poor_value` / `over_our_limit` 进入 provider 代理上下文，等于把\"预算是瓶颈\"这一私密推断交给对方，不变量本身写成了泄露。",
+  "evidence": "INV-30：\"run → `negotiating`（下一轮，反馈只含 reasonKey）\"；04 R10：\"新建 provider `propose` turn（反馈 = 被拒版本 + `reasonKey`…）\"；05 §5.8.6：\"provider 只见 'v3 rejected'，买方代理见 'v3 rejected by {role}'；**不含 `reasonKey`**\"；08 A13：\"**任何他方代理**都拿不到人拒绝的 `reasonKey`\"；08 O14。",
+  "suggested_fix": "INV-30 改为：\"run → negotiating，反馈只含被拒版本（provider 代理不含角色，买方代理含 byRole）；任何他方代理上下文不含 reasonKey / note\"。落点加上 07 §7.14 的上下文白名单。04 R10 的括号改为\"反馈 = 被拒版本（不含 reasonKey，05 §5.8.6）\"，并在 16 增加 provider 请求体中无 reasonKey 的金丝雀断言（对应 08 I8）。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-13",
+  "severity": "medium",
+  "section": "00-invariants-part3.md",
+  "description": "INV-24 / INV-57 / CE-046 与 06/09 的落点不符：(1) INV-24 写\"递增 ⇔ 投影不等\"，但 clock 与 room_opened 两种 bump 发生时投影相等或无前值，而按 INV-24 字面，clock bump 永远不该发生；(2) 性质\"投影相等 ⇒ 阻断集合相等\"缺少\"同 localDate、同台账\"的前提，原样写成测试是错的；(3) cause 枚举写成 request_answered，缺 room_opened，而 09 的枚举是 room_opened / brief_confirmed / catalog_changed / human_answer / clock；(4) CE-046 写只改标题时 revision+1，与 INV-R8 / CC-D3（revision 不变、editNo+1）相反，照写的用例会断言出\"改标题触发 stale_source\"；(5) replayRuleView 与 replayRuleInput 名字不一致。",
+  "evidence": "INV-24：\"递增 ⇔ `scenario.hardProjection(RuleInput)` 前后 `canonicalJson` 不等 … `cause ∈ brief_confirmed / catalog_changed / request_answered / clock` … 性质：'投影相等 ⇒ 阻断集合相等'\"；06 §5.3：\"`cause: 'clock'` 例外，强制递增\"；06 T06-P4：\"同 `localDate`、同台账 … 下投影相等 ⇒ …\"；09 `revisionCauseV`；CE-046：\"只改 `title` 或 `taskTemplates`（revision+1）\"；06：\"仅改 `title` / `taskTemplates` 时 `revision` 不变（… `editNo + 1`）\"。",
+  "suggested_fix": "INV-24 改为：\"open 房间里，非 clock、非 room_opened 的写入使投影改变 ⇔ 同事务 bump；clock 由 `clock.rollLocalDate` 在时间结论翻转时强制 bump；room_opened 在 setup → open 时 bump 到 v1\"。性质加上\"同 localDate、同台账\"的前提。cause 枚举与 09 §9.3 一致。CE-046 改为\"同 revision、editNo+1\"。INV-57 的 replayRuleView 改为 replayRuleInput。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-15",
+  "severity": "medium",
+  "section": "00-invariants-part6.md",
+  "description": "INV-75 / CE-146 描述的首个 run 启动方式与 04/09/10/12 不符。按章节，房间在全部就绪时才由 openIfReady 打开，然后 bump(room_opened) → react → startRunTx（cause 为 room_opened），不存在\"房间已 open 时第三份简报确认，以 cause briefs_confirmed 开 run\"的路径。系统路径在排空时照常建 run、只把首回合停泊；节流满时被拒的是那次 briefs.confirm 本身，简报不会写入。CE-146 的\"简报写入成功、run 不开\"两种情形都不会出现，照写的用例必然失败。",
+  "evidence": "INV-75：\"第三份简报 `briefs.confirm` 使三方均已确认且 `room.status === 'open'` ⇒ 同事务 `runs.start(cause: 'briefs_confirmed')`\"；CE-146：\"简报版本写入成功，run 不开，房间显示'维护中 / 稍后重试'\"；04 M2：\"`constraints.bump({ cause: \\\"room_opened\\\" … })` … `react()` → `startRunTx(cause: \\\"room_opened\\\")`\"；04 §4.3.3：\"系统路径永不因上限或排空而抛错 … 照常插入 run 与 turn\"；10 §10.12.3 第 2 条；12 part3 第 5 条。",
+  "suggested_fix": "INV-75 改为：\"setup 期的写入只写来源；最后一个就绪条件满足时，同事务 openIfReady → bump(room_opened) → react → startRunTx(cause: room_opened)；系统路径不受 draining 与节流阻断（draining 时首回合 waitingReason = draining）\"。CE-146 改为两条：(a) draining 时就绪，run 建立、首回合停泊、无 attempt，解除排空后恢复；(b) 节流已满时那次写入整体被拒、不写简报。同步修改 16 TC-RUN-14。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-17",
+  "severity": "medium",
+  "section": "00-invariants-part8.md",
+  "description": "电池中有一批期望与已定稿章节冲突，16 §16.11.2 没有列入修订，按电池写出的用例会断言错误结果：CE-055（无可撤回时 withdraw 拒绝 / 08 返回 unchanged）；CE-056（交替 60 次 / withdraw 第 11 次即 run.rate_limited）；CE-060（期望 run.invalid_state / 04 是 request.not_open，05 §5.11.3 是 version.stale_constraints）；CE-068（非 creator 期望 approval.missing_role / 实际是 auth.not_creator）；CE-075 与 INV-43（rationale 1,500 码点 → schema_violation 重试 / 05 §5.5.2 是截断、不重试）；CE-127（reconcile 转 needs_input(agent_failed) / 04、10 是取代并 react）；CE-132（reject 清空 currentProposalId / 08 §8.5.4⑤ 与 09 §9.5 保留）；CE-144（旧请求 answered / 04 R19 是 superseded 加 regenerated）；INV-29、INV-31、INV-34 的码名；INV-42 把 modelGateway 放在 core/engine，违反 D21 的纯度规则（10 放在 convex/agents）。",
+  "evidence": "CE-055：\"拒绝，不插行\"，对比 08 §8.5.5：\"否则返回 `unchanged`\"；CE-132：\"reject 同事务 `proposal → rejected`，`run.currentProposalId` 清空\"，对比 08 §8.5.4⑤：\"`run.currentProposalId` 保留指向被拒提案（历史）\"；CE-127：\"`runs.reconcile` 把 run 转 `needs_input(agent_failed)`\"，对比 04 §4.3.5：`disposeCurrentRun … react`；CE-075：\"Zod 失败 → `output.schema_violation`，重试一次\"，对比 05 §5.5.2：\"截断而不重试\"；05 §5.11.3：\"`request.constraintsVersion === room.constraintsVersion`（否则 `version.stale_constraints`）\"，对比 04 §4.8.2：\"`request.not_open`\"；INV-42：\"`core/engine/modelGateway.ts`\"。",
+  "suggested_fix": "在 16 §16.11.2 逐条加入修订行，并同步修改 00-invariants 原文：CE-055 改为 unchanged、无行；CE-056 改为交替 10 次后 withdraw 被 run.rate_limited 拒绝、reject 仍成功；CE-060 统一为 04 / 12 的 request.not_open（同时删去 05 §5.11.3 冗余的 constraintsVersion 守卫或统一其码）；CE-068 改为 auth.not_creator；CE-075 / INV-43 改为截断加 rationaleTruncated；CE-127 改为取代并 react 出新 run；CE-132 改为 currentProposalId 保留、提案为 rejected；CE-144 改为旧请求 superseded(regenerated) 并记 answerOptionKey；INV-29 / 31 / 34 的码名对齐 12 §12.4；INV-42 的落点改为 convex/agents/modelGateway.ts。",
+  "reviewer": "不变量与反例电池"
+ }
+]

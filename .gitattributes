@@ -1,0 +1,5 @@
+# Generated presentation assets must never be diffed or line-normalized as text.
+*.pdf binary
+*.mp4 binary
+*.png binary
+*.zip binary

@@ -1,0 +1,16 @@
+{
+  "name": "convex-test-spike",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@edge-runtime/vm": "^5.0.0",
+    "convex": "1.48.0",
+    "convex-test": "^0.0.65",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}

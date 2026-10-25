@@ -1,0 +1,32 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      CLERK_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - run: npm install --global pnpm@11.25.0
+      - run: pnpm install --frozen-lockfile
+      - name: Generated Convex code is committed and current
+        run: |
+          pnpm convex:codegen:offline
+          git diff --exit-code -- convex/_generated
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      # No secrets: proves the credential-free build path.
+      - run: pnpm build

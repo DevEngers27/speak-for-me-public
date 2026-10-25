@@ -1,0 +1,114 @@
+{
+  "reviewer": "grok",
+  "lens": "verification",
+  "overall": "Accept with residuals. W0R-01 through W0R-08 and W0R-10 through W0R-13 are resolved and match canon D09; W0R-09 stays partial. The suite is green (254 passed, 220 todo). A deadline that expires before the next send, or during retry backoff, is still not a non-retryable timeout. R11 and §10.11 need a design-change notice because the code correctly follows D09 instead of the runtime's SDK-retry budget.",
+  "findings_status": [
+    {
+      "id": "W0R-01",
+      "status": "resolved",
+      "note": "callNegotiationModel records usage, requestId, and outcomeKind output.truncated, then continues once via truncationRetries. A second max_tokens returns output.truncated with retryable false. The test expects attempts 2 and totalUsage.outputTokens 32000. Refusal and model_context_window_exceeded still return without a retry."
+    },
+    {
+      "id": "W0R-02",
+      "status": "resolved",
+      "note": "Satisfies D09. SDK_MAX_RETRIES is 0 and anthropicTransport rejects a non-zero SDK retry. The gateway retries once, and only for 429 and APIConnectionError; 408, 409, 5xx, 529, and timeouts are not retried in the loop. Truncation is a separate counter. CALL_DEADLINE_MS is 230000, capped with one AbortSignal.timeout, and module load requires it to be before WATCHDOG_FIRST_MS 275000. R11 and §10.11 still specify SDK retries and a 448s deadline after the first watchdog, so they need a design-change notice (W0-F-r02). Residual: budget exhaustion is still retryable true, and a deadline during backoff is labeled aborted (W0-F-r01)."
+    },
+    {
+      "id": "W0R-03",
+      "status": "resolved",
+      "note": "drainDue in tests/helpers/convex.ts only advanceTimersByTime(0) and finishInProgressScheduledFunctions. runAllTimers and finishAllScheduledFunctions are gone. The example test shows a job 5s out stays pending. Watchdog advancement remains advanceScheduledTo. lab/ still has the old helper and was not in scope."
+    },
+    {
+      "id": "W0R-04",
+      "status": "resolved",
+      "note": "SCENARIO_KEY is scope_change for the plugin id, the fixture, and health.ping. The directory stays scope-change. The schema uses SCENARIO_KEY_PATTERN, which accepts the underscore form and rejects hyphens. loadScopeChangeFixture maps main into loadFixture with expectedScenarioKey, and tests/foundation/wave0.test.ts loads it. The literal constant lives in core/engine, which §11.0 says should not name a scenario (W0-F-r04)."
+    },
+    {
+      "id": "W0R-05",
+      "status": "resolved",
+      "note": "definePublicTemplate allows only enum, token, amount, date, integer, list, and fragment. slot.token accepts only ITEM_KEY_RE, whose alphabet has no markup, so returning the match is not a free string. slot.text and a list of text stay kind text and are rejected. Catalog titles are not a template slot; they go through wrapCatalogTitle."
+    },
+    {
+      "id": "W0R-06",
+      "status": "resolved",
+      "note": "publicCents and formatUsdCents call assertCents, whose max is 1e11 and whose messages omit the amount. isoDate uses parseIsoDate and throws INVALID_DATE, including 0000-01-01 and 9999-12-31. failSlot throws Invalid slot value and discards the reason that used to contain the rejected value. The wave-0 test rejects PRIVATE_CANARY and 100000000001 without echoing them."
+    },
+    {
+      "id": "W0R-07",
+      "status": "resolved",
+      "note": "assertWhitelisted requires effort medium and max_tokens 16000 after extraBody is merged, and it rejects extra system, message, and cache_control fields. createFetchStreamClient throws GatewayAPIError with message HTTP {status} and does not attach rawText. The body type is collapsed to api_error, which is stricter than keeping a parsed safe type; status still drives classification."
+    },
+    {
+      "id": "W0R-08",
+      "status": "resolved",
+      "note": "callNegotiationModel is exported from convex/agents/modelGateway.ts, the TD-03 path, with callModel kept as an alias. Success is attemptStatus completed. Transport failures use reasonCode null and attemptStatus error. Proposal enums are active, executed, superseded, rejected, and stale; decisions are approve, reject, and withdraw. A two-line re-export remains at convex/lib/modelGateway.ts. convex/agents.ts does not exist yet, so the §11 directory clash is future work."
+    },
+    {
+      "id": "W0R-09",
+      "status": "partial",
+      "note": "The self-comparisons are gone. reconcileBattery().ok is false unless every registry id is in executedIds, and the default report lists 253 untested ids while structureOk stays true. The it.todo bodies were not replaced, so Vitest still cannot fail them. pnpm test reports 220 todo because real-deploy and e2e files are no longer collected; the registry count is still 253."
+    },
+    {
+      "id": "W0R-10",
+      "status": "resolved",
+      "note": "real-deploy and battery e2e specs are out of the default core project. evals and web (jsdom) projects exist. test:watch uses tests/watch.config.ts, which spreads the suite config and adds the scripts and e2e-harness projects. tests/vitest.config.ts imports ../vitest.config.ts. pnpm test: 254 passed, 220 todo, boundaries passed, scripts 9, harness 11."
+    },
+    {
+      "id": "W0R-11",
+      "status": "resolved",
+      "note": "The helper moved to tests/helpers/convex.ts and api.d.ts no longer references test/helpers. ESLint bans raw query, mutation, action, and internal* imports from _generated/server except functions.ts, tests, and fixtures. health uses the sanitized builders. The engine barrel is the import path, and lint rejects engine/ deep imports. example.fixture.ts still uses raw builders and is ignored, which matches the two-dot convex-test modules. A3's named anonQuery/userQuery/sys* constructors are not introduced."
+    },
+    {
+      "id": "W0R-12",
+      "status": "resolved",
+      "note": "markProjected throws unless the value is already projected. Only copyListedKeys, used by pickExact and projectForRole, adds to that set, and it freezes the filtered object. wrapCatalogTitle rejects empty titles, titles over 80 code points, and <> or CR/LF, then wraps untrusted_data. CatalogItem.title uses the same rule. tests/foundation/wave0.test.ts covers both."
+    },
+    {
+      "id": "W0R-13",
+      "status": "resolved",
+      "note": "The README now says the scenario fixtures and plugin shell are present and the rules engine is not. policy:check names --generate on expiry, and expiries differ per package. The generator's window is only 1–7 days, so eight packages expire 2026-10-25 (W0-F-r03)."
+    }
+  ],
+  "issues": [
+    {
+      "id": "W0-F-r01",
+      "severity": "medium",
+      "section": "model-gateway",
+      "description": "A total-deadline expiry is not reported as a non-retryable timeout. If the remaining budget is already gone, callNegotiationModel returns errorCode timeout with retryable true, so a later attempt layer that trusts the flag will retry a call that has already used its deadline. If the deadline fires during retry backoff, withDeadline rejects and the catch returns kind aborted with detail 'request aborted during retry backoff', even when the caller signal did not abort. During send, the same deadline is classified as a timeout. The call does stop, so this does not push the request past the 275s watchdog, but the result contract disagrees with D09's timeout mapping.",
+      "evidence": "convex/agents/modelGateway.ts:2202 retryable: true on the budget-exhausted return; convex/agents/modelGateway.ts:2303-2315 catch of withDeadline(sleep(...), callSignal) returns kind 'aborted'. classifyError marks TimeoutError retryable false at convex/agents/modelGateway.ts:1112-1126.",
+      "suggested_fix": "Return retryable false and errorCode timeout when remainingBudgetMs <= 0. In the backoff catch, if params.signal is not aborted, return kind error / errorCode timeout instead of aborted."
+    },
+    {
+      "id": "W0-F-r02",
+      "severity": "low",
+      "section": "model-gateway",
+      "description": "The gateway now follows canon D09, and runtime R11 plus §10.11 are stale. R11 still assigns 429, 529, 5xx, 408, 409, connection errors, and pre-stream timeout to SDK maxRetries 1, and §10.11 still publishes CALL_DEADLINE_MS 448000, which is after WATCHDOG_FIRST_MS 275000. §10.10.2 also retries output.truncated as a new attempt row. Copying that into decideRetry would truncate twice, because callNegotiationModel already retries max_tokens once and returns retryable false. The code should not be changed back; the design text should.",
+      "evidence": "convex/agents/modelGateway.ts:41 SDK_MAX_RETRIES = 0; :61 CALL_DEADLINE_MS 230000; :65 WATCHDOG_FIRST_MS 275000. docs/design-work/final-v2/10-agent-runtime.md R11 and 10-agent-runtime-part4.md §10.10.1 and the CALL_DEADLINE formula at 448000.",
+      "suggested_fix": "Amend R11, §10.10, and §10.11: SDK retries stay 0, the only gateway transport retry is 429 and connection errors, truncation retry stays inside callNegotiationModel and is not repeated by decideRetry, and the total deadline must fall before the first watchdog (230s < 275s), not only before WATCHDOG_FINAL."
+    },
+    {
+      "id": "W0-F-r03",
+      "severity": "low",
+      "section": "hygiene",
+      "description": "Cooldown exceptions no longer share one expiry, but the generator only spreads them across 1–7 days from the day it runs. Eight packages expire on 2026-10-25, the day after this review, including vite, postcss, eslint-config-next, and the darwin-arm64 rolldown binding. policy:check will start failing then, earlier than the old shared 2026-10-31 date.",
+      "evidence": "scripts/check-dependency-policy.mjs expiresFor uses (1 + charCode sum % 7) days. scripts/cooldown-exceptions.json entries for vite@8.3.5, postcss@8.5.31, eslint-config-next@16.4.3, @rolldown/binding-darwin-arm64@1.2.15, @rolldown/binding-linux-arm-gnueabihf@1.2.15, @tanstack/query-core@5.104.5, @typescript-eslint/parser@8.72.0, and baseline-browser-mapping@2.11.31 all expire 2026-10-25.",
+      "suggested_fix": "Keep distinct per-package dates, but set the minimum several days out so a regenerate does not make policy:check fail the next day. The --generate instruction in the README and in the policy error is already in place."
+    },
+    {
+      "id": "W0-F-r04",
+      "severity": "low",
+      "section": "fixtures",
+      "description": "The shared scenario-key constant is the right fix, but the literal scope_change is defined in the engine. §11.0 says the engine knows no scenario, and the next comment in plugin.ts says the engine never depends on a concrete scenario. The pattern belongs in the engine; the literal belongs with the scenario package.",
+      "evidence": "core/engine/plugin.ts:1-5 exports SCENARIO_KEY = \"scope_change\" and then says the engine never depends on a concrete scenario. docs/design-work/final-v2/11-architecture.md §11.0 item 3.",
+      "suggested_fix": "Move the literal into core/scenarios/scope-change and keep only SCENARIO_KEY_PATTERN in the engine. The plugin, fixture, and health.ping can keep importing that one constant."
+    }
+  ],
+  "strengths": [
+    "Truncation retries once inside the same call, records the first attempt's usage and requestId before the second send, and does not retry refusal or context overflow.",
+    "SDK retries are forced off. One gateway retry covers only 429 and connection errors, and the 230s total deadline is a single AbortSignal budget that module load requires to fire before the 275s watchdog.",
+    "drainDue does not run future jobs, and the example test locks that in. The scenario runtime key is scope_change everywhere it is a key, with the directory left as scope-change.",
+    "Public templates reject free-string slots, cents and dates no longer echo rejected values, and catalog titles are bounded and wrapped as untrusted data.",
+    "The battery report is not ok until cases are actually executed, the self-comparing arithmetic assertions are gone, and the test helper is out of the Convex function graph.",
+    "lint, typecheck, and pnpm test passed here: 254 passed and 220 todo in the main suite, 9 script tests, 11 harness tests, and 14 deliberate boundary violations rejected. The previously flaky r02 timeout assertion passed three times under a frozen clock."
+  ]
+}

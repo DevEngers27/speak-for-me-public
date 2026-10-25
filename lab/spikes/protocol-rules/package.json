@@ -1,0 +1,22 @@
+{
+  "name": "spike-protocol-rules",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "schema:dump": "tsx scripts/dump-schemas.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.1.0",
+    "ajv": "8.17.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.3.0",
+    "tsx": "4.20.3",
+    "typescript": "6.0.3",
+    "vitest": "3.2.4"
+  }
+}

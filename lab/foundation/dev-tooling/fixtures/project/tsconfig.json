@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@core/*": ["./core/*"],
+      "@convex/*": ["./convex/*"]
+    }
+  },
+  "include": ["src/**/*", "core/**/*"],
+  "exclude": ["convex"]
+}

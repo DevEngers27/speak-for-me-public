@@ -1,0 +1,183 @@
+1
+00:00:00,500 --> 00:00:05,367
+A new feature, a fixed deadline, and a tighter budget. One change can leave
+
+2
+00:00:05,367 --> 00:00:07,467
+three people talking past each other.
+
+3
+00:00:07,800 --> 00:00:11,967
+Speak for Me gives each participant an agent, while people keep the final
+
+4
+00:00:11,967 --> 00:00:12,300
+say.
+
+5
+00:00:13,967 --> 00:00:19,500
+Imagine a customer preparing a software launch. Single sign on and audit log
+
+6
+00:00:19,500 --> 00:00:22,900
+export are essential. A usage dashboard is optional.
+
+7
+00:00:23,233 --> 00:00:28,267
+The provider confirms the catalog. Finance sets the spending limit.
+
+8
+00:00:29,933 --> 00:00:34,133
+Each person confirms a structured private brief and chooses which fields to
+
+9
+00:00:34,133 --> 00:00:34,500
+share.
+
+10
+00:00:34,833 --> 00:00:39,400
+The provider never receives private budget numbers. Customer visibility
+
+11
+00:00:39,400 --> 00:00:42,467
+depends on Finance’s explicit disclosure choices.
+
+12
+00:00:44,133 --> 00:00:49,000
+Claude agents negotiate using isolated role contexts and confirmed catalog
+
+13
+00:00:49,000 --> 00:00:49,500
+options.
+
+14
+00:00:49,833 --> 00:00:54,367
+Code checks amounts, scope, delivery dates, and sources. Model
+
+15
+00:00:54,367 --> 00:00:56,900
+recommendations cannot approve an agreement.
+
+16
+00:00:58,567 --> 00:01:02,633
+The first proposal adds the two essential features and the dashboard for
+
+17
+00:01:02,633 --> 00:01:03,633
+nine hundred dollars.
+
+18
+00:01:03,967 --> 00:01:09,300
+Customer and Provider approve. Finance has not approved yet, so nothing
+
+19
+00:01:09,300 --> 00:01:09,800
+executes.
+
+20
+00:01:11,467 --> 00:01:15,833
+Finance lowers the cap from five thousand to forty eight hundred dollars,
+
+21
+00:01:15,833 --> 00:01:17,633
+with four thousand already committed.
+
+22
+00:01:17,967 --> 00:01:22,867
+The previous proposal no longer fits. Both approvals become stale; the
+
+23
+00:01:22,867 --> 00:01:24,667
+system must negotiate again.
+
+24
+00:01:26,333 --> 00:01:31,400
+A supported eight hundred dollar option keeps single sign on and audit log
+
+25
+00:01:31,400 --> 00:01:34,933
+export. When agents disagree, the Customer explicitly chooses it.
+
+26
+00:01:35,267 --> 00:01:39,900
+Four thousand committed plus eight hundred equals the new cap. Fresh human
+
+27
+00:01:39,900 --> 00:01:41,433
+approvals are still required.
+
+28
+00:01:43,100 --> 00:01:48,333
+All three people approve the same exact version. The last required approval
+
+29
+00:01:48,333 --> 00:01:52,233
+atomically records the execution, commitment, change order, and tasks.
+
+30
+00:01:52,567 --> 00:01:56,867
+There is no separate execute button, and retries cannot duplicate the
+
+31
+00:01:56,867 --> 00:01:57,267
+result.
+
+32
+00:01:58,933 --> 00:02:03,667
+What if Finance lowers the cap further, to forty seven hundred? The
+
+33
+00:02:03,667 --> 00:02:05,267
+confirmed options cannot fit.
+
+34
+00:02:05,600 --> 00:02:10,700
+Finance receives a specific request to raise the cap or end the run. The
+
+35
+00:02:10,700 --> 00:02:12,533
+agents never invent a discount.
+
+36
+00:02:14,200 --> 00:02:18,700
+Delivery tasks and a timeline preserve the handoff. A later scope change
+
+37
+00:02:18,700 --> 00:02:20,933
+starts a linked follow up room.
+
+38
+00:02:21,267 --> 00:02:25,800
+The original agreement remains intact, and the next change requires new
+
+39
+00:02:25,800 --> 00:02:26,200
+decisions.
+
+40
+00:02:27,867 --> 00:02:32,167
+Google verifies identity, Convex synchronizes rooms and executes
+
+41
+00:02:32,167 --> 00:02:34,833
+transactions, and Claude proposes choices.
+
+42
+00:02:35,167 --> 00:02:39,267
+These are illustrative project inputs. The system records internal work
+
+43
+00:02:39,267 --> 00:02:42,967
+only; it sends no payment and signs no contract.
+
+44
+00:02:44,633 --> 00:02:49,133
+Speak for Me turns a scope change into a decision people can understand,
+
+45
+00:02:49,133 --> 00:02:50,167
+approve, and trace.
+
+46
+00:02:50,500 --> 00:02:55,767
+Three agents. Deterministic checks. Your final say.

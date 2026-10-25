@@ -1,0 +1,41 @@
+{
+  "name": "@speak-for-me/dev-tooling",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Lint boundaries, ops scripts and CI template for the Speak for Me repository.",
+  "engines": {
+    "node": ">=24.19.0 <25"
+  },
+  "exports": {
+    "./eslint": "./src/eslint/index.ts",
+    "./scripts/check-env": "./src/scripts/check-env.ts",
+    "./scripts/convex-ops": "./src/scripts/convex-ops.ts",
+    "./ci": "./src/ci/workflow.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint:fixtures": "node src/eslint/lint-fixtures-cli.ts",
+    "ci:render": "node src/ci/render-cli.ts",
+    "check": "npm run typecheck && npm test"
+  },
+  "dependencies": {
+    "@typescript-eslint/parser": "8.71.1",
+    "eslint-import-resolver-typescript": "4.4.5",
+    "eslint-plugin-boundaries": "7.2.0"
+  },
+  "peerDependencies": {
+    "eslint": "^9.39.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "eslint": "9.39.5",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5",
+    "yaml": "2.9.1"
+  },
+  "overrides": {
+    "handlebars": "4.7.10"
+  }
+}

@@ -1,0 +1,20 @@
+[
+ {
+  "id": "completeness-11",
+  "severity": "medium",
+  "section": "18-decisions-open-questions-part2.md…part6.md（ADR 集合）、part7 §18.4.2",
+  "description": "18 只为 canon D01–D27 写 ADR，但各章新增了若干重大决定没有 ADR 也不在开放问题表：房间写锁 M-ROOM（改变并发模型：每次 agent 提交与每次人类写入都在 rooms 文档上串行）、editNo 定价修订号、constraintRevisions 与 rawOutputs 两张新表、生产可用的 privacy.redact。任务书 §6 要求每个重要决定写背景/选项/决定/后果。",
+  "evidence": "02 DM-09：'房间写锁 M-ROOM：一切改变房间业务状态的 mutation 都经 openRoomTx 把 rooms.writeSeq + 1'；03 SC-05 同；11 A4 同；02 Q4：'INV-M1（房间写锁）尚未列入 00-invariants'。18 §18.4.2 N-01…N-30 无 M-ROOM 条目；18 本章不变量 1：'ADR 不新增 canon 之外的决定'。09 Q3：'constraintRevisions 不在 canon §1.1 实体表中'；03 §3.3.2 第 6 条 privacy.redact '（internal，dev 与 prod 都有）'。",
+  "suggested_fix": "18 增加 ADR-X01 M-ROOM（选项：区间读冲突 vs 写锁；代价：同房间写串行、turns.complete 与人类写互相冲突重试；验证 V-01）、ADR-X02 editNo、ADR-X03 constraintRevisions/rawOutputs、ADR-X04 privacy.redact；并在 §18.4.2 加 N-31'M-ROOM 需进 canon §1.2 与 00-invariants'。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-30",
+  "severity": "low",
+  "section": "00-overview-part2.md §0.6、02-domain-model-part5.md/part6.md、各章'与 canon 的对照'、18-decisions-open-questions-part9.md",
+  "description": "大段无增量信息的重复：00 §0.6 逐字复制 canon §1.1–1.3（约 5 KB）；02 part5/part6 把 INV-01…78 第三次复述（00-invariants、02、03 §3.17）；每章末尾的'与 canon 的对照'表只是把本章内容按 canon 条目再列一遍；18 part9 与 part7 的 N 列表重叠。读者需要维护的同义文本成倍增加，且已出现漂移（见 completeness-23）。",
+  "evidence": "00 §0.6：'下列三张表从 00-canon.md §1.1–§1.3 逐字复制…本表不另行维护'；02 part5 表头：'编号与完整谓词取自 00-invariants-part2..6…本章按落点重新组织'但仍逐条复写谓词；18 part9：'本表是…各章开放问题小节的索引…已在 §18.4.2 合并为 N 编号的条目标注对应 N'。",
+  "suggested_fix": "00 §0.6 改为指向 canon §1 的一句话加 5 条'补充的非 canon 术语'；02 part5/6 只保留'INV 编号 → 数据落点/唯一写者/守卫码'三列，不复写谓词；各章'与 canon 的对照'压缩为只列有偏离或细化的条目；18 part9 删除与 part7 重复的行。",
+  "reviewer": "完整性批评"
+ }
+]

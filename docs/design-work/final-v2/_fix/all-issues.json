@@ -1,0 +1,929 @@
+[
+ {
+  "id": "names-01",
+  "severity": "blocker",
+  "section": "05-protocol.md",
+  "description": "被规则阻断的 provider 候选要不要插入提案行，05 与 03/04/09/12/14 的写法相反。05 按\"插入后再检查\"写，03 的唯一插入 helper `insertProposal` 却先断言 `passesChecks`，不通过就抛 internal。照 05 实现，所有被阻断的回合都会以 internal 失败；提案版本号、`currentProposalId`、历史列表与 provider 的 fit 语义也会全部错位。",
+  "evidence": "05 P10：\"provider 的提案被 checkProposal 阻断时照常插入提案行（历史不可篡改）\"；§5.7.3 第 5–6 步先插入 `status: 'active'` 并设 `run.currentProposalId`，再算 fit；E2：\"提案照常插入（只追加），blocked\"；§5.15.1 由此得出 v2 $900 blocked、v3 $800。另一方：03 §3.9 \"被规则阻断的候选不插提案（turns.outcome.blockedCandidateKey）\"，§3.13.1 `insertProposal` 守卫\"候选在当前 RuleInput 下 passesChecks（调用方已判，这里断言，internal）\"；04 §4.3.4 \"不插入提案；turn 记 outcome: { blockedCandidateKey }\"；12 §12.18 \"全量 checkProposal 通过才 insertProposal\"；14 S8 \"不插提案、不消耗版本号\"，14 §15 Q5 也已点名这一冲突。",
+  "suggested_fix": "以 03/04 为准改写 05：P10 改为\"被阻断的候选不插提案，turn 记 `outcome.blockedCandidateKey`，不消耗版本号，provider 下一回合只得 `blocked`\"；§5.7.3 改为先 `checkProposal`，通过才 `insertProposal`；同步改 §5.8.2 S1、E2、§5.16 E19；§5.15.1 第 6–9 步改为\"O2 被阻断（无提案）→ 第 2 轮 v2 $800\"；§5.18 的\"v1–v3\"改为\"v1–v2\"。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-02",
+  "severity": "high",
+  "section": "04-state-machines-part2.md",
+  "description": "run 的 attempt 上限或美元上限触发后开哪种人工请求，各章写法不同：04、00-invariants 写 `agent_failed`（只有 end_run），05、10 写 `rounds_exhausted`（cause 为 call_limit）。12 Q12 仍未定。两种写法的请求 kind、收件人、选项与 questionKey 都不同，状态机、表驱动测试和界面文案都得二选一。",
+  "evidence": "04 R6：\"run 调用 / 美元上限 → agent_failed（只含 end_run）\"；04 U5、SM-21 同此。INV-72 ②：\"超限不调度、转 needs_input(agent_failed)\"；CE-135 同此。05 §5.8.5 把\"run 的 attempt 上限或美元上限用尽（cause: 'call_limit' | 'spend_limit'）\"列入轮次用尽；05 §5.11.2 写\"failureCode = run.call_limit 的除外，走 §5.8.5\"。10 B4 写\"needs_input + rounds_exhausted 请求（questionKey 带 call_limit）\"，F16、RT-05 同此。12 §12.25 Q12：\"本章不定\"。",
+  "suggested_fix": "统一为 05/10 的写法：上限触发时开 customer 的 `rounds_exhausted` 请求，questionKey 用 `request.rounds_exhausted.call_limit` / `.spend_limit`，选项为 choose_candidate + end_run，不提供 keep_as_is。据此改 04 R6、U4、U5、SM-21、4.8.3 兜底段，00-invariants INV-72 ②、CE-135，12 §12.18 与 Q12。如果反过来采用 04 的写法，就同步改 05 §5.8.5、§5.11.2 与 10 B4、B5、F16、F17、RT-05。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-03",
+  "severity": "high",
+  "section": "10-agent-runtime-part2.md",
+  "description": "10 让 turn 从 running 回到 scheduled，并用 drainParked、deferredFnId、deferredUntil 表达等待。canon §1.3 的 turn 状态机没有 running → scheduled，04 也明确不需要这条迁移，用的是 waitingReason 与 beginFnId（turn 保持 running）。10 §10.24 却声称\"状态逐字采用\"，这句对照不属实。",
+  "evidence": "10 §10.4.5：\"不建 attempt：turn 保持 / 回到 `scheduled`，deferredUntil = …，deferredFnId = runAfter(…)\"；B3：\"回合留在 / 回到 scheduled，drainParked: true\"；§10.9 reconcile 有 `case 'scheduled': if (turn.deferredFnId …) … if (turn.drainParked …)`。04 §4.4：\"两次 attempt 之间 turn 保持 running，用 waitingReason: 'backoff' + beginFnId 表示等待；canon §1.3 没有 running → scheduled，本设计也不需要它\"。03 §3.8 turns 只有 `waitingReason`、`beginFnId` 两个字段；04 §4.15 Q8 已点名。",
+  "suggested_fix": "按 04 与 03 改写 10 的 §10.3、§10.4.5、§10.5.2 B3/B6、§10.9、§10.12.3：turn 不回退状态，等待时写 `waitingReason ∈ {backoff, spend_deferred, draining}` 并把 `beginFnId` 存为延迟调度的 id；删掉 `drainParked`、`deferredFnId`、`deferredUntil`。reconcile 的分支改为按 04 §4.3.5 判断 `waitingReason` 与 `beginFnId`。同时把 §10.24 中\"§1.3 状态逐字采用\"一行改为如实表述。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-04",
+  "severity": "high",
+  "section": "10-agent-runtime.md",
+  "description": "10 §10.3 列的\"运行时依赖字段\"与 03 定稿的 runs、turns、attempts、spendCounters、opsFlags、rawOutputs 字段大面积不一致，§10.5 至 §10.9 的代码也照这些字段名写。照 10 实现会写进 schema 里不存在的字段，validator 直接失败。",
+  "evidence": "runs：10 有 `extraRoundGranted`、`providerRejectLocked`、`startedByUserId`（可为 null）、`updatedAt` 和索引 `by_status_updatedAt`；03 对应的是 `roundsExtended`、`startedBy?` 和索引 `by_status`，没有 providerRejectLocked 与 updatedAt。turns：10 有 `deferredFnId`、`drainParked`、`failureCode`，03 是 `waitingReason`、`beginFnId`、`retryOfTurnId`。attempts：10 的 `dispatchFnId`、`stopDetailsCategory`、`priceTableVersion`、`lateResult`、`createdAt`、`reasonCode`+`errorCode`、`staleGuard`、`reservedDay`、`protocolVersion`、`retryNote`、`rationaleTruncated`，在 03 分别是 `actionFnId`、`stopCategory`、`priceTableAsOf`、`lateUsage`、`startedAt`，只有一个 `errorCode`，其余字段 03 没有（promptVersion 在 03 的 turns 上）。usageV：10 多了 `serviceTier`，`thinkingTokens` 可为 null。opsFlags：10 是 `key: 'draining', value, updatedAt`，并写 `opsFlags('modelVerifiedAt')`；03 是单行 `key: 'global', draining, changedAt, changedBy`。rawOutputs：10 为 ≤ 32 KB、保留 30 天；03 为 ≤ 64 KiB、prod 7 天，另有 `truncated` 与 `expiresAt`。",
+  "suggested_fix": "10 §10.3 不再自列字段，改为引用 03 §3.8 与 §3.12，并把 §10.5.2 B7、§10.6.2、§10.7、§10.8、§10.12 代码中的字段名换成 03 的名字（actionFnId、stopCategory、lateUsage、priceTableAsOf、startedAt、waitingReason、beginFnId、roundsExtended）。10 确实需要、03 没有的字段，在 03 §3.8 补登记并说明理由，例如 `reservedDay`、`retryNote`、`staleGuard`、`httpStatus`、`retryAfterMs`、`protocolVersion`、`rationaleTruncated`、`spendCounters.attempts`、`unknownCostAttempts`。`modelVerifiedAt` 不放进 opsFlags，改为 opsLog 或另建运维表。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-05",
+  "severity": "high",
+  "section": "10-agent-runtime-part2.md",
+  "description": "`attempts.origin` 的枚举值三处不同：03、12 用 turn_start、auto_retry、retry_turn；05、10 用 first、auto_retry、user_retry。这是 validator 的字面量，不统一就无法实现。",
+  "evidence": "03 §3.8 attempts：`origin: v.union(v.literal(\"turn_start\"), v.literal(\"auto_retry\"), v.literal(\"retry_turn\"))`；12 §12.18 originV \"以 03 §3.8 为准（turn_start / auto_retry / retry_turn；10 写作 first / user_retry，见 §12.25 Q11）\"，12 §12.13 也写 `beginAttempt(origin: retry_turn)`。10 §10.5.1 `origin: 'first' | 'auto_retry' | 'user_retry'`；10 §10.4.4 `beginAttempt(origin: 'user_retry')`；10 §10.9 `{ origin: 'first' … }`；05 §5.11.4 retry_turn 写 \"(origin: 'user_retry')\"。",
+  "suggested_fix": "以 03 为准：10 §10.3、§10.4.4、§10.5.1 BeginOpts、§10.9、§10.10 \"链\"的定义里的 `first` 改 `turn_start`、`user_retry` 改 `retry_turn`；05 §5.11.4 同步改。12 Q11 关闭。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-06",
+  "severity": "high",
+  "section": "05-protocol-part4.md",
+  "description": "表示\"每 run 可额外延长一轮\"的字段有三个名字，而且两种语义互斥：03/04/12 是 `roundsExtended` 加 `maxRounds++`，05/08/10 是 `extraRoundGranted` 加派生的 `effectiveMaxRounds = maxRounds + 1`，06 是 `keepAsIsUsed`。若两种同时实现，轮次上限会被算两遍或一次都不算。",
+  "evidence": "03 §3.8 runs：`maxRounds` 注释\"keep_as_is 延长一次时 +1\"，`roundsExtended: v.boolean()`；04 R14：\"延长一轮（maxRounds++、roundsExtended = true）\"；12 §12.14 写 `roundsExtended`。05 §5.8.1：\"effectiveMaxRounds = run.maxRounds + (run.extraRoundGranted ? 1 : 0)\"；05 §5.8.7 写 `runs.extraRoundGranted`；08 §8.5.4 \"默认 3，含 extraRoundGranted\"；10 §10.3 runs 写 `extraRoundGranted`。06 part7 RelaxCtx：`run: { …; keepAsIsUsed: boolean }`。",
+  "suggested_fix": "统一为 03 的 `roundsExtended`，语义是\"延长时 `maxRounds += 1`\"。05 §5.8.1、§5.8.3 不再派生 effectiveMaxRounds，`resolveRound` 的入参改为 `maxRounds`；同步改 05 §5.8.7、§5.11.4，08 §8.5.4，10 §10.3，06 part7 RelaxCtx 中的 `keepAsIsUsed`。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-07",
+  "severity": "high",
+  "section": "08-approval-execution-part4.md",
+  "description": "`isExecutable` 有两套互不兼容的定义。04 与 08 定义为\"规则通过且审批集合齐\"；canon D02/D03 与 INV-35、02、07、12、14 则把它当作\"状态 + 规则\"使用，并要求在每张 approve 写入之前调用。按 04/08 的定义，approve 前的 isExecutable 在最后一票之前永远为假，07、12 写的守卫会挡住所有审批。",
+  "evidence": "04 §4.1.1：\"isExecutable（通过且审批齐）\"、\"后者 = 前者 ∧ evaluateApprovalSet 完成\"；08 §8.4.2 `isExecutable(i: … & { verdict; approvalSet })` 把 approvalSet.reasons 计入，08 A4 自称把 canon \"精确化\"。另一方：INV-35 \"isExecutable(p) ⇔ p.status === 'active' ∧ … ∧ checkProposal(...).blocking = ∅ … 审批齐命名为 allApproved\"；02 part4 定义同此，02 §2.14 Q1 已点名冲突；07 §7.12.2 \"approve 前 isExecutable\"；12 §12.4 \"approve 前同事务 isExecutable 不通过\"；14 S5 `isExecutable(v1) = ['version.stale_constraints','budget.over']`。",
+  "suggested_fix": "采用 INV-35 与 02 的定义：`isExecutable` = 当前性 + `passesChecks`，审批集合另名 `allApproved`（即 `evaluateApprovalSet().complete`），执行条件写成 `isExecutable ∧ allApproved`。改 04 §4.1.1 第三行的派生列与其后一句；08 §8.4.2 去掉 `approvalSet` 参数，另写 `canExecuteNow = isExecutable ∧ approvalSet.complete` 供 X1 使用，并删去 A4 的\"精确化\"表述；14 S5、S7 改为返回布尔或 `{ ok, reasons }`，不再写码数组。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-08",
+  "severity": "high",
+  "section": "14-scenario-scope-change.md",
+  "description": "14 的简报字段、目录字段和写入口校验与 03/12/09/05 冲突。最关键的一条：必需项是否必须已在目录、能否为空，两边写法正好相反；另外文本上限、任务模板形状、软字段集合、标题闸门的失败码也都不一致。",
+  "evidence": "14 §4 `requiredItemKeys`：\"每个键是本房间目录中出现过的非草稿 item（item.unknown / item.unconfirmed）…可为空\"。03 §3.6 customerHardV：\"非空、去重、字典序、≤ 12；不要求已在目录（缺项 → item.required_missing）\"；12 §12.9 与 04 §4.2.1 同 03。notes：14 \"≤ 4,000 码点\"，03 TEXT_LIMITS 为 `softFields.notes 2,000`。任务模板：14 `maxTaskTemplatesPerRow: 3`、`taskTemplates: [{ title }]`（assigneeRole 恒为 provider）；03 为 \"item ≤ 5 条\"、`{ title, assigneeRole }`，12 §12.12 同 03。软字段：14 S-D4 删除 `preferredDate`，03 customerSoftV、07 SHAREABLE_FIELDS、12 §12.9 仍有；05 §5.9.1 话题引用的 `tradeoffPriority` 在 03 与 14 都不存在。标题注入：14 §9.6 写 `disclosure.blocked`（06 §6.1 同），09 §9.6.3 与 12 §12.12 写 `input.invalid{field}`。",
+  "suggested_fix": "以 03 和 12 为准改 14 §4：requiredItemKeys 改为\"非空、≤ 12、可不在目录，由规则报 item.required_missing\"（与 04 §4.2.1 的就绪说明一致）；notes 改为 ≤ 2,000；CatalogDecl 改为 `maxTaskTemplatesPerRow: 5`，taskTemplates 带 assigneeRole（默认 provider）。preferredDate 二选一：14 删除，就同步删 03 customerSoftV、07 §7.8.4 与 12 §12.9 中的 preferredDate；或者 14 保留它。05 §5.9.1 删去 `tradeoff_priority` 话题，或在 03 补字段。标题闸门的失败码在 06、09、12、14 之间统一为一个，建议用 `input.invalid{field:'title'}`，同时改 06 §6.1 中 `disclosure.blocked` 的产生者一栏。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-09",
+  "severity": "high",
+  "section": "14-scenario-scope-change-part3.md",
+  "description": "14 把 cause 和 actorRole 放进 `constraints_changed` 的 payload，并让 restrictedRef 指向简报行。events.payload 对全房间可见（canon D14），而 03 把 cause 与变更角色的披露类定为只给 customer 和 finance；照 14 写，provider 能读到\"finance 改了约束\"，这违背 D14 \"对 provider 只有 Constraints changed\"。命名上也与 03、09 的事件目录冲突。",
+  "evidence": "14 §8.3：\"payload = { fromVersion, toVersion, cause, actorRole }，不含任何数值；finance / customer 变体里的金额与日期来自 restrictedRef 指向的简报版本行\"；14 S7 事件 `constraints_changed { fromVersion: 1, toVersion: 2, cause: 'brief_confirmed', actorRole: 'finance' }`。03 §3.7：\"payload 只有 { fromVersion, toVersion }（room 类），cause / 变更角色 / 新旧值经 restrictedRef → constraintRevisions 在渲染时按查看者连接\"；03 §3.7 披露类：\"cause 与由 actorUserId 推出的角色为 roles: [customer, finance]\"；09 §9.4 `bump` 的事件同 03；03 §3.20 Q3 曾对 09 提出同样的问题。14 §16 仍声称满足 D14。",
+  "suggested_fix": "14 §8.3 的 payload 改为 `{ fromVersion, toVersion }`，restrictedRef 改为 `{ table: 'constraintRevisions', id }`，渲染器经 revision 的 sourceRefs 连接简报版本。S7 的事件写法同步修改，§16 的 D14 一行改为如实描述。目录类变更若要对 provider 显示 \"Provider retired …\"，需在 03 §3.11.1 的渲染规则中写明\"cause = catalog_changed 时 room 变体可读公开的目录 diff\"，并在 canon_objections 里登记，因为这偏离了 D14 的\"provider 只有 Constraints changed\"。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-10",
+  "severity": "high",
+  "section": "14-scenario-scope-change-part5.md",
+  "description": "14 的主走查自称\"事件类型名以 03/12 为准\"，实际用了一批 03 事件目录里没有的事件名、run cause、helper 名和返回形状。T14-G01 要断言\"事件类型序列\"和三方 golden JSON，照现稿必然失败。01 part4 也沿用了其中几个名字。",
+  "evidence": "14 S1 `ledger_baseline_recorded`，03 为 `baseline_recorded`；S2 `catalog_confirmed`（07 DX-2 同），03 为 `catalog_item_confirmed`；S5 `agent_recommended`（INV-20、CE-036 同）与 `run_pending_approval`，03 为 `turn_completed` 与 `run_awaiting_approval`；S7 `run_superseded`，03 为 `run_ended`；S11 `executed { changeOrderNo: 1 }`，03 为 `room_executed { changeOrderNumber }`；S3、S13 `runs.start({ cause: 'initial' })`，03/04 中由 `openIfReady` 调 `startRunTx(cause: 'room_opened')`，且 `runs.start` 没有 cause 参数；`createTurn`，04 为 `createTurnTx`；S12 返回 `{ status: 'already_executed', executionId }`，08 与 12 为 `{ status: 'executed', executionId, alreadyExecuted: true }`；`validateCapChange`、`validateCatalogRow` 在 12 中没有。",
+  "suggested_fix": "按 03 §3.11.1 的事件目录与 12 的签名逐条替换 14 §10 S0–S13 和 §11 A–G 中的名字：baseline_recorded、catalog_item_confirmed、turn_completed、run_awaiting_approval、run_ended、room_executed{changeOrderNumber}；第三份确认改写为 `openIfReady` → `bump(room_opened)` → `startRunTx(cause:'room_opened')`；createTurn 改 createTurnTx；S12 返回值改为 `{status:'executed', executionId, alreadyExecuted:true}`。同步改 01-product-part3/part4 和 07 DX-2 中的旧事件名，并把 INV-20、CE-036 的 `agent_recommended` 改为 `turn_completed`。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-11",
+  "severity": "high",
+  "section": "12-api-part5.md",
+  "description": "`rooms.previewChange` 的参数和返回形状在 07、09、12、14 四处各不相同，非所有者调用时是返回 null 还是抛错也不一致。12 让一个 query 抛 `auth.role_forbidden`，自相矛盾：它自己的 §12.2 第 2 条规定公共 query 一律返回 null。07 还把形状引向错误的章节号。",
+  "evidence": "07 §7.11.1：change ∈ `set_cap{capCents}` / `customer_hard` / `catalog_upsert` / `catalog_retire`，返回 `no_change` / `rejected` / `after{…budgetAfter, headroomAfterCents}` / `recheck{…willSupersedeRun}`，非所有者返回 null，并说\"形状以 12 §12.11 为准\"，但 12 §12.11 是 sharedFacts。09 §9.6.8：`{kind:'cap', capCents} | {kind:'customerHard'} | {kind:'catalog', items}`，返回 `{ projectionChanged, invalidatedApprovals }` 加 `verdictAfter` 或 `verdict:'recheck'`，低于已承诺时返回 `{ rejected: … }`，非所有者 null。12 §12.17：`{kind:'cap', newCapCents} | {kind:'customer_hard'} | {kind:'catalog', itemKey, …, retire}`，返回 `unchanged / recheck / after{verdictAfter, belowCommitted, minAllowedCapCents}`，非所有者\"抛 auth.role_forbidden\"。14 S7 写 `rooms.previewChange({ change: { capCents: 480000 } })`，没有 kind。canon D12 ② 的规范名是 `verdictAfter`。",
+  "suggested_fix": "以 12 §12.17 为唯一定义，但非所有者改为返回 null，删掉\"抛 auth.role_forbidden\"，并从 12 §12.4 该码的触发列表中移除 previewChange。07 §7.11.1 改为引用 \"12 §12.17\"，删去自列的形状，或照抄 12 的形状。09 §9.6.8 与 9.8.2 第 1 步改用 12 的形状（`kind:'cap', newCapCents`，返回 `verdict:'after', verdictAfter`）。14 S7 改为 `{ change: { kind: 'cap', newCapCents: 480000 } }`。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-12",
+  "severity": "high",
+  "section": "03-schema-part8.md",
+  "description": "03 写\"stub 模式同样受排空约束\"，直接违反 canon D17（\"stub 模式不受两者影响\"），也与 INV-66、10 R17/B3、12 §12.18/§12.20 冲突。03 §3.21 在 D17 一行却声称符合。",
+  "evidence": "03 §3.12 opsFlags：\"stub 模式同样受排空约束（不发外部请求，但排空的目的是不让在途 attempt 跨部署）\"。canon D17：\"stub 模式不受两者影响\"；INV-66：\"stub 不受 opsFlags.draining 与 AGENTS_ENABLED 影响\"；10 B3：\"live 时 opsFlags.draining !== true（stub 跳过）\"；12 §12.20 ops.activeAttemptCount：\"stub 不受排空约束，D17\"；12 §12.25 Q16 已点名。",
+  "suggested_fix": "删去 03 §3.12 中那句话，改为\"stub 不受排空约束（canon D17）；`ops.activeAttemptCount` 只以 `provenance = 'live'` 的 running attempt 判定是否可部署\"。如果作者认为 stub 也应排空，只能写进 canon_objections，正文必须照 canon 写。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-13",
+  "severity": "medium",
+  "section": "05-protocol-part5.md",
+  "description": "05 与 14、08 的场景词表互相冲突（05 声明这些取值由 14 定稿）：clarify 话题表、reasonKey 枚举、stub 决策规则各不相同。05 自己的 schema 示例还与 05 §5.9.1 矛盾。",
+  "evidence": "话题表：05 §5.9.1 是 required_items / deadline / tradeoff_priority / budget_cap；14 §3 是 item_required / deadline_value / item_scope / budget_room，toRole 与可问角色也不同。05 §5.4.3 的示例写 \"clarify: topicKey enum [budget_cap, option_fits_constraints]\"，而 05 §5.9.1 说\"本设计对所有角色都不提供 option_fits_constraints\"。reasonKey：05 §5.4.1 是 customer scope_insufficient / delivery_too_late / price_poor_value / other，finance price_poor_value / other；14 §3 是 missing_required_item / after_deadline / preference_not_met / over_budget / price_too_high / terms_not_acceptable / needs_earlier_delivery / over_our_limit …；08 V5 与 §8.5.3 用的是 `scope_mismatch`。stub：05 §5.14 provider 选\"条目数最多 → 金额最高\"，拒绝理由用 scope_insufficient / price_poor_value；14 §6.3 S-D8 选\"愿望清单重合最多 → 金额最低\"，拒绝理由用 preference_not_met / over_budget。",
+  "suggested_fix": "以 14（场景插件定稿处）为准：05 §5.9.1 的话题表与 §5.4.1 的 reasonKeys 注释改为引用 14 §3 的取值；05 §5.4.3 示例删去 option_fits_constraints，topicKey 改为 [budget_room]；05 §5.14 的 StubDriver 规则改为引用 14 §6.3 `stubDecide`，或直接照抄。08 §8.5.3 与 V5 的 `scope_mismatch` 改为 14 表内的人类 reasonKey，例如 `scope_insufficient`。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-14",
+  "severity": "medium",
+  "section": "14-scenario-scope-change.md",
+  "description": "14 的拒绝理由表允许 provider 看到\"Customer agent declined\"\"Finance agent declined\"这类按角色区分的代理拒绝信息，也允许看到原样的人类 reasonKey。这与 05 §5.12、07 PV-10 冲突（proposer 只得到不带角色和原因的 not_accepted），与 08 A13、07 DX-6 的口径也不一致（人类 reasonKey 对全房间可见，没有按角色隐藏的例外）。",
+  "evidence": "14 §3 拒绝理由表\"provider 看到的形式\"列：customer 模型拒绝 → \"Customer agent declined\"；finance 模型拒绝 → \"Finance agent declined\"；人类 reasonKey → \"原样\"；`over_our_limit` → \"Finance rejected v{n}\"（不带理由）。05 §5.12：\"他方代理的动作、reasonKey、rationale：无\"，轮次结果写作 \"vN not accepted\"；07 PV-10：\"not_accepted 不带评估方角色与 reasonKey\"；08 A13：人的 reasonKey \"对房间全员可见\"，不进任何他方代理上下文。",
+  "suggested_fix": "改写 14 §3 的拒绝理由表：所有代理拒绝对 provider 的人和代理都只显示 \"v{n} not accepted\"，不带角色和理由；人类拒绝在时间线上按 08 A13 / 07 DX-6 对全房间显示角色与 reasonKey，但不进他方代理上下文。删除 `over_our_limit` 的特殊隐藏规则；如果需要隐藏，就把它从封闭枚举里删掉，因为\"类别级、全员可见\"是 08 O6 的要求。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-15",
+  "severity": "medium",
+  "section": "04-state-machines-part2.md",
+  "description": "04 R10 规定人拒绝后，新一轮 provider 回合的反馈包含 reasonKey；05 §5.8.6/§5.12 与 08 A5/A13 都规定任何他方代理都拿不到 reasonKey。08 O14 已点名，04 尚未改。",
+  "evidence": "04 R10：\"新建 provider propose turn（反馈 = 被拒版本 + reasonKey，…）\"。05 §5.8.6：\"provider 只见 'v3 rejected'…不含 reasonKey\"；08 A13：\"任何他方代理都拿不到人拒绝的 reasonKey\"；08 §8.13 O14：\"建议回改 04 R10\"。",
+  "suggested_fix": "04 R10 的同事务副作用改为\"新建 provider propose turn（反馈只有 'v{n} rejected'，买方代理另得拒绝者角色；不含 reasonKey 与 note；被拒 candidateKey 进入本 run 阻断集）\"。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-16",
+  "severity": "medium",
+  "section": "05-protocol-part3.md",
+  "description": "provider 候选快照的剔除范围偏离 canon D10，05 §5.20 却声称符合 D10。canon、03、07 只剔除\"本 run 已被阻断\"的候选；05 与 14 剔除\"本 run 已提出过的全部候选\"加上被人拒绝的候选，范围更大，而且没有登记为 canon 偏离。",
+  "evidence": "canon D10：\"provider 快照剔除本 run 内已被阻断的 candidateKey\"；03 §3.8 说本 run 已阻断的 candidateKey 集合由 turns 与 proposals 现算；07 §7.14.2：\"剔除本 run 已被阻断的 candidateKey\"。05 §5.7.2：\"excludedCandidateKeys(run) = 本 run 内已提出过的（含被阻断的）∪ 被人拒绝的\"；05 §5.6.2 的 action.repeats_blocked 条件同样写\"已阻断 / 已提出 / 被人拒绝\"；14 S8 写\"剔除本 run 已提出的 $900\"。05 §5.20 D10 一行写的是\"剔除已阻断\"。",
+  "suggested_fix": "二选一。若保留 05 的做法：把\"已提出 ∪ 被拒\"写进 canon_objections，并同步改 03 §3.8、07 §7.14.2 的措辞和 06 的 `excludedCandidateKeys` 定义，05 §5.20 如实写成\"偏离 D10：剔除已提出与被拒\"。若照 canon：05 §5.7.2 与 §5.6.2 改为\"本 run 已阻断 ∪ 被人拒绝（D02/A5）\"，14 S8 相应修改。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-17",
+  "severity": "medium",
+  "section": "07-permissions-privacy-part3.md",
+  "description": "invites 表的字段名和状态值在 07、03/12、04 三处各不相同，席位已占的错误码也不统一。07 §7.25 却声称与 03 §3.6、12 §12.4 一致。",
+  "evidence": "07 §7.6：\"invites（kind: 'email'…）\"、\"同角色 pending 邀请置 revoked\"、accept 时要求\"邀请 pending\"。03 §3.5：`mode: v.union(v.literal(\"email\"), v.literal(\"link\"))`、`status: open | accepted | superseded`；12 §12.7 同 03。04 §4.9 invite 行写\"派生 open / accepted / expired\"。错误码：03 §3.5 与 §3.13.1 写 `invite.role_taken`（02 part5 同），07 §7.7 与 12 §12.4 写 `invite.seat_taken`。",
+  "suggested_fix": "以 03 与 12 为准：07 §7.6 的 `kind` 改 `mode`，`pending` 改 `open`，`revoked` 改 `superseded`。04 §4.9 的 invite 行改为\"存储 open → accepted | superseded；过期在 accept 时比较、不写状态\"。03 §3.5、§3.13.1 与 02 part5 的 `invite.role_taken` 改为 `invite.seat_taken`（12 是码表归属章）。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-18",
+  "severity": "medium",
+  "section": "00-invariants-part3.md",
+  "description": "00-invariants 的 cause 枚举与 03/04/09/12 定稿不一致：约束修订的 cause、run 的 cause，以及\"何时自动开 run\"的模型。08、14、05 中还另有几个散落的取值。",
+  "evidence": "INV-24 与 INV-57 的 constraintRevisions cause 是 `brief_confirmed / catalog_changed / request_answered / clock`，没有 `room_opened`；03 §3.7 与 09 §9.3 的 revisionCauseV 是 `room_opened | brief_confirmed | catalog_changed | human_answer | clock`；08 §8.10.1 追溯链写 \"cause `budget`\"。run cause：INV-75 写 `runs.start(cause: 'briefs_confirmed')`，并描述\"room 先 open、第三份简报才触发 start\"；03 §3.8、04 §4.3.1、12 §12.13 是 `room_opened | constraints_changed | renegotiation_requested | manual_start`，由 04 M2 `openIfReady` 在就绪（含三份简报）时一并 open 并开 run；14 S3 写 `cause: 'initial'`；05 §5.11.4 写 \"runs.start（cause `restart`）\"。",
+  "suggested_fix": "INV-24、INV-57 的 cause 列表改为 03/09 的五个值。INV-75 改写为\"就绪（04 §4.2.1）满足时，openIfReady 同事务 setup → open、bump(room_opened)、startRunTx(cause: 'room_opened')\"，并按此修订 INV-67 的就绪描述和 §4 Q4。08 §8.10.1 的 cause 改 `brief_confirmed`；14 S3、S13 的 `initial` 改 `room_opened`；05 §5.11.4 的 `restart` 改 `manual_start`。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-19",
+  "severity": "medium",
+  "section": "10-agent-runtime-part3.md",
+  "description": "10 使用的 `run.endedReason`、事件名、运维函数名和模型调用接缝名都不在 03/12/canon 的规范清单里。",
+  "evidence": "10 §10.9：`supersedeAndRestart(…, { endedReason: 'constraints_drift' })`，03 的 endedReason 枚举没有 constraints_drift，04 §4.3.5 修复路径用的是 `disposeCurrentRun(…, 'constraints_changed')`。事件：10 写 `agent_turn_started`、`agents_deferred`、`agent_result_discarded`，03 §3.11.1 是 `turn_scheduled`、`turn_rejected_stale`，没有 deferred 事件。运维：10 写 `ops.sweepStuckRuns`（每 5 分钟）与 `ops.liveAttemptCount`，canon D17、03、04、12 用 `ops.livenessSweep` 与 `ops.activeAttemptCount`（04 写每 15 分钟，12 写每 5 分钟）；INV-70 另写 `runs.negotiatingWithoutAttempt`（每小时）。接缝：10 §10.14.1 与 §10.18.1 写 `callNegotiationModel`，并以它作为 vi.mock 目标；canon part7（16 的 must_absorb）、INV-42、11、12 §12.18 都写 `callModel`。",
+  "suggested_fix": "10 统一改用：`endedReason: 'constraints_changed'`（漂移修复经 04 的 `disposeCurrentRun` + `react`，并 `opsLog('constraints_drift')`）；事件 `turn_scheduled` / `turn_rejected_stale`；如需延期事件，先在 03 §3.11.1 登记 `agents_deferred`。运维函数名统一为 `ops.livenessSweep` 与 `ops.activeAttemptCount`，频率统一为每 5 分钟（同步改 04 §4.3.5 的\"15 分钟\"和 INV-70）。接缝函数名统一为 `callModel`（`callNegotiationModel` 可作为它的内部实现）。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-20",
+  "severity": "medium",
+  "section": "00-invariants-part4.md",
+  "description": "INV-42 把 `modelGateway` 放在 `core/engine/modelGateway.ts`。这违反 canon D21 的引擎纯度规则（core/engine 零依赖，禁 fetch，SDK 只能在 convex 边界），也与 10 的落点 `convex/agents/modelGateway.ts` 冲突。",
+  "evidence": "INV-42 落点列：\"core/engine/modelGateway.ts（唯一接缝 callModel，L1 用 vi.mock 替换）\"。canon D21：\"core/engine/（零依赖纯 TS…）…引擎纯度规则禁 Date / Intl / Math.random / fetch / convex/* / zod\"。10 §10.14.1：\"convex/agents/modelGateway.ts，只被 internal action 导入\"。",
+  "suggested_fix": "INV-42 的落点改为 `convex/agents/modelGateway.ts`（唯一接缝 `callModel`），并注明 core/engine 只放纯函数部分（strictSchema、budget 常量与不等式断言）。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-21",
+  "severity": "medium",
+  "section": "05-protocol-part6.md",
+  "description": "`encodeBlock` 在 05 与 07 中是两种互不兼容的转义方案：05 用 JSON 转义，07 用 HTML 实体。07 把唯一实现指派给 10，但 10 根本没有定义它。",
+  "evidence": "05 §5.13.2：\"encodeBlock(value) = JSON.stringify(value).replace(/</g, '\\\\u003c')…\"；07 §7.14.3：\"stableStringify 后把 &、<、> 替换为 &amp;、&lt;、&gt; …单一实现归 10（core/engine/encodeBlock.ts）\"；10 全文没有 encodeBlock。",
+  "suggested_fix": "选定一种转义并把实现放在 `core/engine/encodeBlock.ts`（推荐 05 的 < / > / &，块内仍是合法 JSON）。07 §7.14.3 改为引用 05 §5.13.2；10 §10.14 或 §10.18 登记该文件与 `wrapUntrusted` 的调用顺序。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-22",
+  "severity": "medium",
+  "section": "05-protocol-part5.md",
+  "description": "05 的 humanRequests 字段定义与回答守卫和 03/04/12 不一致：缺少 `blocked` 效果，回答陈旧请求时用的错误码也不同。00-invariants 又是另一套错误码。",
+  "evidence": "05 §5.11.1 requestEffectV 只有 8 种效果，没有 blocked；03 §3.9 写\"字段按 05 §5.11.1 定稿\"，却含 `v.object({ type: v.literal(\"blocked\") })`；12 §12.14 也含 blocked。05 §5.11.3：\"request.constraintsVersion === room.constraintsVersion（否则 version.stale_constraints）…状态不符 run.invalid_state\"。04 §4.8.2 与 12 §12.14 用 `auth.role_forbidden` / `already_answered` / `request.not_open` / `run.invalid_state` / `request.option_unknown`（07 §7.7 同）。INV-34 写\"否则 run.invalid_state\"。",
+  "suggested_fix": "05 §5.11.1 的 requestEffectV 加上 `{ type: 'blocked' }`，并注明\"不可回答，只作说明\"。05 §5.11.3 的守卫与错误码改为照抄 12 §12.14：删去 version.stale_constraints，旧请求因 bump 已是 superseded，返回 request.not_open。INV-34 的错误码同样按 12 改写。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-23",
+  "severity": "medium",
+  "section": "00-invariants-part3.md",
+  "description": "00-invariants 里的审批、请求、run 相关错误码和授权规则，与 04、08、12 的定稿不一致，其中有些码已被 canon §1.5 明令废弃。",
+  "evidence": "INV-31 与 CE-054：调用者角色不在 requiredApprovals 时报 `approval.missing_role`；04 A-G6、08 S7、12 §12.15 报 `auth.role_forbidden`，06 与 08 把 missing_role 用作 evaluateApprovalSet 的槽位原因。CE-068：非 creator 调 requestRenegotiation 报 `approval.missing_role`，12 报 `auth.not_creator`。INV-29 与 CE-055：没有可撤回的 approve 时\"拒绝\"；04 §4.7.2、08 A4、12 ⑧ 返回 `unchanged`。INV-45 与 CE-083：场景未注册报 `internal`；04 M1、08 S5 报 `run.invalid_state{guard:'scenario_version'}`。CE-132：\"reject 同事务…run.currentProposalId 清空\"；08 §8.5.4 第 5 条写\"run.currentProposalId 保留指向被拒提案（历史）\"。INV-73：\"runs.cancel 任一成员\"；04 §4.3.6、07 §7.12.2、12 §12.13 都限 creator。CE-001、CE-054 用 `NOT_FOUND`，CE-120 用 `INVITE_USED`，都是 canon §1.5 废弃的大写码。",
+  "suggested_fix": "按 12 §12.4 与 08 改写 00-invariants：INV-31、CE-054 的角色不符改 `auth.role_forbidden`；CE-068 改 `auth.not_creator`；INV-29、CE-055 改\"返回 unchanged、不插行\"；INV-45 改 `run.invalid_state{guard:'scenario_version'}`（与 04 M1 对齐）；CE-132 改\"proposal → rejected；currentProposalId 保留，守卫靠 proposal.status\"；INV-73 改\"runs.cancel 仅 creator\"；CE-001、CE-054 改 `auth.not_member` / null；CE-120 改 `invite.seat_taken`（或 `invite.invalid`）。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-24",
+  "severity": "medium",
+  "section": "00-invariants-part2.md",
+  "description": "00-invariants 引用的 helper 名和索引名在 03/04/10/12 中不存在或已改名，按 INV 编号查找落点会落空。",
+  "evidence": "INV-09、INV-68 写 `scheduleTurn`，04/12 为 `createTurnTx` + `beginAttempt`。INV-10、34、64 写 `openHumanRequest`，04/03 为 `openHumanRequestTx`。INV-34 写 `by_run_open`，03 为 `by_run_status`。INV-65 写 `humanRequests.expire`，03/12 为 `humanRequests.expireDue`。INV-67 写索引 `runs.by_room_status`，03 只有 `by_room_runNo` 与 `by_status`；INV-67 的\"进入终态时同事务清空 currentRunId\"与 03 §3.5、04 §4.3.3 的\"currentRunId 指向最新 run（任何状态）\"冲突（03 Q2 已点名）。INV-69 的 `assertAttemptLive` 与 INV-76 的 `finishRun` 在任何章都没有定义。INV-60、CE-151 写\"代码库唯一公开 action 是邀请 token 生成（invites.create…）\"，03/07/12 中这个 action 是 `invites.createLink`，`invites.create` 是 mutation。",
+  "suggested_fix": "按 03/04/12 的名字替换上述引用：scheduleTurn → createTurnTx/beginAttempt；openHumanRequest → openHumanRequestTx；by_run_open → by_run_status；humanRequests.expire → humanRequests.expireDue；runs.by_room_status → rooms.currentRunId + runs.by_room_runNo，INV-67 措辞改为\"非终态 run 至多一个且就是 currentRunId\"；assertAttemptLive、finishRun 改为引用 04 §4.5.2 的 G0–G3 守卫与 `setStatus`；INV-60、CE-151 改为 `invites.createLink`。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-25",
+  "severity": "medium",
+  "section": "00-invariants-part8.md",
+  "description": "00-invariants 反例电池里的若干条目与 03、05、09、14 定稿的取值或行为冲突，按原文写成用例会变红，或测到错误的行为。",
+  "evidence": "CE-003、CE-087、CE-088、CE-112 用 `REPORTS`、`AUDIT`、`LOGIN+REPORTS@rush`、`LOGIN`，不满足 03 的 itemKey 正则 `^[a-z][a-z0-9_]{1,39}$`，也不是 D27 的 fixture 键名。CE-046 写\"只改 title 或 taskTemplates（revision+1）\"，03 §3.7 与 09 §9.1.3 规定 revision 不变、editNo + 1。CE-128（$4,400）与 CE-167（$4,700）写\"按 relaxationOrder 先 customer drop_items\"；05 §5.15.2、09 V1、14 §11 A 与 canon D27 都是 customer 视图无法判定、被跳过，finance 收到 raise_cap。CE-075 写\"rationale 1,500 码点 → output.schema_violation，重试一次\"，05 §5.5.2 写\"截断到 1,200 并标注，不重试\"。CE-086 写开关 `OUTPUT_SCHEMA_MODE` / `sdk_transform`，05 §5.4.5 是 `OUTPUT_SCHEMA_TRANSFORM = sdk`。",
+  "suggested_fix": "CE-003、087、088、112 改用 fixture 键名（usage_dashboard、audit_log_export、`audit_log_export+usage_dashboard@rush`、sso_login）；CE-046 改为\"revision 不变、editNo + 1，不 bump\"；CE-128、CE-167 改为\"customer 被跳过 → finance raise_cap\"；CE-075 改为\"截断、不重试、记 rationaleTruncated\"；CE-086 改为 `OUTPUT_SCHEMA_TRANSFORM = sdk`。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-26",
+  "severity": "medium",
+  "section": "08-approval-execution-part10.md",
+  "description": "D27 主线走查在 05、08、09、14 四章中的 cv 编号、提案版本号、$800 方案的产生方式和参数名互不一致。14 是 fixture 与走查的定稿章。",
+  "evidence": "14 §10：开房时 cv 1；下调后 cv 2；run 2 第 1 轮 O2 被阻断、不插提案；第 2 轮 v2 = $800；run 2 共 4 个回合。05 §5.15.1：v2 是被阻断但仍插入的 $900，v3 才是 $800，并写\"失效的是至多两条\"。08 §8.10.1：\"以进入协商时 cv = 3 示意\"，cv 3 → 4；\"provider 回合 + customer counter 只含必需项 → v2\"，与 05 \"counter 不直接成为提案\"冲突；调用写作 `budget.setCap({ newCapCents: 480_000 })`，12 的参数名是 `capCents`；revision cause 写 `budget`；reasonKey 写 `scope_mismatch`。09 §9.8.2 第 10 步 provider 直接选 O1，与 14 的 stub 先选 O2 不同。",
+  "suggested_fix": "以 14 §10 为准统一。08 §8.10.1、§8.6.3 改为 cv 1 → 2，v2 由 provider 在 run 2 第 2 轮提出（不是 customer counter），参数改 `capCents`，cause 改 `brief_confirmed`，reasonKey 改用 14 的人类枚举。05 §5.15.1 随 names-01 改为 v1 / v2。09 §9.8.2 第 10 步改为\"第 1 轮 stub 选 O2 被阻断 → 第 2 轮 O1 → v2\"（或注明非 stub 情形），并与 14 的回合数对齐。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-27",
+  "severity": "medium",
+  "section": "09-constraint-changes-part4.md",
+  "description": "09 主走查第 9 步让 customer 看到 `budget.over`（不带参数）。按 07 §7.11 的掩码规则和 14 §8.4，customer 只共享了 capCents、拿不到已承诺额时，应看到折叠后的 `private.constraint_unmet`。",
+  "evidence": "09 §9.8.2 第 9 步：\"customer：v1 Blocked budget.over（无 overByCents：customer 不知已承诺额）\"。07 §7.11 示例：\"customer（fixture 只获共享 capCents，算不出 headroom）见 private.constraint_unmet\"；14 §8.4：budget.over 对 customer 写\"开 headroomCents：… 否则折叠为 private.constraint_unmet\"；14 S7：customer 的 v1 卡显示 \"A constraint private to another participant is not met.\"",
+  "suggested_fix": "09 §9.8.2 第 9 步改为\"customer：v1 Blocked，检查清单只有 `private.constraint_unmet`（budget.over 的输入含 finance 未共享的已承诺额）\"。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-28",
+  "severity": "medium",
+  "section": "08-approval-execution-part3.md",
+  "description": "08 §8.3 给出的 validator 与 03 定稿不一致，而两者都声称落在同一文件 `convex/lib/validators.ts`。03 §3.20 Q8 已指出，08 未回改。",
+  "evidence": "08 §8.3.3 executions：`scenarioKey: v.string(), scenarioVersion: v.string()`，注释却写\"类型随 rooms.scenarioVersion（03）\"；03 §3.10 是 `scenarioKey: v.literal(\"scope_change\")`、`scenarioVersion: v.number()`。08 §8.3.1 `lineV = { itemKey, revision, title, priceCents, leadDays }`，03 §3.4 的 lineV 多一个 `kind: item | modifier`（12 §12.17 roomView 的 lines 也带 kind）；canon D25 列出的 lines 字段没有 kind。",
+  "suggested_fix": "08 §8.3.3 改为 `scenarioKey: v.literal('scope_change'), scenarioVersion: v.number()`；08 §8.3.1 的 lineV 删去自列定义，改为引用 03 §3.4（含 kind），并在 canon_objections 中登记\"D25 的 lines 需补 kind\"。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-29",
+  "severity": "medium",
+  "section": "08-approval-execution-part2.md",
+  "description": "关于谁能调用 `rooms.startFollowUp`，08 写的是 creator，04、07、09、12 都写旧房间任一成员。07 还把它计入 constraint_writes 节流桶，而 12 把它放在 room_create 桶。",
+  "evidence": "08 A9：\"例外只有 tasks.markDone … 与 creator 的 rooms.startFollowUp\"；08 §8.6.5 \"除 tasks.markDone 与 creator 的 rooms.startFollowUp 外\"；V8 \"执行后 creator 调 rooms.startFollowUp\"。04 §4.3.6：\"rooms.startFollowUp（任一成员）\"；07 §7.5.5：\"对旧房间任一成员开放\"；12 §12.6：\"调用者是旧房间任一成员（04 / 07 一致）\"。节流：07 §7.12.2 在 startFollowUp 行标 ⑥ ✔；12 §12.2 第 7 条与 B7 写\"room_create 桶覆盖 rooms.create 与 rooms.startFollowUp\"。",
+  "suggested_fix": "08 A9、§8.6.5、V8 的\"creator 的\"改为\"旧房间任一成员的\"；07 §7.12.2 的 startFollowUp 行把节流列改为\"room_create（12 B7）\"，不计入 ⑥。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-30",
+  "severity": "medium",
+  "section": "10-agent-runtime-part3.md",
+  "description": "10 的文件布局与 canon 函数路径不一致；10 还声称 rooms 只在少数时候被写，这与 03、12 的房间写锁 M-ROOM 冲突；另外 10 用到了 03 中不存在的 rooms 字段。",
+  "evidence": "10 §10.6 把注册函数放在 `convex/agents/runAttempt.ts`、`convex/agents/context.ts`、`convex/agents/watchdog.ts`，生成的路径是 `agents/runAttempt:runAttempt`，不是 canon §1.6 的 `agents.runAttempt`（12 §12.25 Q15）。10 §10.13 第 3 条：\"rooms 只在建 run、插提案、约束变更时写\"；03 SC-05、12 B13、11 §11.2 规定每个改变房间业务状态的 mutation 都经 openRoomTx 写 `rooms.writeSeq`，而且 RoomTx 在类型层强制房间作用域表（含 turns、attempts）的写入。10 §10.18.2 写 `rooms.testFaultPlan`，03 rooms 表没有这个字段。",
+  "suggested_fix": "10 按 12 Q15 与 11 §11.3 改布局：注册函数集中在 `convex/agents.ts`，实现放在 `convex/model/agents/`。§10.13 第 3 条改为\"按 M-ROOM，turns.complete / fail / watchdog / beginAttempt 都经 openRoomTx，同房间写入串行，冲突面是 rooms.writeSeq\"。故障计划改存独立的 dev-only 表，或在 03 rooms 中登记 `testFaultPlan?` 并说明只在非生产使用。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-31",
+  "severity": "medium",
+  "section": "09-constraint-changes-part3.md",
+  "description": "09 用的写入 helper 名、事件写入签名和 catalog.confirm 参数名与 03、12 不一致；09 §9.14 Q9 还在引用 12 的旧形状。",
+  "evidence": "09 §9.6.1、9.6.6、9.8.2 写 `appendBriefVersion`，03 §3.13.1 与 12 §12.8 写 `insertBriefVersion`。09 §9.4 `bump` 直接调 `ctx.db.insert(\"constraintRevisions\")`、`ctx.db.patch`，并写 `events.append(ctx, room._id, payload, { restrictedRef })`；03 §3.3.2 规定门面外禁止 patch，事件经 `appendEvents(tx, evs[])`。09 §9.6.3 的参数是 `items: {…}[]`，12 §12.12 是 `rows`；09 Q9 说\"12 §12.12 写的是单条 item\"，但 12 现稿已是批量 rows。09 §9.6.2 写\"requiredItemKeys ≤ 20 项\"，03、12、14 都是 ≤ 12。",
+  "suggested_fix": "09 把 appendBriefVersion 统一改为 insertBriefVersion；§9.4 的代码改为经 RoomTx（`tx.insert` / `tx.patch`）与 `appendEvents(tx, [{ payload, restrictedRef }])`；§9.6.3 参数改名 `rows`，删去 Q9 的过时陈述；§9.6.2 的上限改为 ≤ 12。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-32",
+  "severity": "medium",
+  "section": "05-protocol-part3.md",
+  "description": "05 在 turns.complete 内用 `todayInTimeZone(Date.now(), room.timeZone)` 物化交付日。03、04、08、09、12、14 规定规则检查与物化一律读 `room.localDate`，否则在本地午夜到 cron 推进之间，会出现与界面结论不一致的窗口（08 K27、09 §9.6.7 讨论过这一点）。",
+  "evidence": "05 §5.7.3 第 2 步：\"today = todayInTimeZone(Date.now(), room.timeZone)（mutation 权威计算，canon D22）\"。03 §3.9：\"deliveryDate = room.localDate + 有效工期\"；04 P1：\"deliveryDate = room.localDate + max(leadDays)\"；12 §12.2 第 8 条：\"规则检查与物化一律读 rooms.localDate（09 §9.6.7）\"；12 §12.18：\"交付日按 room.localDate 物化\"；14 §6.2 也用 localDate。",
+  "suggested_fix": "05 §5.7.3 第 2 步改为 `today = room.localDate`（09 §9.6.7），第 4 步\"回合跨过午夜\"的说明改为\"以 localDate 为准，cron 推进后才可能变化\"。canon D22 中\"mutation 用 todayInTimeZone 权威计算\"一句，请在 canon_objections 里澄清为\"只有推进 localDate 的 cron 用它\"（08 O5）。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-33",
+  "severity": "medium",
+  "section": "12-api.md",
+  "description": "API 错误码的单一来源说法与 06 的码表对不上，各章使用的错误码也在漂移：12 B4 说 auth.* 等码与 reasonCode 同在 `core/engine/reasonCodes.ts`，但 06 的 REASON_CODES 里一个都没有；03、02 仍在用旧码；06 与 12 对 run.rate_limited 的参数名也不同。",
+  "evidence": "12 B4：\"错误码与 reasonCode 共用 core/engine/reasonCodes.ts，…新增 API 域 auth.*、invite.*、request.*、input.*\"；06 §6.2 的 REASON_CODES 数组不含这些域，06 §6.1 还写\"internal 不是 reasonCode，属于 12 的错误命名空间\"。03 §3.13.1 openRoomTx 写\"房间存在（auth.not_found）\"，02 part5 写 auth.not_found / auth.forbidden / auth.not_provisioned，12 §12.4 是 auth.not_member / auth.role_forbidden / auth.user_not_provisioned。06 §6.1 run.rate_limited 的 params 是 `retryAfterMinutes`，03 §3.11.3 与 12 §12.4 是 `retryAfterMs`。",
+  "suggested_fix": "在 06 §6.2 增设 `API_ERROR_CODES` 数组（auth.*、invite.*、request.*、input.*、internal），与 REASON_CODES 放在同一文件、派生同一个 validator，并在 12 B4 写明数组名。03 §3.13.1 改为 `auth.not_member`（与 12 一致，不区分不存在和非成员），02 part5 同步改。06 中 run.rate_limited 的参数改为 `retryAfterMs`。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-34",
+  "severity": "medium",
+  "section": "07-permissions-privacy-part4.md",
+  "description": "07 把金丝雀变体的披露设定当成主 fixture 的设定写，与 14 和 05 的主 fixture 冲突：主 fixture 中 customer 把截止日同时披露给 provider 与 finance，只有 canary 变体对 provider 隐藏截止日。这一设定决定 provider 的候选集和走查调用次数。",
+  "evidence": "07 §7.8.4 \"fixture 设定（D27）\"列：customer `deadline` 为\"仅 finance（provider 侧金丝雀）\"。14 S-D6 与 §9.2：`disclosures: { requiredItemKeys: ['provider','finance'], deadline: ['provider','finance'], preferredItemKeys: ['provider'] }`，canary 变体才\"截止日不向 provider 披露\"；05 §5.15 也写\"把 requiredItemKeys 与 deadline 披露给 provider 与 finance\"。07 该表还写 preferredItemKeys 主 fixture 为\"无\"，14 为披露给 provider。",
+  "suggested_fix": "07 §7.8.4 的末列拆成\"主 fixture\"与\"canary 变体\"两列：主 fixture 中 deadline 披露给 provider 与 finance、preferredItemKeys 披露给 provider；canary 变体中 deadline 只披露给 finance。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-35",
+  "severity": "medium",
+  "section": "04-state-machines-part5.md",
+  "description": "04 §4.10 的派生阶段名与 01、13 不一致，04 却声称\"阶段名与 01 part4 X6、13 的 derivedPhaseV 一致\"。",
+  "evidence": "04 §4.10 `Phase = \"setup_members\" | \"setup_inputs\" | \"negotiating\" | \"needs_input\" | \"awaiting_approval\" | \"no_agreement\" | \"canceled\" | \"executed\" | \"closed\"`（9 个）。01 part4 第 36 行：\"04 定义：setup{gaps} / negotiating / needs_input{you, waitingOn?} / awaiting_approval{pendingRoles} / stopped{reason} / executed / closed\"；13 part3、part4 同样用 `setup{gaps}` 与 `stopped{reason: canceled | ended_no_agreement}`。",
+  "suggested_fix": "二者择一并改齐：要么 04 §4.10 改为 `setup{gaps}` 与 `stopped{reason}` 的 7 阶段形状（setup_members / setup_inputs 用 gaps 区分，no_agreement / canceled 合并为 stopped），要么 01 part4 与 13 改用 04 的 9 个名字。改完后 04 §4.10 的一致性声明才属实。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-36",
+  "severity": "low",
+  "section": "07-permissions-privacy-part5.md",
+  "description": "07 字段 × 角色矩阵中有几行引用了 03 中不存在或已改名的字段，有几处事件名、参数名、函数参数名也与 03、06、12 不符。按 TC-PRIV-10 \"DISCLOSURE 必须覆盖 schema 每个叶子路径\"做对账，这些行会报错。",
+  "evidence": "§7.9.1 有 `users.email`，03 §3.5 明写 users \"不存邮箱\"。§7.9.5 写 `constraintRevisions.constraintsVersion`，03 的字段是 `version` / `previousVersion`。§7.9.3 写 `approvals._creationTime`，03 为 `decidedAt`。§7.9.4 写 provider 把 needs_input 投影为 `waiting`，canon D12 ⑦ 为 `run_waiting`。DX-2 的事件名 `catalog_confirmed` 应为 `catalog_item_confirmed`。§7.17 写\"executed 对 finance 经 restrictedRef → ledgerEntries\"，03 与 08 为 `room_executed` → executions。§7.11 的 item.required_missing 参数写 `missingItemKeys`，06 §6.2 为 `itemKeys`、`reason`。§7.6 rooms.create 的参数写 `creatorRole`，12 §12.6 为 `myRole`。DX-8 的 endedReason 写 `canceled`，03 为 `canceled_by_creator` / `room_closed` 等。",
+  "suggested_fix": "按 03、06、12 逐条修正 07 §7.6、§7.8.6、§7.9、§7.11、§7.17：删去 users.email 行（邮箱只在 identity claim 中）；constraintsVersion 改 version；_creationTime 改 decidedAt；waiting 改 run_waiting；catalog_confirmed 改 catalog_item_confirmed；executed 改 room_executed → executions；missingItemKeys 改 itemKeys、reason；creatorRole 改 myRole；DX-8 改用 03 的 endedReason 枚举。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-37",
+  "severity": "low",
+  "section": "03-schema-part12.md",
+  "description": "03 的 §3.21\"与 canon 的对照\"漏报了两处偏离 canon 的地方；开放问题和注释里还有几条已经过时（兄弟章已改）。08、04 的开放问题中也有同类过时陈述。",
+  "evidence": "漏报：03 §3.11 的 restrictedRefV 在 canon D14 列出的 briefs / humanRequests / attempts / ledgerEntries 之外，又加了 approvals、constraintRevisions、sharedFacts、executions，§3.21 的 D14 行未说明；03 §3.8 `attempts.schemaVersion` 写\"toStrictOutputSchema 结果的 sha256 前 16 位\"，另有 `outputSha256`，而 05 §5.4.1 与 10 用 turnSpecKey 规范串，正是为了不依赖 crypto.subtle（canon D25 也以此否决哈希）。过时：03 Q1（04 §4.9 C2 已改为只追加）、Q4（04 已用 tasks.markDone）、Q7（08 已定 unchanged）、Q9（11 已对齐 MUTABLE_FIELDS），以及 §3.5 注释\"07 §7.6 写作 storeLink\"（07 现为 insertLink）；08 §8.6.5\"04 写作 tasks.complete\"、08 O11 引用的 07 auth.forbidden / auth.not_found，07 现已改用 12 的码；04 Q8 所列 12 的 briefs_ready / manual / keepAsIsUsed / ended_by_human，12 现稿已不用。",
+  "suggested_fix": "03 §3.21 的 D14 行补一句\"restrictedRef 目标扩展到 approvals / constraintRevisions / sharedFacts / executions（建议 canon D14 补列）\"。attempts.schemaVersion 改为 `turnSpecKey(spec)`（05 §5.4.1），删去 `outputSha256`，或注明\"仅在 action 内可用 crypto 时写入，待验证\"。03 §3.20 删除 Q1、Q4、Q7、Q9，§3.5 的注释同步改。08 §8.6.5、O11 与 04 Q8 删去对兄弟章的过时描述，只保留仍未解决的项（04 Q8 中涉及 05、10 的部分保留）。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-38",
+  "severity": "low",
+  "section": "00-canon.md",
+  "description": "canon 自身有若干缺口和内部不一致，各章已据此提出了偏离或 canon_objections（本返回结构没有 canon_objections 字段，故作为 issue 列出）。",
+  "evidence": "§1.5 的 approval.* 不含 `approval.not_executable`，D02 却使用它（04 Q6、06 §6.1、08 O3）；§1.5 也没有 auth.* / invite.* / request.* / input.* 与 item.limit_exceeded、date.before_lead_time。§1.6 缺 D12 ② 用到的 `rooms.previewChange`，也缺 `tasks.markDone`、`invites.createLink`、`humanRequests.expireDue`、`ops.livenessSweep`、`ops.activeAttemptCount`。§1.1 没有列出 part6 要求的 `constraintRevisions`、内部表 `rawOutputs` 与 catalogItems 的 `editNo`（09 Q2/Q3）。§1.2 的 candidateKey 示例 `LOGIN+REPORTS@rush` 与 D27 的小写键、03 的正则不符。§1.6 把 `ops.setDraining` 标为 dev-only，与 D17 的生产排空冲突（12 Q5）。D04\"任何写入拒绝\"没有豁免 tasks.markDone 与 startFollowUp（04 Q4、12 Q3）。D27 的\"3 条审批 stale\"与\"stub counter $800\"与 D02、D03、D08 矛盾（09 Q5/Q6、14 §16）。",
+  "suggested_fix": "canon §1.5 补录 approval.not_executable、item.limit_exceeded、date.before_lead_time 与 API 域；§1.6 补 rooms.previewChange、tasks.markDone、invites.createLink、humanRequests.expireDue、ops.livenessSweep、ops.activeAttemptCount，并把 ops.setDraining 改为全层级 internal；§1.1 补 constraintRevisions、rawOutputs 与 catalogItems 的 (itemKey, revision, editNo)；§1.2 示例改为 `audit_log_export+sso_login@rush`；D04 写明两个豁免；D27 改为\"2 条 stale_approve + finance pending\"与\"provider 第 2 轮提出 $800\"。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "completeness-01",
+  "severity": "high",
+  "section": "05-protocol-part3.md / part4 / part6（对照 03-schema-part7.md、04-state-machines-part2.md、06-rules-engine-part6.md、14-scenario-scope-change-part5.md）",
+  "description": "被规则阻断的 provider 候选是否插入提案行，05 与 03/04/06/14 相反；这改变提案版本编号、proposals.by_run 阻断集、INV-SM-06 以及主走查（v2 是 $900 还是 $800）。实现 turns.complete/applyMove 时无法同时满足两边。",
+  "evidence": "05 P10：'provider 的提案被 checkProposal 阻断时照常插入提案行（历史不可篡改），不花评估调用'；05 §5.7.3 步骤 5–6 先插入再判 blocked；05 §5.15.1 把 $900 记为 v2、$800 记为 v3。03 §3.9：'被规则阻断的候选不插提案（turns.outcome.blockedCandidateKey）…所以每一行在插入时都通过全部检查'；04 §4.3.4：'不插入提案；turn 记 outcome: { blockedCandidateKey }'；06 §9.2：'不通过 → 不插提案、不消耗版本号'；14 S8：'不插提案、不消耗版本号'。06 §15 第 6 条与 14 §15 第 5 条都只写'合稿时需统一'。",
+  "suggested_fix": "按 03/04/06/14 改写 05：P10 改为'被阻断的候选不插提案，只在 turns.outcome.blockedCandidateKey 记录并进入 excludedCandidateKeys(run)；provider 下一回合只得 blocked'；§5.7.3 步骤 5 改为'先 checkProposal(全局)，通过才 insertProposal'；§5.15.1 第 6–7 步改为'T4 选 O2 → blocked、不消耗版本号；T5 选 O1 → v2 $800'；E2 同步改写；16 §16.11 加一条 CE：被阻断候选不得出现在 proposals 表与 provider 的 proposalHistory。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-02",
+  "severity": "high",
+  "section": "07-permissions-privacy-part4.md §7.8.4（对照 14-scenario-scope-change.md S-D6/§4、14-part4 §9.2、16-testing-part5.md §16.7.1/§16.7.4）",
+  "description": "主 fixture 中 customer 的 deadline 是否披露给 provider，07 与 14 相反；这决定 provider 首轮快照是 2 个候选还是 16 个截断为 12、stub 是否三轮被阻断、主走查调用次数与 golden 快照。16 的 C1 '默认配置'照抄了 07 的值。",
+  "evidence": "07 §7.8.4 表 deadline 行的'fixture 设定（D27）'列为'仅 finance（provider 侧金丝雀）'。14 S-D6：'主 fixture 的披露：customer 把必需项与截止日披露给 provider 与 finance'；14 §9.2 disclosures: { deadline: ['provider', 'finance'] }；14 §6.1：'截止 2026-11-20 已向 provider 披露…provider 视图只剩两个候选'。16 §16.7.4：'C1 fixture 默认（…deadline → finance…）'。01 C3、05 §5.15、06 T06-U18 均按 14 书写。",
+  "suggested_fix": "07 §7.8.4 deadline 行改为'provider、finance'，并把'provider 侧金丝雀'移到 canary 变体说明；16 §16.7.4 的 C1 改为与 14 §9.2 一致，把'deadline 只给 finance'作为 canary 变体（14 §9.4 F）单独列出。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-03",
+  "severity": "high",
+  "section": "04-state-machines-part2.md R6、part3 U5（对照 05-protocol-part4.md §5.8.5、05-part5 §5.11.2、10-agent-runtime-part2.md B4/B5、12-api-part8.md Q12）",
+  "description": "每 run attempt 上限或美元上限命中后开哪种人工请求、发给谁，04 与 05/10 相反；12 明确表示'本章不定'。实现 beginAttempt 的 limit 分支时没有唯一答案，而两种选择的收件人与选项完全不同。",
+  "evidence": "04 R6：'run 调用 / 美元上限 → agent_failed（只含 end_run）'；04 U5：'首个 attempt 前就撞到 run 上限；同事务 R6（agent_failed，选项只有 end_run）'。05 §5.8.5：'run 的 attempt 上限或美元上限用尽（10，cause: call_limit | spend_limit）'进入轮次用尽 → 'kind: rounds_exhausted 请求给 customer'；05 §5.11.2：'agent_failed…failureCode = run.call_limit 的除外，走 §5.8.5'。10 B4：'回合 → failed（failureCode: run.call_limit），05 §5.8.5 → needs_input + rounds_exhausted 请求'。12 §12.25 Q12：'本章不定，按 04 与 10 统一后的结果'。",
+  "suggested_fix": "统一为 05/10 的 rounds_exhausted（customer 可用 choose_candidate 自救，agent_failed 的 retry_turn 在上限下本就不可用）：04 R6 的'run 调用 / 美元上限 → agent_failed（只含 end_run）'改为'→ rounds_exhausted（toRole customer；questionKey 带 call_limit/spend_limit；不提供 keep_as_is）'，U5 同步；06 §11.2 agent_failed 行加'不含上限触发'；12 §12.18 beginAttempt 的 limit 说明与 TC-RUN-15 按此断言。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-04",
+  "severity": "high",
+  "section": "06-rules-engine-part6.md §9.1 与 08-approval-execution-part4.md §8.4.2（同一文件 core/engine/executable.ts）",
+  "description": "两章各自给出 core/engine/executable.ts 的 isExecutable 完整实现，签名与语义不同：06 的版本不含审批集合，08 的版本把 approvalSet 并入；02 Q1/18 N-22 只记为待对齐。同一路径两份互斥的代码，实现者必须二选一。",
+  "evidence": "06 §9.1：'export function isExecutable<RI>(p, x: { room, run, proposal, input })…const blocking = [...new Set([...g, ...evaluation.blocking])]'，'审批是否齐由 08 的 evaluateApprovalSet 判定，不在此函数内'。08 §8.4.2：'export function isExecutable(i: … & { verdict: RuleVerdict; approvalSet: ApprovalSetResult })…for (const r of i.approvalSet.reasons) reasons.push(r)'，'08 对 canon isExecutable 的唯一定义'。04 §4.1.1：'isExecutable（通过且审批齐）'；13 FE-D12：'isExecutable 在 08 含审批已齐'。",
+  "suggested_fix": "保留一份：以 08 为准（含 approvalSet），06 §9.1 改名为 passesStateAndChecks 或删除代码块只保留对 08 的引用；02 §2.8 与 INV-35 改为'isExecutable = 状态守卫 ∧ passesChecks ∧ allApproved'，approve 前的纵深防御调用改写为 passesChecks + isCurrentForApproval；canon D02/D03 中'approve 前跑 isExecutable'注为'其规则与状态部分'。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-05",
+  "severity": "high",
+  "section": "06-rules-engine-part7.md §11.1/§11.2（对照 03-schema-part7.md requestEffectV、04-state-machines-part4.md §4.8.3、05-protocol-part5.md §5.11.1/§5.11.2、12-api-part4.md §12.14）",
+  "description": "人工请求的 disclose 效果形状、optionKey 格式与'无人可放松'回退分支，06 与 03/04/05/12 不一致；06 的回退分支还需要一条 04 没有的 needs_input→needs_input（disclose 后重新预检开新请求）迁移。03 的 validator 会拒绝 06 的 effect。",
+  "evidence": "06 §11.1：'{ kind: \"disclose\"; field: FieldKey; toRoles: RoleKey[] }'、'optionKey: 不透明 opt_1..opt_n'；06 §11.2：'都不满足 → 回退到 relaxationOrder[0] 的角色…各一个 disclose，末尾 end_run'；06 §15 第 9 条：'回退分支 disclose 回答后 run 保持 needs_input 并开新请求（04/05 需要这条迁移）'。03 §3.9：'v.object({ type: v.literal(\"disclose\"), field: v.string() })'、'optionKey: \"A\"..\"E\"'；04 §4.8.3：'若没有任何角色按自身视图存在放松选项，向 customer 发 kind: infeasible 请求，选项只有 end_run'；05 §5.11.2：'都没有 → customer，只给 end_run'；04 R14 把 disclose 列为 needs_input → negotiating。14 §9.7 脚本用 'opt_1'。",
+  "suggested_fix": "二选一并同步：若保留 06 的回退 disclose，则 03 requestEffectV.disclose 加 toRoles、04 新增 R20 'needs_input → needs_input（disclose 后重跑预检）'、05 §5.11.2 改写；否则删除 06 §11.2 回退分支改为 end_run。optionKey 统一为 03/05 的 'A'..'E'，06 §11.1 与 14 §9.7 的 opt_N 改掉。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-06",
+  "severity": "high",
+  "section": "10-agent-runtime.md §10.3、part2 §10.5、part3（对照 03-schema-part5.md/part6.md/part8.md、04-state-machines-part5.md Q8、12-api-part8.md Q11/Q13/Q16）",
+  "description": "运行时章引用的大量字段、枚举值、索引在 schema 章里不存在或同名异义；03 是 schema 唯一定稿处，但 10 的代码按另一套字段写，04 Q8/12 Q11 只登记未解决。实现时 10 的 beginAttempt/reconcile/watchdog 无法直接落在 03 的表上。",
+  "evidence": "attempts.origin：03 'turn_start | auto_retry | retry_turn' vs 10 'first | auto_retry | user_retry'（05 §5.11.4 又写 origin: user_retry）。延长标记：03/04 roundsExtended、05 extraRoundGranted、10 extraRoundGranted、06 keepAsIsUsed、12 'keepAsIsUsed'。10 §10.3 runs 字段 providerRejectLocked、startedByUserId、updatedAt 与索引 by_status_updatedAt，03 均无（03 只有 startedBy、by_status）。turns：10 deferredFnId/deferredUntil/drainParked/failureCode vs 03 waitingReason/beginFnId；10 §10.4.5 '回合保持 / 回到 scheduled'，04 §4.4 '没有 running → scheduled'。attempts：10 dispatchFnId/reservedDay/protocolVersion/promptVersion/retryNote/lateResult/staleGuard vs 03 actionFnId/lateUsage（无 reservedDay、promptVersion 在 turns）。spendCounters：10 多 attempts/unknownCostAttempts；opsFlags：10 'key: draining, value' vs 03 'key: global, draining'。rawOutputs：10 '≤ 32 KB、保留 30 天' vs 03 '≤ 64 KiB、dev 30 / prod 7'。03 §3.12 'stub 模式同样受排空约束' vs canon D17/10 'stub 不受影响'。",
+  "suggested_fix": "以 03 为准回改 10 的 §10.3、§10.5.2 B7、§10.9、§10.12.3 字段名；03 补齐 10 确实需要的字段：runs.providerRejectLocked（或在 05 ActionCtx 中声明为由 humanRequests 派生）、attempts.reservedDay/retryNote/promptVersion、spendCounters.unknownCostAttempts；统一延长标记为 roundsExtended、origin 为 03 枚举；03 §3.12 删去'stub 同样受排空约束'。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-07",
+  "severity": "high",
+  "section": "03-schema-part9.md §3.11.1（对照 10-agent-runtime-part2.md B7 步骤 5、10-part3 §10.7.2、10-part4 §10.4.5、04-state-machines-part2.md R4、12-api-part6.md、14-scenario-scope-change-part5.md、16-testing-part4.md TC-RUN-03）",
+  "description": "03 声称事件目录是 v1 全集且 eventPayloadV 是封闭联合，但他章写入的事件名不在目录里或一名多写，实现时 validator 直接拒绝写入；同一事件还可能被两处各写一次。",
+  "evidence": "03 §3.11.1 目录无 agent_turn_started（10 B7 步骤 5）、agents_deferred（10 §10.4.5）、agent_result_discarded（10 §10.7.2 步骤 3）、run_resumed 有但 10 的 'agent_result_discarded' 与 03 的 'turn_rejected_stale' 与 16 TC-RUN-03 的 'turn_stale' 是同一事件三个名字。turn_scheduled：04 R4 在 advanceRun 建回合时写，12 §12.18 '回合首个 attempt 写 turn_scheduled 事件'，10 B7 '每个回合的第一个 attempt 写 agent_turn_started'——同一事实两处写。14 S1–S11 用 ledger_baseline_recorded / catalog_confirmed / run_pending_approval / agent_recommended / run_superseded / executed，03 对应为 baseline_recorded / catalog_item_confirmed / run_awaiting_approval / turn_completed / run_ended / room_executed；14 §8.3 'payload = { fromVersion, toVersion, cause, actorRole }' 与 03 Q3 '只放 { fromVersion, toVersion }'冲突。10 §10.23 第 6 条承认'需 07 的事件矩阵收录'。",
+  "suggested_fix": "03 §3.11.1 增补 agents_deferred（payload { runNo, until }，room 类）并把 turn_rejected_stale 定为唯一名；10/16 改名；turn_scheduled 只由 createTurnTx 写（04 R4/U1），12 §12.18 与 10 B7 删除'首个 attempt 写事件'；14 全文事件名按 03 替换，§8.3 的 payload 删去 cause/actorRole；16 加静态测试：代码中 appendEvents 的 type 字面量 ⊆ eventPayloadV 成员。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-08",
+  "severity": "high",
+  "section": "06-rules-engine-part8.md §12.1（对照 04-state-machines.md §4.2.1、05-protocol-part5.md §5.9.1/§5.10/§5.11.2、07-permissions-privacy-part6.md §7.11、13-frontend-part6.md §13.15、16-testing-part7.md）",
+  "description": "插件接口被钉死为'恰好 15 个成员'并在注册表断言，但 04/05/07/13/16 调用了不在接口里的场景钩子或字段，实现第二场景契约测试时注册表会拒绝或代码引用不存在的成员。",
+  "evidence": "06 §12.1 'ScenarioPlugin 恰好 15 个成员'、§12.2 '15 个成员齐全'。04 §4.2.1：'其余由场景 scenario.readiness(ruleInput) 声明'（无 readiness 成员）；05 §5.11.2：'其余由 scenario.rankForOwner(customerView) 排序'（无 rankForOwner）；05 §5.10：'场景 tradeoffOwner（首个场景 customer）'（无此字段）；07 §7.11：'查看者角色 ∈ scenario.fitOnlyRoles'（06 用 roles[].side）；05 §5.9.1 ClarifyTopic 含 askers/ownerRole/field/answer/questionTemplateKey，06 ProtocolDecl.topics 只有 { topicKey, toRole, askableBy }；13/techstack D24 的场景纯函数 diffTerms、16 §16.10.1 的 evalCases 也不在成员表。",
+  "suggested_fix": "06 §12.1 改为'≤ 18 个成员'并显式加入 readiness(input)、rankForOwner(role, view)、protocol.tradeoffOwner、protocol.topics[].{field, answer, questionTemplateKey}；fitOnlyRoles 由 roles[].side === 'seller' 派生并在 07 §7.11 改写；diffTerms 与 evalCases 标为'场景目录内的非插件导出'；§12.2 的成员数断言随之更新。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-09",
+  "severity": "high",
+  "section": "16-testing-part4.md TC-EXE-10（对照 08-approval-execution-part2.md A12、08-part7 K27、09-constraint-changes-part3.md §9.6.7、12-api.md B8）",
+  "description": "16 把一条与 08/09 规定相反的行为写成了必过用例：审批时用'权威 today'重算而拒绝；08/09 的定稿是规则一律读 rooms.localDate，cron 未跑时照常执行。按 16 实现会让 08 的 K27 场景（午夜后点批准）无出口。",
+  "evidence": "16 TC-EXE-10：'假时钟越过交付日但未运行 rollLocalDate：approve 在 mutation 内用权威 today 重算 → approval.not_executable 不写行；随后 rollLocalDate → constraints.bump(cause: clock)'。08 A12：'规则检查一律以 room.localDate 为 today…所以审批时的结论与审批人屏幕上的结论来自同一个日期'；08 K27：'cron 尚未推进 localDate…规则读 room.localDate（仍为前一日）…正常执行'；08 §8.12 否决'approve 用 Date.now() 推出的真实日期判规则'；09 §9.6.7：'规则在 query 与 mutation 中一律读 room.localDate'；12 B8：'规则一律读 rooms.localDate'。",
+  "suggested_fix": "TC-EXE-10 改为与 08 I16 一致：'cron 未跑时 approve 以 room.localDate 判定并执行；另一用例先跑 rollLocalDate 使结论翻转 → cv+1，之后旧 cv 的 approve → approval.stale'；§16.11 映射 CE-071 的描述同步。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-10",
+  "severity": "medium",
+  "section": "16-testing-part5.md §16.7.1（对照 14-scenario-scope-change-part4.md §9.5、16 TI-12）",
+  "description": "16 自带一套 canary 数字与披露配置，和 14 的 canary 变体不一致，违反 16 自己的 TI-12（金额与日期一律从 fixture 模块推出）；两份 golden 不可能同时为真。",
+  "evidence": "16 §16.7.1：capCents = 481_237、baseline 400_013、deadline = anchor + 47d、派生 headroom 81_224、overByCents 8_776、committedAfter 480_013。14 §9.5：capCents v1 512347 / 下调后 481237、基线 400219、headroom 112128 / 81018、执行后已承诺 480219、deadline 2026-11-20（只披露给 finance）。16 TI-12：'测试中的金额与日期一律从 fixture 模块推出'。",
+  "suggested_fix": "删除 16 §16.7.1 的硬编码数字，改为引用 14 §9.5 的 canary fixture 并由 canaryNeedles(fx) 计算；C0/C1/Ck 配置以 14 §9.2 为 C1 基线。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-11",
+  "severity": "medium",
+  "section": "18-decisions-open-questions-part2.md…part6.md（ADR 集合）、part7 §18.4.2",
+  "description": "18 只为 canon D01–D27 写 ADR，但各章新增了若干重大决定没有 ADR 也不在开放问题表：房间写锁 M-ROOM（改变并发模型：每次 agent 提交与每次人类写入都在 rooms 文档上串行）、editNo 定价修订号、constraintRevisions 与 rawOutputs 两张新表、生产可用的 privacy.redact。任务书 §6 要求每个重要决定写背景/选项/决定/后果。",
+  "evidence": "02 DM-09：'房间写锁 M-ROOM：一切改变房间业务状态的 mutation 都经 openRoomTx 把 rooms.writeSeq + 1'；03 SC-05 同；11 A4 同；02 Q4：'INV-M1（房间写锁）尚未列入 00-invariants'。18 §18.4.2 N-01…N-30 无 M-ROOM 条目；18 本章不变量 1：'ADR 不新增 canon 之外的决定'。09 Q3：'constraintRevisions 不在 canon §1.1 实体表中'；03 §3.3.2 第 6 条 privacy.redact '（internal，dev 与 prod 都有）'。",
+  "suggested_fix": "18 增加 ADR-X01 M-ROOM（选项：区间读冲突 vs 写锁；代价：同房间写串行、turns.complete 与人类写互相冲突重试；验证 V-01）、ADR-X02 editNo、ADR-X03 constraintRevisions/rawOutputs、ADR-X04 privacy.redact；并在 §18.4.2 加 N-31'M-ROOM 需进 canon §1.2 与 00-invariants'。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-12",
+  "severity": "medium",
+  "section": "03-schema-part2.md §3.3.2 第 6 条 / 12-api-part7.md privacy.redact / 15-operations-part4.md §15.11 第 6 步（对照 07-permissions-privacy-part9.md §7.24 第 11 条、canon D18）",
+  "description": "privacy.redact 的 v1 状态自相矛盾：03/12/15 把它定义为全部层级可用并写进恢复手册，07 说 v1 不提供；canon D18 又说 prod 唯一清理是 rooms.close。它是对只追加表的生产写入，必须有明确裁决与测试。",
+  "evidence": "03 §3.3.2：'privacy.redact（internal，dev 与 prod 都有）只把 REDACTABLE_FIELDS 覆盖为固定串'；12 §12.20：'privacy.redact · sysMutation · 全部层级（经 CLI，人工发起）'；15 §15.11 第 6 步：'按恢复前快照中的抹除事件重放抹除'。07 §7.24 第 11 条：'自助删除与 PII 抹除（privacy.*，techstack D38）v1 不提供，15 / 17 决定'；17 E17 把'账户删除与数据导出'列为扩展。",
+  "suggested_fix": "统一为'v1 提供运维人工发起的 privacy.redact，不提供自助删除'：07 §7.24 第 11 条改写并在 §7.12.2 登记该 internal 函数；canon D18 加一句豁免；16 增加 SC-T7 对应的 L1 用例并把 pii_redacted 事件纳入 TC-PRIV-03。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-13",
+  "severity": "medium",
+  "section": "06-rules-engine-part2.md §5.3 末段（对照 09-constraint-changes.md §9.1.1、03-schema-part4.md §3.7 constraintRevisions、09-part5 Q10）",
+  "description": "硬投影是否持久化，06 与 09/03 相反；09 已指出 06 需改写但 06 未改。持久化投影串会把 finance 私密的 capCents 写进他方可达的行。",
+  "evidence": "06 §5.3：'写入口先写数据，再对写入后的全局输入算 hardProjection，与上一个约束版本存下的投影串比较（字段归 03/09，例如 constraintRevisions 行）'。09 §9.1.1：'投影只在事务内存中求值（before / after），从不持久化：它含 finance 私密的 capCents；存哈希也不行'；03 §3.7：'投影不持久化'；09 Q10：'06 需改写该句'。",
+  "suggested_fix": "06 §5.3 末段改为'withConstraintChange 在同一事务内对写前、写后的全局 RuleInput 各算一次 hardProjection 并比较（09 §9.4），不持久化任何投影串'。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-14",
+  "severity": "medium",
+  "section": "12-api-part5.md rooms.previewChange（对照 01-product-part3.md F5、07-permissions-privacy-part6.md §7.11.1、09-constraint-changes-part3.md §9.6.8、13-frontend-part3.md §13.8.1/part5 §13.10 B）",
+  "description": "rooms.previewChange 的参数与返回形状有四种写法，前端章按 07 的形状消费而 12 定了另一套；实现者不知道该实现哪一个。",
+  "evidence": "01 F5：'change: { kind: \"set_cap\", capCents }'、返回 '{ verdict: \"after\", budgetAfter, headroomAfterCents, invalidatedApprovals, willSupersedeRun }'；07 §7.11.1：change ∈ set_cap / customer_hard / catalog_upsert / catalog_retire，返回 no_change / rejected / after{budgetAfter, headroomAfterCents} / recheck{willSupersedeRun}；09 §9.6.8：'{ kind: \"cap\" } | { kind: \"customerHard\" } | { kind: \"catalog\", items }'，返回 '{ projectionChanged, invalidatedApprovals }' + verdictAfter{feasibleAfter}；12 §12.17：'{ kind: \"cap\", newCapCents } | { kind: \"customer_hard\" } | { kind: \"catalog\", itemKey, …, retire }'，返回 unchanged / recheck / after{verdictAfter: checksViewV, belowCommitted, minAllowedCapCents}，无 rejected、无 willSupersedeRun；13 §13.8.1 与 §13.10 B 按 07 的 set_cap/catalog_upsert 与 rejected 分支书写。",
+  "suggested_fix": "以 12 为准定稿一份（含 willSupersedeRun 与 rejected 分支，因为 13 需要），01/07/09/13 全部改引 12 §12.17 的 validator；16 TC-PRIV-13 按 12 断言。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-15",
+  "severity": "medium",
+  "section": "05-protocol-part5.md §5.9.1、05-part2 §5.4.1/§5.4.3（对照 14-scenario-scope-change.md §3、03-schema-part3.md customerSoftV、16-testing-part4.md TC-RUN-19、16-part7 E-CLARIFY）",
+  "description": "clarify 话题表与 reasonKey 表的取值在 05、14、16 三处不同，05 还引用了一个任何 schema 都没有的软字段 tradeoffPriority；16 的用例按 05 的键写，14 才是场景定稿。",
+  "evidence": "05 §5.9.1：topicKey required_items / deadline / tradeoff_priority（field 'tradeoffPriority（软字段枚举 scope_first / date_first / cost_first）'）/ budget_cap；14 §3：item_required / deadline_value / item_scope / budget_room。03 customerSoftV 只有 preferredItemKeys / preferredDate / notes，无 tradeoffPriority；14 S-D4 字段最小集亦无。05 §5.4.1 示例 reasonKeys 'scope_insufficient / delivery_too_late / price_poor_value / other'，14 §3 为 missing_required_item / after_deadline / preference_not_met / over_budget / price_too_high / terms_not_acceptable / scope_insufficient / needs_earlier_delivery / other / over_our_limit。16 TC-RUN-19 用 'topicKey: deadline'，E-CLARIFY 同。",
+  "suggested_fix": "05 §5.9.1 表改为引用 14 §3 的键（删除 tradeoff_priority 或在 03/14 增加该软字段并定义披露类）；05 §5.4.1/§5.4.3 示例改用 14 的 reasonKeys；16 TC-RUN-19/E-CLARIFY 改为 deadline_value。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-16",
+  "severity": "medium",
+  "section": "14-scenario-scope-change.md §4/§5（对照 03-schema-part3.md briefs、03-part4 catalogItems、07-permissions-privacy-part4.md §7.8.4、12-api-part3.md §12.9/§12.12）",
+  "description": "场景章与 schema 章对 customer 软字段、备注长度、任务模板数量与形状的规定不同；03 的 validator 与 14 的 Zod 入参会互相拒绝。",
+  "evidence": "03 customerSoftV 含 'preferredDate: v.union(v.string(), v.null())'，07 §7.8.4 把 preferredDate 列为可共享字段；14 S-D4 字段最小集无 preferredDate，14 §15 第 8 条'preferredDate 这类软日期偏好被删去'。notes：03 §3.2 'softFields.notes 2,000'，14 §4 '≤ 4,000 码点'。任务模板：03 §3.7 'item ≤ 5 条'、12 §12.12 '≤ 5 条'，14 §5 'maxTaskTemplatesPerRow: 3'；形状：03/12 '{ title, assigneeRole }'，14 §5 'taskTemplates: z.array({ title })'、'assigneeRole 恒为 catalog.ownerRole'。",
+  "suggested_fix": "以 14 为场景定稿：03 customerSoftV 删 preferredDate（07 §7.8.4 同删）、notes 上限改 4,000；taskTemplates 统一为 ≤ 3 条且只有 title（assigneeRole 由 CatalogDecl.ownerRole 派生，03 的 plannedTaskV 保留 assigneeRole 字段），12 §12.12 的 validator 同步。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-17",
+  "severity": "medium",
+  "section": "01-product-part3.md P2、13-frontend-part5.md §13.10 B 步 3、18-decisions-open-questions-part7.md N-24（对照 12-api-part3.md §12.12、03-schema-part4.md §3.7、09-part3 §9.6.3）",
+  "description": "12 已把 catalog.confirm 定为批量 rows[]（计一次节流），但 01/13/18 仍描述 12 是单条 item 并把'6 行撞节流'列为未决冲突；读者会以为问题未解决，前端会按单条实现。",
+  "evidence": "12 §12.12：'args { roomId, expectedConstraintsVersion, rows: v.array(…) }，rows 1–14 行（一次确认一批，避免 seed 与正常使用撞上 6 次 / 小时）'。01 P2：'按 12 现签名每行一次 catalog.confirm({ roomId, expectedConstraintsVersion, item })…单条确认会让 6 行目录撞上每小时 6 次的约束写入节流，见 18 N-24'；13 §13.10 B 步 3：'catalog.confirm({ roomId, expectedConstraintsVersion, item })（按 12 现签名每行一次）'；18 N-24：'catalog.confirm 单条（12）vs 批量（03 / 09）'。",
+  "suggested_fix": "01 P2、13 §13.10 B、14 S2 改为批量签名并删除'每行一次'；18 N-24 改为已解决并注明 12 §12.12 为准。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-18",
+  "severity": "medium",
+  "section": "03-schema-part3.md rooms、03-part10 §3.14、03-part11 §3.15（对照 12-api-part2.md §12.6 rooms.startFollowUp、07-permissions-privacy-part3.md §7.5.5）",
+  "description": "startFollowUp 的'每个执行至多一个后续房间'派生键幂等需要按 followsExecutionId 查找的索引与唯一性落点，03 没有列出，12 Q1 提出后未回填；并发两次 startFollowUp 会建两个后续房间。",
+  "evidence": "12 §12.6 守卫 ③：'已有 followsExecutionId = executionId 的房间 → 返回 { roomId: 既有, created: false }（读 rooms.by_followsExecutionId，03 需增设该索引，见 §12.25 Q1）'；07 §7.5.5：'每个执行至多一个后续房间，按 followsExecutionId 幂等'。03 rooms 只有 by_createdBy、by_status；03 §3.14 唯一性落点表无'每执行至多一个后续房间'行；12 Q1 状态'增设'无 03 回应。",
+  "suggested_fix": "03 rooms 增加 .index('by_followsExecutionId', ['followsExecutionId'])，§3.14 加一行'每 executionId 至多一个后续房间 | by_followsExecutionId | rooms.startFollowUp | 先查 + 旧房间 openRoomTx(allow: executed) 写锁串行'，§3.15 登记读者。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-19",
+  "severity": "medium",
+  "section": "05-protocol-part6.md §5.13.1/§5.13.2 与 07-permissions-privacy-part7.md §7.14.3（对照 10-agent-runtime、11-architecture.md §11.3）",
+  "description": "代理上下文的分块布局与定界转义，05 与 07 各写一套且互不相同；07 说 encodeBlock 的单一实现归 10，但 10 全章没有 encodeBlock，11 把 wrapUntrusted 放在 core/engine/projection/。实现 renderPrompt 时没有唯一规范，金丝雀测试也不知按哪种转义扫描。",
+  "evidence": "05 §5.13.2：'encodeBlock(value) = JSON.stringify(value).replace(/</g, \"\\\\u003c\").replace(/>/g, \"\\\\u003e\").replace(/&/g, \"\\\\u0026\")'；块结构 A（principal）/ B（room_state+candidates+untrusted_data+shared_facts+clarify_answers）。07 §7.14.3：'所有块经 encodeBlock(value)：stableStringify 后把 &、<、> 替换为 &amp;、&lt;、&gt;…单一实现归 10（core/engine/encodeBlock.ts）'；块结构三个 user 块（principal_brief / room_state / turn）。10 全文无 encodeBlock、wrapUntrusted 定义；11 §11.3 把 wrapUntrusted 放在 core/engine/projection/。",
+  "suggested_fix": "以 05 §5.13 为提示词布局唯一规范，07 §7.14.3 改为引用 05 并删除自己的布局表；转义统一为 JSON \\\\uXXXX（与 JSON 编码一致），05 §5.13.2 注明实现位于 core/engine/projection/encodeBlock.ts（11 §11.3 增列）；16 TC-INJ-01 按同一转义断言。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-20",
+  "severity": "medium",
+  "section": "11-architecture-part3.md §11.10 / part4 §11.14（对照 07-permissions-privacy-part3.md §7.5.2、13-frontend.md FE-D14/§13.2、18-part5 ADR-D19、12-api-part2.md health.ping）",
+  "description": "auth.protect() 的放置位置与匿名/健康端点在 11 与 07/13/18 之间矛盾：11 采用 proxy 对 /rooms(.*) 调 auth.protect 并明确否决 layout 写法，07/13/18 写只在 (app)/layout.tsx 调一次；anonQuery 白名单 07 写 app.publicConfig、11/12 写 health.ping；13/16 断言 Next 的 /api/health 返回 401，而 11 说 v1 无业务 Route Handler。",
+  "evidence": "11 §11.10：'已配置时进入 clerkMiddleware，对 /rooms(.*) 调 auth.protect()（skeleton 实测）'；11 §11.14：'auth.protect() 只放在 (app)/layout.tsx（techstack D23）→ 采用 skeleton 实测的 proxy 写法'。07 §7.5.2：'auth.protect() 只在 (app)/layout.tsx 调一次'；13 FE-D14 同；18 ADR-D19 '…'。07 §7.5.3：'anonQuery…v1 白名单只允许 app.publicConfig'；11 §11.6/12 §12.5：'仅 health.ping'。13 §13.2 与 16 TC-AUTH-11：'无会话 fetch(/api/health) → 401 JSON'；11 §11.10：'v1 不提供业务 Route Handler'。",
+  "suggested_fix": "统一为 11 的 proxy 写法（并在 (app)/layout 保留一次 auth.protect 作客户端导航兜底），07 §7.5.2 与 13 FE-D14 改写；anonQuery 白名单统一为 health.ping；11 §11.10 补一句'唯一 Route Handler 是 /api/health，自己返回 401'。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-21",
+  "severity": "medium",
+  "section": "04-state-machines-part3.md §4.3.6、12-api-part2.md rooms.close、01-product-part4.md X6/X7、17-roadmap.md E10",
+  "description": "没有定义成员身份消失（Clerk 账号删除/封禁/离职）时的行为：creator 独占 rooms.close / runs.cancel / requestRenegotiation，席位不可转移，审批不过期；creator 消失的房间永远停在 open/setup，任一审批人消失的 pending_approval 永远等不到最后一票。这是任务要求检查的'最后一个审批人退出'边界。",
+  "evidence": "04 §4.3.6：rooms.close / runs.requestRenegotiation / runs.cancel 调用者均为'creator'；12 §12.6 rooms.close 'creatorOnly'；07 §7.6：'v1 席位一旦绑定不可解绑或更换，错人占席的处置是 creator 关闭房间、重新建房'；canon U7 审批不过期；01 X7：'v1 不支持换人与解绑（关房重建）'；17 E10 只把换人列为扩展，没有 v1 的兜底。",
+  "suggested_fix": "01 X6 与 04 §4.3.6 增加兜底：允许任一成员在当前 run 非终态且 N 天无写入后 rooms.close（或 ops 的 internal rooms.forceClose + assertTier 并写事件 room_closed{by: 'ops'}）；12 登记该函数；17 E10 写明触发条件；00-invariants 加一条活性 INV：任何房间都存在至少一个非 creator 可达的终结路径。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-22",
+  "severity": "low",
+  "section": "04-state-machines.md M6、12-api-part2.md rooms.close、15-operations-part4.md §15.9、18-part5 ADR-D18",
+  "description": "executed 房间没有任何归档/关闭路径（executed 与 closed 都是终态且互不可达），但多处声称 rooms.close 是生产唯一清理；已执行房间会永久留在收件箱 Done 区且 provider 的 open 任务无人能清。",
+  "evidence": "04 M6：'executed / closed → 任何：禁止'；04 §4.2 '执行后 rooms.close…(executed → run.invalid_state)'；12 rooms.close 守卫：'openRoomTx(allow: [\"setup\", \"open\"])（executed → run.invalid_state）'；15 §15.9：'生产：没有 seed，没有 reset；rooms.close 归档是唯一清理'；13 §13.3 Done 分区条件 'phase executed（且我无未完成任务）'。",
+  "suggested_fix": "要么在 04 增加 M7 'executed → closed（creator，任务全部 done 或显式确认）'并在 12/13 开放入口，要么把 15/18 中'rooms.close 是唯一清理'改为'open/setup 房间的唯一清理；executed 房间保持只读'并在 13 加归档筛选。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-23",
+  "severity": "medium",
+  "section": "00-overview.md §0.3、§0.9（对照 16-testing-part8.md §16.11、00-invariants-part7…11）",
+  "description": "00 的'八条核心 → 测试编号'表按已被 16 放弃的旧电池编号（CE-001…118）引用，而 16 最终采用了 00-invariants 的 CE-001…170（+171–175）；00 §0.9 对两套编号的裁决方向写反，表中的 CE 引用全部失效。",
+  "evidence": "00 §0.3：'反例电池用 16 §16.11 的 CE 编号（沿用原电池 CE-001…108 并按 canon part5 修订、新增 CE-109…118：CE-009 改为…CE-084/085 改为…）'，核心 1 列 'CE-001…020、CE-106'，核心 5 列 'CE-060…079（RD：061、062…）'；00 §0.9 第 3 条：'本章 §0.3 暂以 16 为准'。16 §16.11：'电池正文见 00-invariants-part7..11.md（canon 对齐重写版，CE-001…CE-170）；本章新增 CE-171…CE-175'，映射表按 170 编号。",
+  "suggested_fix": "重写 00 §0.3 的测试编号列为 00-invariants/16 的编号（核心 1 → CE-001…035、165、166；核心 5 → CE-095…120、169 等），删除'新增 CE-109…118 / CE-009 改为…'一段，§0.9 第 3 条改为已统一。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-24",
+  "severity": "low",
+  "section": "12-api-part7.md seed.fromFixture、14-scenario-scope-change-part4.md §9.1、15-operations-part4.md §15.9（对照 canon D18、00-invariants INV-63、02-domain-model-part6.md INV-63）",
+  "description": "seed 的终止状态表述自相矛盾：canon/02/INV-63 说停在'三份简报已确认、首个 run 即将开始'之前，但第三份确认与开 run 在同一事务，这个状态不可达；12/14/16 实际让第三份确认按生产路径自动开 stub run。演示与 E2E 的起点因此不明确。",
+  "evidence": "canon D18：'停在\"三份简报已确认、首个 run 即将开始\"之前，不预置提案 / 审批 / 执行'；INV-63 同句；04 M2/INV-75：第三份确认同事务 openIfReady → bump → startRunTx。12 §12.20：'第三份确认按生产路径 openIfReady 并自动开 run'；14 §9.1：'第三份确认按生产路径自动 runs.start'；16 T14-F03：'seed 结束时无提案、审批、执行，run 1 已由第三份确认按生产路径开始'。",
+  "suggested_fix": "canon D18 与 INV-63/02 INV-63 改为'seed 只写输入链；缺省让第三份确认自动开首个 run（stub），stopBeforeRole 可留一方不确认以停在 setup'；01 X8 同步。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-25",
+  "severity": "low",
+  "section": "07-permissions-privacy-part3.md §7.6（对照 03-schema-part3.md invites、12-api-part2.md §12.7）",
+  "description": "07 的邀请字段名与状态枚举与 03/12 不一致，按 07 实现会写出 schema 不接受的值。",
+  "evidence": "07 §7.6 2a：'invites（kind: \"email\"…）'、'同角色 pending 邀请置 revoked'；2b：'kind: \"link\"'；4：'邀请 pending'。03 §3.5：'mode: v.union(v.literal(\"email\"), v.literal(\"link\"))'、'status: open | accepted | superseded'；12 §12.7 同 03。",
+  "suggested_fix": "07 §7.6 把 kind→mode、pending→open、revoked→superseded；07 §7.9.1 的 invites 行同步。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-26",
+  "severity": "medium",
+  "section": "06-rules-engine-part3.md §6.1/§6.2（对照 07-permissions-privacy-part6.md §7.11、03-schema.md §3.2、12-api.md §12.4、14-scenario-scope-change.md §5、10-agent-runtime-part5.md §10.15、11-architecture-part3.md §11.10、16-testing-part9 CE-093）",
+  "description": "reasonCode 的参数名与若干码的归属在各章漂移；PARAM_AUDIENCE 是 fail-closed（未声明的参数丢弃），所以参数名不一致会让界面静默缺字段。另外 11/15/16 使用的 attempt 错误码 config_invalid 不在 10 的封闭枚举 ATTEMPT_ERROR_CODES 中。",
+  "evidence": "item.required_missing 参数：06 'itemKeys、reason' vs 07 §7.11 'missingItemKeys'。run.rate_limited 参数：06 'retryAfterMinutes' vs 03 §3.11.3/07 §7.7/12 §12.4/13 'retryAfterMs'。目录标题闸门失败码：03 §3.2 与 12 §12.12 'input.invalid'，06 §4 与 14 §5/§9.6 'disclosure.blocked { field: title }'。10 §10.15.1 ATTEMPT_ERROR_CODES 无 config_invalid，但 11 §11.10 'live 模式缺 key → attempt error(config_invalid)'、15 §15.3 'attempt 进入 error…opsLog(config_invalid)'、16 §16.11 CE-093 'attempt error(config_invalid)'；10 把缺 key 映射为 auth。",
+  "suggested_fix": "06 §6.2 PARAM_AUDIENCE 作为唯一来源：07 §7.11 改为 itemKeys；06 §6.1 改 retryAfterMs；目录标题闸门统一为 disclosure.blocked（12 §12.12 ⑤ 改码）；10 §10.15.1 增加 'config_invalid' 并把 GatewayConfigError 映射到它。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-27",
+  "severity": "low",
+  "section": "04-state-machines-part2.md R6/§4.3.4（对照 05-protocol.md §5.3.3、05-part3 §5.7.2、05-part4 §5.8.5）",
+  "description": "05 规定 provider 快照在剔除后为空时不创建 provider 回合、直接走轮次用尽，但 04 的 R6 守卫清单与 advanceRun 结果映射都没有这一项，也没说由谁写 run_needs_input。",
+  "evidence": "05 §5.3.3：'provider 回合在创建前保证 snapshotSize ≥ 1 且 proposeCountInRun < 4；否则不创建回合，直接走轮次用尽（§5.8.5）'；05 §5.7.2：'provider 视图在剔除后为空 → 不创建 provider 回合'。04 R6 守卫列举 clarify/escalate/轮次用尽/4 次/重试耗尽/上限，无'快照为空'；04 §4.3.4 映射表无该行。",
+  "suggested_fix": "04 R6 守卫增加'createTurnTx 为 proposer 枚举得空快照 → rounds_exhausted'，§4.3.4 增加一行'下一轮 provider 快照为空 → R6（不建 turn）'。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-28",
+  "severity": "low",
+  "section": "04-state-machines-part3.md §4.3.5、10-agent-runtime.md R16、12-api-part7.md、15-operations-part2.md §15.5 步 2",
+  "description": "活性巡检的名字与频率三处不同，15 的排空等待上限引用了 10 中不存在的常量。",
+  "evidence": "04 §4.3.5：'ops.livenessSweep（10 / 12：cron 每 15 分钟…）'；10 R16：'每 5 分钟的 ops.sweepStuckRuns'；12 §12.20 与 15 §15.8：'ops.livenessSweep 每 5 分钟'。15 §15.5 步 2：'等待上限 = WATCHDOG_DELAY_MS（10 从 SDK 时间预算推导）+ 60 秒'，10 §10.11 只定义 WATCHDOG_FIRST_MS (275 s)、WATCHDOG_REARM_MS、WATCHDOG_FINAL_MS (935 s)、ACTION_WALL_MAX_MS (488 s)。",
+  "suggested_fix": "04 改为 5 分钟；10 改名 ops.livenessSweep / ops.activeAttemptCount；15 §15.5 改为'等待上限 = ACTION_WALL_MAX_MS + 60 秒'。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-29",
+  "severity": "medium",
+  "section": "04-state-machines-part2.md R2 / 09-constraint-changes-part4.md V9（canon D06 字面）",
+  "description": "按 D06 字面实现，被取代 run 处于 negotiating/needs_input 时的 active 提案（评估尚未完成，甚至 customer 代理还没评估）也可经预检直接进入 pending_approval；04/09 都只把它列为待裁决问题却已按字面写进迁移表与走查。这需要在实现 startRunTx 前拍板。",
+  "evidence": "04 R2 守卫：'被同一事务取代的旧 run 的 currentProposalId = P，P 在本事务内刚由 active 变 stale'，无 run 状态限制；04 Q1：'canon D06 字面让…negotiating / needs_input 中也可经 R2 直接进入 pending_approval，跳过尚未完成的代理评估…本章按字面实现'；09 V9：'run#3 直接 pending_approval 沿用 v2（未完成的代理评估被跳过，见 04 Q1）'；18 N-27 未裁决。",
+  "suggested_fix": "canon D06 收窄为'仅当被取代 run 处于 pending_approval（或 needs_input 且 kind = rounds_exhausted 且提案仍通过）时沿用'；04 startRunTx 的 R2 条件加 cur.status === 'pending_approval'；09 V9 改为新 run 重新评估 v2（provider 快照 mustInclude 该 candidateKey）。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-30",
+  "severity": "low",
+  "section": "00-overview-part2.md §0.6、02-domain-model-part5.md/part6.md、各章'与 canon 的对照'、18-decisions-open-questions-part9.md",
+  "description": "大段无增量信息的重复：00 §0.6 逐字复制 canon §1.1–1.3（约 5 KB）；02 part5/part6 把 INV-01…78 第三次复述（00-invariants、02、03 §3.17）；每章末尾的'与 canon 的对照'表只是把本章内容按 canon 条目再列一遍；18 part9 与 part7 的 N 列表重叠。读者需要维护的同义文本成倍增加，且已出现漂移（见 completeness-23）。",
+  "evidence": "00 §0.6：'下列三张表从 00-canon.md §1.1–§1.3 逐字复制…本表不另行维护'；02 part5 表头：'编号与完整谓词取自 00-invariants-part2..6…本章按落点重新组织'但仍逐条复写谓词；18 part9：'本表是…各章开放问题小节的索引…已在 §18.4.2 合并为 N 编号的条目标注对应 N'。",
+  "suggested_fix": "00 §0.6 改为指向 canon §1 的一句话加 5 条'补充的非 canon 术语'；02 part5/6 只保留'INV 编号 → 数据落点/唯一写者/守卫码'三列，不复写谓词；各章'与 canon 的对照'压缩为只列有偏离或细化的条目；18 part9 删除与 part7 重复的行。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-31",
+  "severity": "low",
+  "section": "13-frontend-part6.md §13.16 / 16-testing-part4.md TC-EXE-01（对照 08-approval-execution-part5.md §8.5.2、12-api-part4.md §12.15）",
+  "description": "返回值判别字段与 DTO 字段名在测试章与定稿章不一致，按 16 写断言会失败。",
+  "evidence": "16 TC-EXE-01：'第二次返回 { kind: \"executed\", alreadyExecuted: true }'；08 §8.5.2 与 12 §12.15：approvalRecordResultV 用 status 判别：'{ status: \"executed\", executionId, alreadyExecuted }'。16 §16.4.3 seedRoom 确认顺序 customer → finance → provider（provider 触发开房），14 §9.2 confirmOrder ['provider', 'customer', 'finance']（finance 触发），影响 room_opened 的 actorUserId 与 golden 事件序列。",
+  "suggested_fix": "16 TC-EXE-01 改为 status: 'executed'；16 §16.4.3 的确认顺序改为读取 fixture.confirmOrder。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "invariants-01",
+  "severity": "high",
+  "section": "08-approval-execution-part5.md",
+  "description": "approvals.record 的 S9 用一个全提案的读上限（201 行）把超限变成 internal，这个上限对 reject 同样生效。它实质上就是 canon D02 已否决的全局决定上限，会挡住唯一的逃生口 reject。provider 一人就能把它填满：每次改一个无关条目的价格触发 bump，R2 沿用同一提案后自己再批一次，每小时 6 次，约 33 小时后该提案上任何人的 reject / approve 都返回 internal，而且之后的 bump 仍会经 R2 沿用它，冻结一直持续。",
+  "evidence": "08 part5 S9：\"读本提案**全部**审批：`approvals.by_proposal_user.eq(proposalId).take(MAX_APPROVAL_ROWS_PER_PROPOSAL + 1)`（= 201）… 超上限或 seq 重复 → `internal`\"（位于 S13 的 reject / approve 分支之前）；同章 §8.5.2：\"reject 不受任何决定次数上限约束\"；part7 §8.7.4：\"触顶意味着同一保留提案经历约 45 次以上 bump，按 `internal` + critical opsLog 处理 … reject 不计入任何上限\"；09 M12 / V7：无关改价 bump 后 R2 沿用同一 proposalId。",
+  "suggested_fix": "改写 08 part5 S9：reject 与 withdraw 只读本人最新一行（`by_proposal_user.eq(proposalId).eq(userId).order('desc').first()`；同房间的冲突已由 M-ROOM 的 writeSeq 保证），不读整区间，也不设上限。approve 仍读整区间以判定集合，去掉 `internal` 上限，改为按人限额：新增 `MAX_APPROVE_ROWS_PER_USER_PER_PROPOSAL`，超限只对 approve 返回 `run.rate_limited`。同步修改 §8.7.4 的\"审批行上界\"、O4、K 表，以及 16 中 CE-056 的期望（增加\"200 行后 reject 仍成功\"一例）。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-02",
+  "severity": "high",
+  "section": "10-agent-runtime-part3.md",
+  "description": "G3 守卫可能卡死。10 规定 G1–G3 不符时只把 attempt 标 stale，回合保持 running；reconcile 的 running 分支遇到终态 attempt 时调用 applyRetryDecision，而 decideRetry 对 stale 的规定是\"只 runs.reconcile\"，结果是空操作或互相递归。04 里 A1 在回合快照不符时\"否则 reconcile\"，reconcile 最后一步又调 beginAttemptTx，同样可能无限递归；04 的 G3 行写的是\"同上\"，没有说清回合是否置 stale。触发条件是回合快照与房间 cv 不一致、但 run 的 cv 与房间一致（G3 本来就是为这种纵深场景设的）。此时提交事务回滚、看门狗也失败，attempt 永远停在 running，巡检判为\"有在途\"而跳过，run 永久停在 negotiating。",
+  "evidence": "10 §10.7.2 第 3 步：\"G1 … G2 … G3 … | attempt → `stale`（…`staleGuard`）、usage 照记、结算；事件 …；`runs.reconcile(run._id)`\"（没有回合 → stale）；§10.9：\"case 'running': … if (a.status === 'running') return 'in_flight'; return applyRetryDecision(ctx, turn, a);\"；§10.10.2：\"`stale`（任何守卫） | — | — | 只 `runs.reconcile`\"；04 §4.5.1 A1：\"`turn.constraintsVersion === room.constraintsVersion`（否则 reconcile）\"；04 §4.3.5 末行 `return beginAttemptTx(ctx, turn, { why })`；04 §4.5.2 的 G3 行只写\"同上\"。",
+  "suggested_fix": "(1) 10 §10.7.2 第 3 步与 04 §4.5.2：G2、G3 失败且 attempt 所属回合非终态时，同事务 `setStatus(turn, running|scheduled → stale)`，并把 G3 行写明，不再用\"同上\"。(2) 10 §10.9 与 04 §4.3.5：`turn.status === 'running'` 且当前 attempt 为 `stale` 时，按 stale 回合处理，走 `replaceTurnTx`。(3) decideRetry 为 stale 增加结果 `{ kind: 'replace_turn' }`。(4) 04 §4.5.1 A1 与 10 B2：回合快照不符时只把回合置 stale 并返回 `stale`，beginAttemptTx 内禁止再调 reconcile，由外层调用者调用一次。(5) 增加 SM-05b / RT-08b：只有回合 cv 漂移、run cv 一致时，断言建出替代回合、无递归、run 不停在 negotiating。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-03",
+  "severity": "high",
+  "section": "05-protocol.md",
+  "description": "被规则阻断的 provider 候选要不要插入提案行，05 与 03/04/06/08/09/14 互相矛盾。05 规定照常插入，按 P1 它会成为 active 的 currentProposalId。这会破坏 INV-SM-05/06（active 提案在插入时都通过检查），会让 R2 / rounds_exhausted 拿一个从未被评估过、当时被阻断的提案去沿用或送审，也会让版本号与全部走查（v2 被阻断 / v3 $800 对比 v2 $800）以及 16 的期望错位。",
+  "evidence": "05 P10：\"provider 的提案被 `checkProposal` 阻断时照常插入提案行（历史不可篡改）\"；05 E2：\"提案照常插入（只追加），blocked\"；05 §5.15.1 第 6 步：\"stub 选 O2 → v2 $900 → blocked\"；而 04 §4.3.4：\"**不插入提案**；turn 记 `outcome: { blockedCandidateKey }`\"；03 part7：\"**被规则阻断的候选不插提案**\"；06 §15 Q6 与 14 part7 第 5 条都写了\"合稿时需统一 05 的编号\"。",
+  "suggested_fix": "按 03/04 统一，改写 05：P10 改为\"阻断的候选不插提案、不消耗版本号，`turns.outcome.blockedCandidateKey` 记录，历史由 turns 承担\"，并把\"阻断的提案不入库（历史缺口）\"从否决栏删去；E2 同步修改；§5.6.1 第 15 步与 §5.7.3 第 5–6 步改为\"`checkProposal` 通过才 `insertProposal`\"；§5.15.1 第 6–9 步改为 v2 = $800（第 2 轮），删掉\"版本号是 v3\"的说明。00-invariants INV-55 补一句\"被规则阻断的候选不插提案\"。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-04",
+  "severity": "high",
+  "section": "06-rules-engine-part6.md",
+  "description": "`isExecutable` 有四种互不兼容的定义，06 和 08 还都把它放在 `core/engine/executable.ts` 里，签名不同。canon D02、12 和 06 的调用点表都写\"approve 前同事务 isExecutable\"。如果实现者用 08 那个含审批集合的定义，最后一票之前的每次 approve 都会因集合不齐被 `approval.not_executable` 拒绝，审批根本无法推进。",
+  "evidence": "04 §4.1.1：\"后者（isExecutable）= 前者 ∧ `evaluateApprovalSet` 完成\"；06 §9.1：isExecutable 只含状态守卫、termsKey 与 checkProposal，并注明\"审批是否齐由 08 的 `evaluateApprovalSet` 判定，不在此函数内\"；06 §9.2 的 approvals.record 行：\"approve：`isExecutable` 不通过 → `approval.not_executable`\"；08 §8.4.2：`for (const r of i.approvalSet.reasons) reasons.push(r);`，并称\"08 对 canon 'isExecutable' 的唯一定义\"；12 码表：\"approve 前同事务 `isExecutable` 不通过\"；INV-35：\"isExecutable(p) ⇔ p.status === 'active' ∧ … ∧ checkProposal(...).blocking = ∅\"。",
+  "suggested_fix": "只保留 08 §8.4.2 一个定义（当前性 ∧ passesChecks ∧ allApproved）。06 §9.1 那个函数改名为 `evaluateCurrentProposal`（只含状态守卫、termsKey 与 checkProposal），并移出 `core/engine/executable.ts`；06 §9.2 的 approvals.record 行、12 §12.15 与码表、INV-35 都改成\"approve 前跑 `isCurrentForApproval` ∧ `passesChecks`\"。canon D02 的措辞同理需要澄清（canon 意见）。增加一条结构测试：仓库内只有一个导出名为 `isExecutable` 的函数。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-05",
+  "severity": "high",
+  "section": "04-state-machines-part2.md",
+  "description": "每 run 的 attempt 或美元上限用尽后开哪种请求，各章三种说法：04 是给失败方的 agent_failed、只有 end_run；05/10 是给 customer 的 rounds_exhausted（cause 为 call_limit）；00-invariants 是给当前回合角色的 agent_failed。12 Q12 仍悬而未决。迁移表、请求生成、测试期望（SM-21、RT-05、CE-135、TC-RUN-15）因此不可能同时成立。",
+  "evidence": "04 R6：\"run 调用 / 美元上限 → `agent_failed`（只含 `end_run`）\"；04 U5：\"选项只有 `end_run`\"；04 §4.8.3：\"run 上限触发时只有 `end_run`\"；05 §5.8.5：\"run 的 attempt 上限或美元上限用尽（10，`cause: 'call_limit' | 'spend_limit'`）\"进入 rounds_exhausted；10 B4：\"05 §5.8.5 → `needs_input` + `rounds_exhausted` 请求（`questionKey` 带 `call_limit`）\"；INV-72 ②：\"超限不调度、转 `needs_input(agent_failed)`\"；CE-135：\"run → `needs_input(agent_failed)` 给当前回合角色\"；12 Q12。",
+  "suggested_fix": "统一采用 05/10：给 customer 开 rounds_exhausted 请求，选项为 choose_candidate（在自身视图内，零模型调用即可送审）和 end_run，不提供 keep_as_is。改写 04 的 R6 / U5、§4.8.3、SM-21，00-invariants 的 INV-72 ② 与 CE-135，以及 12 Q12；并在 05 §5.11.2 的 agent_failed 行保留\"call_limit 除外\"的说明。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-06",
+  "severity": "high",
+  "section": "12-api-part2.md",
+  "description": "\"执行后再次承诺已执行范围\"并没有被杜绝。startFollowUp 把旧房间全部已确认目录（包括 CO-1 已执行的条目）复制为新房间的草稿，provider 确认后它们就进入候选。provider stub 选\"条目数最多、金额最高\"的候选，customer stub 只要必需项被覆盖就建议接受，finance 只要预算够就接受，所以只要余量允许，默认路径会把已执行的 sso_login / audit_log_export 再提一次、再承诺一次（再写一条台账 commit 和任务）。D04 / INV-52 声称新房间\"天然杜绝\"，CE-112、CE-168 只依赖 customer 去掉必需项，没有测代理会不会重新提议。",
+  "evidence": "12 §12.6：\"`appendCatalogRow` 把旧房间每个 itemKey 的当前已确认行复制为新房间的 `status: \\\"draft\\\"`\"；05 §5.14 provider stub：\"选'条目数最多 → 金额最高 → candidateKey 字典序最小'的候选（最大范围）\"，customer stub：\"base 满足本方硬约束（必需项 ⊆ itemKeys、deliveryDate ≤ deadline）→ recommend_accept\"；08 A9：\"新房间以零新不变量得到同一旅程，并天然杜绝'已执行范围被再承诺一次'\"；01 part2：\"已执行的条目不会在新房间被重复要求（它们不在新房间的必需项里）\"。",
+  "suggested_fix": "12 §12.6 与 04 C1 改为：只复制 itemKey 不在 `followedExecution.terms.itemKeys` 中的行（modifier 可以复制）；已执行条目在新房间只读显示为 \"Delivered in CO-n\"。provider 若确实要再卖同一项，必须用新的 itemKey 显式确认（这是新范围，由人决定）。CE-112 / CE-168 / TC-EXE-06 增加断言：follow-up 房间的 provider 快照不含旧执行的 itemKey。00-invariants INV-52 补\"跨房间\"一句。这是对 canon D04\"目录复制为 draft\"的细化（canon 意见）。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-07",
+  "severity": "high",
+  "section": "10-agent-runtime-part2.md",
+  "description": "回合等待与退避的机制、字段，10 与 03/04 不一致。04/03 让回合在两次 attempt 之间保持 running，用 `waitingReason` 加 `beginFnId`，退避靠调度一次 `turns.beginAttempt`。10 则立即建 attempt、延迟派发，用 `deferredFnId` / `drainParked`，并要求回合\"保持 / 回到 scheduled\"——这是 canon §1.3 与 04 迁移表都不存在的 running → scheduled，setStatus 会抛 internal：重试回合遇到日美元上限或排空时，整个 turns.fail 回滚，最后由看门狗兜底成 agent_failed。10 的 reconcile 读的字段在 03 中不存在。另外 `extraRoundGranted`（05/10）、`roundsExtended`（03/04）、`keepAsIsUsed`（06/12）三名并存；`providerRejectLocked` 在 03 没有落点；节流计数 10 写 `.take(7)` 原始事件，03 写按 distinct commitTs 计数且过滤类型——按 10 实现，一次 setCap 产生的 5 条事件就会耗掉大半配额。",
+  "evidence": "04 §4.4：\"两次 attempt 之间 turn 保持 `running`，用 `waitingReason: \\\"backoff\\\"` + `beginFnId` … canon §1.3 没有 `running → scheduled`\"；10 §10.4.5：\"turn 保持 / 回到 `scheduled`，… `deferredFnId = runAfter(…, turns.beginAttempt, …)`\"；10 B3：\"回合留在 / 回到 `scheduled`，`drainParked: true`\"；10 §10.9：`turn.deferredFnId && await isPending(...)`、`turn.drainParked`；03 part5 的 turns 只有 `waitingReason` / `beginFnId`；10 §10.12.1：\"按 `events.by_room_actor` … `.take(7)` 计数\"，对比 03 §3.11.3：\"按 **distinct `commitTs`** 计数\"；04 §4.15 Q8 已列出这些分歧。",
+  "suggested_fix": "以 03/04 为准改写 10：§10.3 的字段改为 `waitingReason` / `beginFnId` / `outcome` / `retryOfTurnId` / `roundsExtended`；§10.4.5 与 B3 / B6 不改回合状态（scheduled 留在 scheduled，running 留在 running，只写 `waitingReason`）；§10.9 的 reconcile 替换为 04 §4.3.5 的分支；自动重试的退避在 04 与 10 之间二选一，写进 04 §4.5.1；§10.12.1 的节流计数引用 03 §3.11.3；05/06/12 的 `extraRoundGranted` / `keepAsIsUsed` 改名为 `roundsExtended`；03 §3.8 的\"不存的计数\"列出 `providerRejectLocked` 的派生方式（本 run 是否已有 provider 的 agent_escalated 请求以 keep_as_is 被回答）；统一 `actionFnId` / `dispatchFnId`。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-08",
+  "severity": "high",
+  "section": "04-state-machines-part2.md",
+  "description": "无人可放松时的兜底请求，06 与 04/05 冲突。06 给 customer 发带 `disclose` 选项的 infeasible 请求，回答后重跑预检，好让 finance 看到冲突并收到 raise_cap；04/05 只给 end_run。按 06 实现时，04 的 R14 把 disclose 定义为\"为发问方新建同轮同 kind 的 turn\"，而 infeasible 请求没有发问方、run 也没有回合，回答没有合法迁移（会报 internal 或建出空回合）。按 04 实现时，本可由 finance 抬上限解决的房间被直接引向 ended_no_agreement，违背核心 8\"缺信息时向人请求\"。",
+  "evidence": "06 §11.2：\"都不满足 → 回退到 `relaxationOrder[0]` 的角色 | … 回退时为该角色尚未向其他放松角色披露的硬字段各一个 `disclose`，末尾 `end_run`\"；06 §11.4：\"`disclose` … 写披露（不 bump）→ 重跑预检 → 新请求或进入协商\"；06 §15 Q9：\"回退分支 `disclose` 回答后 run 保持 `needs_input` 并开新请求（04/05 需要这条迁移）\"；04 R14：\"`disclose`：写 `sharedFacts`，为发问方新建同轮同 kind 的 turn\"；04 §4.8.3：\"向 customer 发 `kind: infeasible` 请求…选项只有 `end_run`\"；05 §5.11.2：\"都没有 → customer，只给 `end_run`\"；T06-U33。",
+  "suggested_fix": "采用 06，并在 04 新增迁移 R20：`needs_input → needs_input / negotiating`（回答 infeasible 请求的 disclose）。同事务内：写 `sharedFacts`，旧请求置 `answered`，用同一 `buyerFeasible` 与 `buildHumanRequests` 重跑预检；全局仍无解则 `openHumanRequestTx` 生成新的 infeasible 请求（此时 finance 可得 raise_cap）；预检有解则 R1 式建 provider 回合。同步改 04 §4.8.3、05 §5.11.2 的兜底选项与 §5.11.4 的 disclose 行，以及 INV-73。canon D15 的\"disclose → negotiating\"需要据此细化（canon 意见）。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-09",
+  "severity": "medium",
+  "section": "00-invariants-part6.md",
+  "description": "INV-67 要求 run 进入终态时同事务清空 `rooms.currentRunId`，而 03/04/08 都让它指向最新的 run（任何状态）。04 的 R2 依赖 `cur` 拿到刚被取代的旧 run，才能比对 `currentProposalId`；derivePhase 也依赖它显示 canceled / no_agreement。照 INV-67 实现会让 R2 永不触发（CE-058、CE-129 失败），阶段显示也会错。02 Q2 已改用 04 的语义，但电池原文未改，16 仍从这里取编号。",
+  "evidence": "INV-67：\"`rooms.currentRunId` 至多指向一个 `status ∈ {negotiating, pending_approval, needs_input}` 的 run，进入终态时同事务清空\"；03 part3：\"`currentRunId: v.optional(v.id(\\\"runs\\\")), // 最新 run（任何状态）`\"；04 `startRunTx`：\"`if (p?.status === \\\"stale\\\" && cur?.currentProposalId === p._id && passesChecks(p, input).ok)`\"；08 X13：\"`currentRunId` 保持指向本 run\"；02 part7 Q2。",
+  "suggested_fix": "把 INV-67 改为：\"`rooms.currentRunId` 指向房间最新 run（任何状态，只由 `startRunTx` 写）；非终态 run 至多一个，且若存在必为 currentRunId 所指\"。落点改为 `startRunTx` 断言 cur 为空或已终态；删除\"进入终态时同事务清空\"。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-10",
+  "severity": "medium",
+  "section": "00-invariants-part3.md",
+  "description": "人拒绝后给 proposer 代理的反馈是否带 reasonKey，INV-30 与 04 R10 写带，05 与 08 写任何他方代理都不带。canon C28 规定同侧也不默认共享；finance 的 `price_poor_value` / `over_our_limit` 进入 provider 代理上下文，等于把\"预算是瓶颈\"这一私密推断交给对方，不变量本身写成了泄露。",
+  "evidence": "INV-30：\"run → `negotiating`（下一轮，反馈只含 reasonKey）\"；04 R10：\"新建 provider `propose` turn（反馈 = 被拒版本 + `reasonKey`…）\"；05 §5.8.6：\"provider 只见 'v3 rejected'，买方代理见 'v3 rejected by {role}'；**不含 `reasonKey`**\"；08 A13：\"**任何他方代理**都拿不到人拒绝的 `reasonKey`\"；08 O14。",
+  "suggested_fix": "INV-30 改为：\"run → negotiating，反馈只含被拒版本（provider 代理不含角色，买方代理含 byRole）；任何他方代理上下文不含 reasonKey / note\"。落点加上 07 §7.14 的上下文白名单。04 R10 的括号改为\"反馈 = 被拒版本（不含 reasonKey，05 §5.8.6）\"，并在 16 增加 provider 请求体中无 reasonKey 的金丝雀断言（对应 08 I8）。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-11",
+  "severity": "medium",
+  "section": "05-protocol-part3.md",
+  "description": "提案物化时\"今天\"取自哪里不一致：05 用 todayInTimeZone(Date.now())，04/06/08/09/12 用 room.localDate。另外 09 接受午夜后最多约 1 小时的滞后，这段时间插入的提案按前一天物化交付日：交付日比 provider 确认的工期早一天，`by_deadline` 可能误判通过；cron 推进后比较的是 in_past 结论，不会翻转，所以这份短了一天工期的条款会被批准并执行。",
+  "evidence": "05 §5.7.3 第 2 步：\"`today = todayInTimeZone(Date.now(), room.timeZone)`（mutation 权威计算，canon D22）\"；04 P1：\"`deliveryDate = room.localDate + max(leadDays)`\"；12 §12.15 ⑦：\"交付日按 `room.localDate` 物化\"；09 §9.6.7：\"代价是本地午夜后至多约 1 小时的滞后（期间插入的提案按前一日物化交付日，偏早一天，不会误判 `date.in_past`）\"。",
+  "suggested_fix": "05 §5.7.3 统一为 `room.localDate`。消除滞后窗口：(a) `clock.rollLocalDate` 在每个房间本地午夜按 `runAt` 精确调度（canon D22 允许），每小时 cron 只作兜底；(b) `insertProposal` 与 choose_candidate 物化前若 `todayInTimeZone(now, tz) > room.localDate`，先在同事务调用 `rollLocalDateTx`（可能 bump，回合随之被 G1 判 stale 并 reconcile）。在 09 §9.6.7 与 16 增加\"00:30 插入提案\"的用例。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-12",
+  "severity": "medium",
+  "section": "06-rules-engine-part2.md",
+  "description": "06 写 bump 时与\"上一个约束版本存下的投影串\"比较，并举例存在 constraintRevisions 行；09 写投影只在事务内存中做前后比较、从不持久化。投影包含 finance 私密的 capCents，而 constraintRevisions 正是 provider 可见的 `constraints_changed` 事件通过 restrictedRef 指向的行；照 06 实现会把私密上限落进一张面向他方渲染的表。",
+  "evidence": "06 §5.3：\"写入口先写数据，再对写入后的全局输入算 `hardProjection`，与上一个约束版本存下的投影串比较（字段归 03/09，例如 `constraintRevisions` 行）\"；09 §9.1.1：\"投影只在事务内存中求值（before / after），**从不持久化**：它含 finance 私密的 `capCents`\"；09 §9.14 Q10。",
+  "suggested_fix": "06 §5.3 改为\"`withConstraintChange` 在同一事务内对写入前、写入后的全局输入各算一次 `hardProjection` 并比较；投影不持久化（09 §9.1.1）\"，删去\"存下的投影串\"。06 与 09 只保留一份 `hardProjection` 实现（目前两份对 undefined / null 的写法不同）。增加 schema 测试：`constraintRevisions` 无字符串型投影字段。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-13",
+  "severity": "medium",
+  "section": "00-invariants-part3.md",
+  "description": "INV-24 / INV-57 / CE-046 与 06/09 的落点不符：(1) INV-24 写\"递增 ⇔ 投影不等\"，但 clock 与 room_opened 两种 bump 发生时投影相等或无前值，而按 INV-24 字面，clock bump 永远不该发生；(2) 性质\"投影相等 ⇒ 阻断集合相等\"缺少\"同 localDate、同台账\"的前提，原样写成测试是错的；(3) cause 枚举写成 request_answered，缺 room_opened，而 09 的枚举是 room_opened / brief_confirmed / catalog_changed / human_answer / clock；(4) CE-046 写只改标题时 revision+1，与 INV-R8 / CC-D3（revision 不变、editNo+1）相反，照写的用例会断言出\"改标题触发 stale_source\"；(5) replayRuleView 与 replayRuleInput 名字不一致。",
+  "evidence": "INV-24：\"递增 ⇔ `scenario.hardProjection(RuleInput)` 前后 `canonicalJson` 不等 … `cause ∈ brief_confirmed / catalog_changed / request_answered / clock` … 性质：'投影相等 ⇒ 阻断集合相等'\"；06 §5.3：\"`cause: 'clock'` 例外，强制递增\"；06 T06-P4：\"同 `localDate`、同台账 … 下投影相等 ⇒ …\"；09 `revisionCauseV`；CE-046：\"只改 `title` 或 `taskTemplates`（revision+1）\"；06：\"仅改 `title` / `taskTemplates` 时 `revision` 不变（… `editNo + 1`）\"。",
+  "suggested_fix": "INV-24 改为：\"open 房间里，非 clock、非 room_opened 的写入使投影改变 ⇔ 同事务 bump；clock 由 `clock.rollLocalDate` 在时间结论翻转时强制 bump；room_opened 在 setup → open 时 bump 到 v1\"。性质加上\"同 localDate、同台账\"的前提。cause 枚举与 09 §9.3 一致。CE-046 改为\"同 revision、editNo+1\"。INV-57 的 replayRuleView 改为 replayRuleInput。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-14",
+  "severity": "medium",
+  "section": "03-schema-part3.md",
+  "description": "startFollowUp 的\"每个执行至多一个后续房间（派生键幂等）\"在 03 没有落点：rooms 表没有 by_followsExecutionId 索引，按 07 / 12 的承诺实现只能全表扫描，或者在双击、并发时建出两个后续房间（两份目录草稿、两套预分配席位，基线预填也会被重复确认）。",
+  "evidence": "12 §12.6 守卫 ③：\"已有 `followsExecutionId = executionId` 的房间 → 返回 `{ roomId: 既有, created: false }`（读 `rooms.by_followsExecutionId`，03 需增设该索引，见 §12.25 Q1）\"；03 part3 的 rooms 索引只有 `by_createdBy`、`by_status`；12 §12.25 Q1。",
+  "suggested_fix": "03 §3.5 的 rooms 增加 `.index(\\\"by_followsExecutionId\\\", [\\\"followsExecutionId\\\"])`。§3.14 唯一性落点表新增一行：\"每个 execution 至多一个后续房间 | by_followsExecutionId | rooms.startFollowUp | 旧房间 openRoomTx(allow: executed) 写 writeSeq，加先查后插\"。16 增加双击 startFollowUp 只建一个房间的用例。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-15",
+  "severity": "medium",
+  "section": "00-invariants-part6.md",
+  "description": "INV-75 / CE-146 描述的首个 run 启动方式与 04/09/10/12 不符。按章节，房间在全部就绪时才由 openIfReady 打开，然后 bump(room_opened) → react → startRunTx（cause 为 room_opened），不存在\"房间已 open 时第三份简报确认，以 cause briefs_confirmed 开 run\"的路径。系统路径在排空时照常建 run、只把首回合停泊；节流满时被拒的是那次 briefs.confirm 本身，简报不会写入。CE-146 的\"简报写入成功、run 不开\"两种情形都不会出现，照写的用例必然失败。",
+  "evidence": "INV-75：\"第三份简报 `briefs.confirm` 使三方均已确认且 `room.status === 'open'` ⇒ 同事务 `runs.start(cause: 'briefs_confirmed')`\"；CE-146：\"简报版本写入成功，run 不开，房间显示'维护中 / 稍后重试'\"；04 M2：\"`constraints.bump({ cause: \\\"room_opened\\\" … })` … `react()` → `startRunTx(cause: \\\"room_opened\\\")`\"；04 §4.3.3：\"系统路径永不因上限或排空而抛错 … 照常插入 run 与 turn\"；10 §10.12.3 第 2 条；12 part3 第 5 条。",
+  "suggested_fix": "INV-75 改为：\"setup 期的写入只写来源；最后一个就绪条件满足时，同事务 openIfReady → bump(room_opened) → react → startRunTx(cause: room_opened)；系统路径不受 draining 与节流阻断（draining 时首回合 waitingReason = draining）\"。CE-146 改为两条：(a) draining 时就绪，run 建立、首回合停泊、无 attempt，解除排空后恢复；(b) 节流已满时那次写入整体被拒、不写简报。同步修改 16 TC-RUN-14。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-16",
+  "severity": "medium",
+  "section": "08-approval-execution-part5.md",
+  "description": "场景版本守卫 S5 位于分支之前，对 reject / withdraw 同样生效。只要部署提升了场景版本，所有旧版本的 open 房间都无法拒绝，也无法批准，直到一次未定义的迁移（O12 自认迁移的 cause 待 canon 补录）。reject 不运行任何规则，不需要版本一致；这条守卫变相成了\"挡住 reject 的上限\"。",
+  "evidence": "08 S5：\"`getScenario(room.scenarioKey).version === room.scenarioVersion` | `run.invalid_state{guard:'scenario_version'}`\"（位于 S13 之前）；K28：\"运维按 15 迁移（bump 后重批）\"；O12：\"对受影响房间 `constraints.bump`（cause 取值待 canon 补录）后重批\"；06 §12.4：\"只钉 `id.version`，不符即拒绝写入\"。",
+  "suggested_fix": "S5 只对 approve 生效（approve 需要按当时规则重算）；reject / withdraw 跳过版本守卫照常记录，reject 后建回合的 createTurnTx 在版本不符时让 run 走 needs_input(agent_failed, end_run)。15 定义迁移流程，并请 canon 增加 cause `scenario_migrated`（或规定房间未全部终态前禁止提升场景版本）。12 §12.15 ④ 同步修改。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-17",
+  "severity": "medium",
+  "section": "00-invariants-part8.md",
+  "description": "电池中有一批期望与已定稿章节冲突，16 §16.11.2 没有列入修订，按电池写出的用例会断言错误结果：CE-055（无可撤回时 withdraw 拒绝 / 08 返回 unchanged）；CE-056（交替 60 次 / withdraw 第 11 次即 run.rate_limited）；CE-060（期望 run.invalid_state / 04 是 request.not_open，05 §5.11.3 是 version.stale_constraints）；CE-068（非 creator 期望 approval.missing_role / 实际是 auth.not_creator）；CE-075 与 INV-43（rationale 1,500 码点 → schema_violation 重试 / 05 §5.5.2 是截断、不重试）；CE-127（reconcile 转 needs_input(agent_failed) / 04、10 是取代并 react）；CE-132（reject 清空 currentProposalId / 08 §8.5.4⑤ 与 09 §9.5 保留）；CE-144（旧请求 answered / 04 R19 是 superseded 加 regenerated）；INV-29、INV-31、INV-34 的码名；INV-42 把 modelGateway 放在 core/engine，违反 D21 的纯度规则（10 放在 convex/agents）。",
+  "evidence": "CE-055：\"拒绝，不插行\"，对比 08 §8.5.5：\"否则返回 `unchanged`\"；CE-132：\"reject 同事务 `proposal → rejected`，`run.currentProposalId` 清空\"，对比 08 §8.5.4⑤：\"`run.currentProposalId` 保留指向被拒提案（历史）\"；CE-127：\"`runs.reconcile` 把 run 转 `needs_input(agent_failed)`\"，对比 04 §4.3.5：`disposeCurrentRun … react`；CE-075：\"Zod 失败 → `output.schema_violation`，重试一次\"，对比 05 §5.5.2：\"截断而不重试\"；05 §5.11.3：\"`request.constraintsVersion === room.constraintsVersion`（否则 `version.stale_constraints`）\"，对比 04 §4.8.2：\"`request.not_open`\"；INV-42：\"`core/engine/modelGateway.ts`\"。",
+  "suggested_fix": "在 16 §16.11.2 逐条加入修订行，并同步修改 00-invariants 原文：CE-055 改为 unchanged、无行；CE-056 改为交替 10 次后 withdraw 被 run.rate_limited 拒绝、reject 仍成功；CE-060 统一为 04 / 12 的 request.not_open（同时删去 05 §5.11.3 冗余的 constraintsVersion 守卫或统一其码）；CE-068 改为 auth.not_creator；CE-075 / INV-43 改为截断加 rationaleTruncated；CE-127 改为取代并 react 出新 run；CE-132 改为 currentProposalId 保留、提案为 rejected；CE-144 改为旧请求 superseded(regenerated) 并记 answerOptionKey；INV-29 / 31 / 34 的码名对齐 12 §12.4；INV-42 的落点改为 convex/agents/modelGateway.ts。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "privacy-01",
+  "severity": "blocker",
+  "section": "07-permissions-privacy-part6.md",
+  "description": "DX-2 的预检 1 bit 信道没有被挡住，只是被限速，且限速不足以保护核心 1。provider 可以给目录批量改价（catalog.confirm 一批算一次节流），触发 bump 后看新 run 的预检结果：进入 negotiating 时自己的 propose 回合会开始；needs_input 时只看到 run_waiting。这样每次改价得到一次全局可行性判定，候选金额又由 provider 自己定，所以能二分出 finance 的余量。整个过程不花 provider 一次模型调用，finance 也从未做过任何披露决定。07 自己算出约 2.3 小时就能精确到 1 美元，12 却称这是'压到不可用的速度'；唯一的补救是用户决策 N-29（每日上限），至今悬而未决。反方向同样成立：finance 用 setCap 探测，约 1 小时（5 个条目约 5 bit）就能反推出 customer 未向其披露的必需项集合。（对 canon 的异议：D12 ⑥ 每小时 6 次只能减速，并没有像 D12 自称的那样'堵住零成本预言机'。）",
+  "evidence": "07 §7.13：'$0–$10,000 区间、$1 分辨率二分余量约需 14 bit；仅靠 DX-2，provider 需要 ≥ 约 2.3 小时连续、全员可见的改价'；12 §12.12 末段：'每小时 ≤ 6 次把二分探测压到不可用的速度'；12 §12.12：catalog.confirm '节流 constraint_writes（一批计一次）'；04 §4.2 注：buyerFeasible '对 provider 泄露的至多是 run 在跑 / 在等 1 bit'；18 N-29：'是否在每小时 6 次之外再加每房间每日上限……用户决策'。",
+  "suggested_fix": "07 §7.13 和 12 §12.2 第 7 条增加一个与 ⑥ 并列的约束桶 `price_writes`：房间 open 期间，改变 priceCents/leadDays/新增/retire 的 catalog.confirm 每房间每 24 小时 ≤ 3 次，每个 open run 内同一 itemKey 改价 ≤ 1 次；setCap 与 customer 硬字段变更共用一个每房间每 24 小时 ≤ 6 次的桶（计数源仍是命令事件，与 03 §3.11.3 同法）。07 §7.21 R-1 改写为总量上界（例如每房间每天 ≤ 9 bit），12 §12.12 删除'不可用的速度'。16 新增 TC-AUTH-13：第 4 次价格类目录确认返回 `run.rate_limited`，第 7 次 setCap 同样被拒。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-02",
+  "severity": "high",
+  "section": "07-permissions-privacy-part4.md",
+  "description": "约束变更由谁发起被泄露给了 provider。D14、DX-5 和 09 都规定 provider 只能看到 'Constraints changed'，连谁改的都不该知道。但 brief_confirmed{role, version} 事件和 rooms.view.members[].briefVersion 对全员可见（DX-7）。结果是：finance 的简报版本号加一和 cv 加一出现在同一提交里，就说明 finance 改了上限，因为它唯一的硬字段是 capCents；customer 的情况同理。raise_cap 的回答还会同时写出 human_request_answered（provider 看到'resumed'）和 brief_confirmed(finance)，provider 由此知道 finance 通过人工请求提高了上限。再配合 DX-2，provider 可以推断出变化方向。07 内部 DX-5 与 DX-7 互相矛盾。",
+  "evidence": "07 DX-5：'变更角色只给 customer / finance，provider 只见 Constraints changed'；DX-7：'简报确认状态与版本号……room'；03 §3.11.1：`brief_confirmed` payload `role、version`，'他人只见 confirmed v{n}'；03 §3.11.3：'raise_cap 回答同时写 human_request_answered 与 brief_confirmed'；12 §12.17 roomViewV：`members: [{ role, …, briefConfirmed, briefVersion }]`；09 part2：'provider 连是谁改的都看不到'；13 §13.6：'Customer and Provider will see: Finance updated a budget constraint.'",
+  "suggested_fix": "07 DX-7 的受众改为 buyer。在 provider 的投影里：房间 open 之后，members[].briefVersion 对非本人角色一律为 null，只保留 briefConfirmed:boolean；brief_confirmed 和 human_request_answered 在 03 §3.11.1 增加 provider 变体——非本人且房间已 open 时不渲染，或并入同一提交的 'Constraints changed (vN)'；13 §13.6 文案改成 'Provider will see: Constraints changed'。16 新增元形态用例 TC-PRIV-21：分别由 finance setCap、customer 改截止日、answer(raise_cap) 引起 bump，provider 的 rooms.view 和 timeline 规范化后逐字节相同。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-03",
+  "severity": "high",
+  "section": "06-rules-engine-part6.md",
+  "description": "rooms.previewChange 的 finance 分支有三份互相冲突的规格，其中 06 和 14 的写法会给 finance 一个不留痕、不限频的预言机。06/14 要求对 finance 无条件做全局 feasibility 枚举并返回'仍存在可行方案'；09 只在 viewCoversRuleInput(finance) 为真时返回 feasibleAfter；07/12/13 只回答预算维度。C0 配置下 customer 没有把 requiredItemKeys/deadline 披露给 finance，此时 feasibility 结论依赖 customer 的私密值，finance 可以反复调用 preview 零成本二分出 customer 的必需集合与截止日。（对 canon 的异议：D12 ② 的前提'首个场景只有 finance 改上限能看到全部规则输入'在 U1/C0 配置下不成立。）",
+  "evidence": "06 §9.2：'rooms.previewChange……只对 finance 的上限变更返回 verdictAfter（对打补丁的输入跑 checkProposal 与 feasibility 枚举）'；14 S7：'只对 finance 返回 verdictAfter：当前提案将被阻断……仍存在可行方案'；09 §9.6.8：'viewCoversRuleInput(role)……verdictAfter { …, feasibleAfter }'；07 §7.11.1：'budgetAfter……只回答预算维度'；12 §12.17 returns 中没有 feasibility 字段；16 TC-PRIV-13 只测角色分支。",
+  "suggested_fix": "以 12 §12.17 的形状为唯一定义：verdictAfter 只含当前提案在新上限下的预算检查（budget.over / below_committed），删除 06 §9.2 的'feasibility 枚举'和 14 S7 的'仍存在可行方案'。09 §9.6.8 的 feasibleAfter 要么删除，要么在 07 写明它只在 viewCoversRuleInput 由当前 sharedFacts 动态判定为真时返回，并补进 12 的 returns。TC-PRIV-13 增加 C0 用例：finance 的 preview 结果在扰动 customer 未披露的必需项和截止日后逐字节不变。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-04",
+  "severity": "high",
+  "section": "14-scenario-scope-change.md",
+  "description": "评估方代理按角色的动作被渲染给了他方的人。14 的模板写着 provider 能看到 'Customer agent declined' / 'Finance agent declined'，room 变体里还有 'Customer agent recommends v1'；13 决策页的 'Learn more' 也展示'他方动作的模板化摘要'。这与 07 PV-10、07 §7.9.4（turns 的解析输出只给本方）、03 turn_completed（'他人只见 finished'）、05 §5.12（轮次结果只有 'vN not accepted'）直接冲突。按 14 实现，provider 每轮都能知道是 finance 的代理还是 customer 的代理没接受，这远多于 DX-4 规定的'每轮 1 bit'；按此实现 TC-PRIV-20 也会失败。",
+  "evidence": "14 §3 reasonKeys 表：'customer 模型 | Customer agent declined'、'finance 模型 | Finance agent declined（不带理由，D12 ①）'；14 §8.5 `agent.recommended` room 变体：'Customer agent recommends v1 (suggestion only).'；14 S5：'事件 agent_recommended ×2'；13 §13.5 区块 10：'他方动作的模板化摘要'；07 PV-10：'对他方代理的反馈只有公开提案、fit 与不带角色和原因的 not_accepted'；16 TC-PRIV-20：'代理动作、reasonKey、topicKey 不出现在他方任何面'。",
+  "suggested_fix": "14 §3 的'provider 看到的形式'一列改为'不显示'。§8.5 的 agent.recommended 只保留 owner 变体；room 和 buyer 变体改为只渲染轮次结局（DX-4），即 'v1 is ready for approval' 或 'Agents start round 2'。14 S5 的事件改为 turn_completed（他人只见 finished）。13 §13.5 区块 10 删除'他方动作的模板化摘要'，只保留本方 rationale 与公开提案序列。TC-PRIV-20 增加断言：provider 和 finance 的 timeline 中不出现 'agent declined' / 'recommends' 一类按角色动作文本。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-05",
+  "severity": "high",
+  "section": "07-permissions-privacy-part4.md",
+  "description": "07 的显式解密清单 DX-1…DX-10 不完整，而按 07 自己的规则，'不在清单里的派生值一律继承最严格输入的类'，因此下列由他方私密约束决定的结论按规则都不该外泄：① customer 从 turns.result 的 counterForwarded 得到的 1 bit（05 声称它已在清单里，实际没有）；② humanRequests.answer(choose_candidate) 返回 regenerated 还是 applied，即全局复核是否通过（12 Q4 把裁决交给 07，07 没有收录）；③ provider 收到的 'countered' 反馈和被强制纳入快照的 counter 候选，等于告诉 provider 一个它没提过的候选能通过全量检查。此外 DX-9 把 counter 写成'公开提案、≤1 bit'，与 05 的'counter 不直接成为提案'矛盾。TC-PRIV-05 的前置条件 declassified() 按 DX-1…DX-10 定义，这些信道要么让测试失败，要么被临时放进白名单而无人评审。",
+  "evidence": "05 §5.8.4：'customer 由此得到 1 bit，属 07 显式解密清单中的可行性 1 bit'；07 §7.8.6 DX-1…DX-10 中没有 counter 转发和 choose_candidate 复核；12 §12.14 返回 `outcome: regenerated`；12 Q4：'choose_candidate 全视图复核失败会向 customer 暴露……需要谁确认：07'；07 DX-9：'customer 的 counter 提案……room（提案公开）……≤ 1 bit / counter'；05 §5.3.1 counter：'不直接成为提案'；16 §16.7.5：'前置：DX-1…DX-10 对 role 公开的值相同'。",
+  "suggested_fix": "07 §7.8.6 新增三项：DX-11 counter 转发结局（给 customer 的是转发与否，给 provider 的是 'countered' 加候选；每次 counter ≤1 bit 全局可行性，每 run ≤4 次）；DX-12 choose_candidate 复核结局（给 customer，每次回答 ≤1 bit，受 D12 ⑥ 约束）；DX-13 provider 对被转发候选的 fit 隐含。DX-9 改写为'counter 不是提案，只经 DX-11 外显'。16 §16.7.5 的 declassified() 同步纳入 DX-11…13，并加一条元断言：declassified 的键集合 == DECLASSIFIED 常量。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-06",
+  "severity": "medium",
+  "section": "12-api-part5.md",
+  "description": "回合失败和 attempt 状态对 provider 可见，provider 能借此还原出 agent_failed 请求的 kind 和 toRole，违反 D12 ⑦。03 把 turn_failed{role, failureKind}、attempts.status 和 runs.lastFailure.code 都定为 room 类；12 的 rooms.view.run 没有为 provider 投影 attemptStatus 和 activeRole；13 只在组件层'折叠失败 lane'（E27），这又违反 FE-D16（数据存在与否必须由视图模型决定），网络帧里仍能看到。另外 turns 的 role/status 对 room 可见：customer 的 evaluate 回合结束后紧接 run_waiting，provider 可以推断出 customer 的代理做了 clarify（customer 唯一可问的话题指向 finance 的预算）或 escalate。",
+  "evidence": "03 §3.11.1：`turn_failed` payload `role、failureKind`，'他人只见粗类'；03 §3.8：'lastFailure.code 为 room 的粗粒度类'；03 attempts 披露类：'status（粗粒度）与 attemptNo 为 room'；07 §7.9.4：`attempts.status / attemptNo / stopReason` 为'本'；12 §12.17：`run: { …, activeRole, attemptStatus, … }`；13 E27：'provider 视图折叠失败 lane'；FE-D16：'组件……不能决定是否显示某个数据字段'。",
+  "suggested_fix": "03 把 attempts.status、runs.lastFailure 的披露类改为 self。turn_failed 增加 provider 变体：非本人回合渲染为 'turn finished'，不带 failureKind。12 §12.17 在 provider 投影中把 run.attemptStatus 置 null；run_needs_input 时 activeRole 置 null；evaluate 回合在 needs_input 前的最后一条状态统一投影为 'done'。13 删除 E27 的组件层折叠，改为依赖视图模型。TC-PRIV-02 增加 refusal → agent_failed(toRole: finance) 用例，断言 provider 的 rooms.view 和 timeline 中没有任何 failed 痕迹。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-07",
+  "severity": "medium",
+  "section": "08-approval-execution-part2.md",
+  "description": "人类拒绝理由 reasonKey 的受众在各章不一致。14 规定 finance 的 `over_our_limit` 不给 provider（只显示 'Finance rejected v{n}'）。08 A13、07 DX-6 和 12 的 DTO（rooms.view 的 currentProposal.approvals[].reasonKey、proposals.get 的 decisions[].reasonKey）却把 reasonKey 整体定为 room 可见。04 R10 还把 reasonKey 写进了 provider 代理的反馈，08 O14 已指出这条冲突。按 12 实现，provider 会看到 over_our_limit，即'金额超出 finance 的私密额度'这一与预算相关的 bit；经 04 R10 它还会进入 provider 代理的上下文。",
+  "evidence": "14 §3：'over_our_limit | 人（finance） | Finance rejected v{n}（不带理由）'；14 §8.5：'over_our_limit 不给 provider'；08 A13：'reasonKey……按 07 的 DX-6 对房间全员可见'；12 §12.17 `approvals: [{ …, reasonKey }]`，proposals.get：'reasonKey 房间可见'；04 R10：'反馈 = 被拒版本 + reasonKey'；14 §15 Q6 仍为开放问题。",
+  "suggested_fix": "场景插件新增 `humanReasonKeys: { key, audience: 'room' | 'buyers' }[]`，`over_our_limit` 标为 buyers。07 DX-6 改为'按 reasonKey 声明的受众'。XP-6、proposals.get 和 timeline 的 approval_recorded 渲染都按该受众裁剪。04 R10 删除'+ reasonKey'。16 TC-PRIV-20 增加：finance 以 over_our_limit 拒绝后，provider 的全部扫描面不出现该键及其文案。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-08",
+  "severity": "medium",
+  "section": "03-schema-part3.md",
+  "description": "伪 itemKey 信道是否关闭取决于哪一章生效。03、09、12 允许 requiredItemKeys 不在目录中，06 和 14 要求必须是目录中的非草稿 item，07 LP-2 声称伪 itemKey 已被挡住。现状下：materializeDisclosures 经 appendSharedFact 闸门要求 itemKeys ⊆ 当前已确认目录，customer 披露一个尚不在目录中的必需项时整个 briefs.confirm 会失败（功能缺陷）；若实现者为此跳过闸门，requiredItemKeys/preferredItemKeys 就变成一条 40 字符 [a-z0-9_] 的自由通道，可把 finance 只披露给 customer 的上限（如 cap_480000）转发给 provider。TC-PRIV-15 期望的 `CAP_480000 → item.unknown` 也不对：按 03 的正则，大写会先得到 input.invalid。",
+  "evidence": "03 §3.6 customerHardV：'不要求已在目录（缺项 → item.required_missing）'；12 §12.9 ⑤ 与 09 §9.6.2：'可以不在目录中'；06 §4 表：'itemKey 引用（简报、shared fact）| 合法格式且属于本房间目录（任一非草稿行）'；14 §4：'每个键是本房间目录中出现过的非草稿 item'；03 §3.13.1 appendSharedFact：'itemKeys ⊆ 当前 confirmed 目录（item.unknown）'；07 LP-2：'伪 itemKey（如 CAP_480000）必须是已确认目录成员'；16 TC-PRIV-15。",
+  "suggested_fix": "统一采用 14 和 06 的规则：briefs.confirm 中 requiredItemKeys 与 preferredItemKeys 的每个键都必须属于本房间曾确认过的 item（confirmed ∪ retired），否则返回 item.unknown；appendSharedFact 的 itemKeys 闸门使用同一集合。修改 03 §3.6、09 §9.6.2、12 §12.9 ⑤。retired 必需项仍可经 item.required_missing(not_offered) 表达。TC-PRIV-15 改用 `cap_480000`，期望 item.unknown；另加一例'披露一个 retired 必需项可以成功'。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-09",
+  "severity": "medium",
+  "section": "06-rules-engine-part5.md",
+  "description": "06 和 14 让买方的 rooms.view 对'刚被 bump 置为 stale 的提案'做实时重算投影，这与 07 §7.9.3、D12 ①、12 proposals.get 的'历史提案只显示存储状态、不重算'冲突。如果 bump 之后没有新提案（例如 run 进入 needs_input），stale 的 v1 会一直是'最新一份'，在之后每次 bump 下都被重算：finance 反复改上限时，customer 能看到 v1 在通过与不通过之间翻转，获得针对 v1 金额的阈值 bit。这条信道不在 DX 清单里，并且会按当前（而不是当时）的披露状态渲染，绕开了 PV-12 的'按值所属版本判定'。",
+  "evidence": "06 §8 末段：'买方对房间最新一份提案（当前提案，或刚被 bump 置为 stale 的那份）显示实时投影'；14 S7 customer 所见：'v1 卡：Checked against constraints v2……A constraint private to another participant is not met.'；07 §7.9.3：'历史提案在当前 cv 下的重算结论 ○……fit / checks 只对当前提案计算'；12 §12.17 proposals.get：'只有当它是当前提案时才带 fit / checks'。",
+  "suggested_fix": "06 §8 改为：fit 和 checks 只对 run.currentProposalId 计算；stale 提案只显示公开检查 version.stale_constraints {checkedAgainst}，不显示掩码检查和预算检查。14 S7 的 customer 所见改为 'This version no longer applies (constraints v2)'。16 TC-PRIV-14 增加：bump 后进入 needs_input，finance 再次改上限，customer 的 rooms.view 对 v1 的展示逐字节不变。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-10",
+  "severity": "medium",
+  "section": "07-permissions-privacy-part8.md",
+  "description": "公开函数的调用图里有 opsLog，而 logLines 会下发到调用者的浏览器，同时三份白名单互不一致，也没有机械手段保证。07 E1 规定 opsLog 只能出现在 internal 函数（unhandled 分支除外），但 08 在 approvals.record 的 S11 和 rooms.view 的空槽位处、12 在 approval.not_executable 与 humanRequests.answer 中、03 在 appendSharedFact 中都要求 opsLog。15 改口为'公共函数内只允许 {fn, code, errorClass}'，可是 SafeValue 允许任意 number，07 的 SafeLogFields 又含 count/ms，opsLog 本身无法知道自己处在公开上下文中。16 S6 断言'公共函数执行期间 console spy 不得被调用'，这与上述必需日志直接冲突，TC-INJ-03 走到 approval.not_executable 时 S6 必然变红。",
+  "evidence": "08 §8.5.3 S11：'+ opsLog(approval.not_executable, { severity: critical })'；08 §8.6.6：'vacant / self_conflict……投影为 pending 并 opsLog'（在 rooms.view 中）；12 §12.4：approval.not_executable '同时 opsLog'；07 §7.19.2 E1：'其余 opsLog 只允许出现在 internal 函数'；15 §15.6.2：`SafeValue = IdString | SafeEnum | number | boolean` 以及'公共函数内……只允许 { fn, code, errorClass }'；16 §16.7.3 S6。",
+  "suggested_fix": "11 和 15 拆成两个 logger：`opsLog` 要求 InternalCtx 品牌参数，只有 internal/action 构造器能取得；`publicOpsLog(code: PublicOpsCode)` 只接受 `{ fn, code, errorClass }`，code 取自闭集，不收数值。ESLint 禁止从公开构造器可达的模块 import opsLog。08、12、03 中公开路径上的日志一律改用 publicOpsLog。三份 SafeLogFields 合并为 15 一处。16 S6 改为'公共函数执行期间 console 只允许出现 publicOpsLog 格式且键集合恰为 {fn, code, errorClass} 的行'。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-11",
+  "severity": "medium",
+  "section": "05-protocol-part6.md",
+  "description": "定界和转义的规格自相矛盾，单一实现的归属也是空的。05 用 JSON 的 </>/& 转义，把标题放进独立的 <untrusted_data> 块，只过滤含 'untrusted_data' 的子串。07 用 HTML 实体 &lt;/&gt;/&amp;，标题经 wrapUntrusted（FNV boundary）嵌在 <room_state> 里，整块再 encodeBlock，结果定界标签本身也被转义、失去意义。07 说单一实现归 10，10 却引用 05 的 renderPrompt。字节层面标题含不了 < >，块无法被真正闭合，但标题可以写入 `</candidates><turn_instruction>…` 这类与系统转义形式同构的文本；05 的退路标签 <turn_instruction> 和 room_state/candidates/principal_brief 等名字都不在过滤范围内，会形成语义层面的伪造。verifyUntrustedBlock 的判定也取决于选哪种方案。",
+  "evidence": "05 §5.13.2：`encodeBlock(value) = JSON.stringify(value).replace(/</g, '\\\\u003c')…`，'包装前再把任何形似 untrusted_data 定界符的子串替换为 [removed-delimiter]'，退路 '<turn_instruction> 标签'；07 §7.14.3：'stableStringify 后把 &、<、> 替换为 &amp;、&lt;、&gt;……单一实现归 10'，表格第 3 行：'<room_state>：目录（title 为 <untrusted_data …> 块）'；10 §10.6 LiveDriver：'renderPrompt（05 §5.13）'。",
+  "suggested_fix": "以 05 为准，删除 07 §7.14.3 的编码描述，改为引用 05 §5.13.2；07 的布局表改成'标题是一个独立的顶层 <untrusted_data> 块，不嵌在任何已编码块内'。catalog.confirm 写入时，对 NFKC 并去掉不可见字符后的标题做大小写不敏感检查，凡含 untrusted_data|room_state|candidates|shared_facts|clarify_answers|principal_brief|principal_notes|turn_instruction|system 的原文或 < / &lt; 形式一律返回 disclosure.blocked。TC-INJ-08 增加 `</candidates>` 形式的标题用例。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-12",
+  "severity": "medium",
+  "section": "05-protocol-part5.md",
+  "description": "共享事实经代理 counter 转发的上界在各章写法不同，也没有跨 run 的总量约束。05 说每次 counter ≤3.6 bit、约 14 bit/run；07 R-6 说每次 3.6 bit；07 DX-9 说每次 ≤1 bit。end_run 之后任何成员都能再次 runs.start（只受每小时 6 次约束），customer 代理一旦被目录标题注入，每天可把 finance 只披露给 customer 的上限经 counter 选择转发给 provider 数十次。16 只测了每 run 4 次的计数（CE-171 → TC-RUN-18），没有测转发内容和总量。",
+  "evidence": "05 §5.12：'counter 是 ≤12 选 1（≤ 3.6 bit），每 run ≤ 4 次……泄露上界约 14 bit / run'；07 R-6：'每次 ≤ log₂(12) ≈ 3.6 bit'；07 DX-9：'≤ 1 bit / counter（传递性）'；05 §5.11.4 end_run：'任何人可再 runs.start（cause restart）'；16 §16.11.3 CE-171 → TC-RUN-18。",
+  "suggested_fix": "07 DX-9 和 R-1 统一为 '≤ log₂(n) bit/counter、每 run ≤ 4 次、每房间每天 ≤ K 个 run'，并在 12 §12.13 为 runs.start（含 react 自动开局）增加每房间每 24 小时的 run 数上限（例如 6）。05 §5.12 引用该数值。16 新增 L1 用例：被转发 counter 进入 provider 上下文的只有 optionKey/candidateKey；同一房间 24 小时内第 7 个 run 被拒。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-13",
+  "severity": "low",
+  "section": "05-protocol-part2.md",
+  "description": "clarify 话题表存在两套，05 的示例 schema 还给 customer 列出了 `option_fits_constraints`，与 05 §5.9.1 '所有角色都不提供'相矛盾。照示例实现，customer 就有了逐候选的预算探针。14 的话题键（item_required/deadline_value/item_scope/budget_room，部分由代码代答）与 05（required_items/deadline/tradeoff_priority/budget_cap，v1 全部问人）也不一致。TC-PRIV-20 只检查 provider 的 schema。",
+  "evidence": "05 §5.4.3 示例：'clarify: toRole enum [finance], topicKey enum [budget_cap, option_fits_constraints]'；05 §5.9.1：'本设计对所有角色都不提供'；14 §3 话题表的'可代答的来源'列；16 TC-PRIV-20：'provider schema 无 option_fits_constraints'。",
+  "suggested_fix": "删除 05 §5.4.3 示例中的 option_fits_constraints；话题表以 14 为唯一来源，05 §5.9.1 改为引用 14。代码代答只允许读查看者已获披露的事实。TC-PRIV-20 改为遍历全部 ≤152 个 schema 变体，断言任何角色的 topicKey 枚举都不含 fit 类话题。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-14",
+  "severity": "low",
+  "section": "12-api-part5.md",
+  "description": "rooms.view 的检查结果在 DTO 中仍带开放记录 params，与 13 FE-D03/E20 的'不用 v.record params，服务端按受众渲染文案'不一致。returns 探测器对 record 字段无效，真正的防线只有 06 PARAM_AUDIENCE 的 fail-closed。两章的参数名也不同：06 写 itemKeys/reason，07 写 missingItemKeys；06 的 budget.over 带 headroomCents，07 只有 overByCents。参数受众表因此有两个来源，对账测试会漂移。",
+  "evidence": "12 §12.17：`checks: [{ code, owner: \"self\" | \"other\", params }]`；06 §6.2：`vCheckResult.params: v.record(...)`、PARAM_AUDIENCE 中 'item.required_missing': { itemKeys, reason }；07 §7.11 参数表：`missingItemKeys`、budget.over 只有 overByCents；13 FE-D03 与 E20。",
+  "suggested_fix": "12 §12.17 的 checks 改为按 code 判别的联合 validator，每个 code 声明精确参数，由 06 REASON_CODES/PARAM_AUDIENCE 生成；或者只返回 `{ code, owner, text }`。07 §7.11 的参数表改为引用 06 §6.2，删除自有参数名。T06-S4 同时断言 DTO validator 的参数键集合与 PARAM_AUDIENCE 相等。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-15",
+  "severity": "low",
+  "section": "03-schema-part5.md",
+  "description": "03 把 runs 的美元字段和 attemptCount 定为 creator 可见，07 矩阵则定为 system。创建者可能是任一角色；若它在 run 进行中看到 spentMicroUsd 随每个回合增长，就能反推出他方代理每次调用的 token 量，也就是简报长度。07 曾明确把这条侧信道列为已关闭。",
+  "evidence": "03 §3.8 runs 披露类：'美元字段与 attemptCount 为 creator'；03 §3.16.1：creator 类含'runs 的美元与 attempt 计数汇总'；07 §7.9.4：`runs.maxAttempts / reservedMicroUsd` ○（sys），'token 数是简报长度的侧信道，一并关掉'。",
+  "suggested_fix": "03 §3.8 和 §3.16.1 把 spentMicroUsd/reservedMicroUsd/attemptCount 改为 system。成本汇总只出现在 ops.metrics（internal），或在 run 终态后按整 run 汇总给 creator，不实时更新。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-16",
+  "severity": "low",
+  "section": "09-constraint-changes-part4.md",
+  "description": "掩码规则在走查和前端说明里写错。09 的主线走查让只获得 capCents 的 customer 看到 `budget.over` 原码（只是不带 overByCents），与 06 B2 的 requires 和 07/14 的写法（应折叠为 private.constraint_unmet）冲突。13 写'owner:\"other\" 只可能是 private.constraint_unmet'，这与 finance 精确看到 customer 已披露检查的情况冲突，实现者可能因此回退到'按 code 判所有者'。",
+  "evidence": "09 §9.8 第 9 步：'customer：v1 Blocked budget.over（无 overByCents：customer 不知已承诺额）'；06 §6.3 表：customer 只开 capCents 时看到 'private.constraint_unmet（预算检查的所有者是 finance，customer 缺 committed / headroom，无法解密）'；13 §13.8.2 ChecksList：'owner: \"other\" 只可能是 private.constraint_unmet'。",
+  "suggested_fix": "09 第 9 步改为 customer 看到 'A constraint private to another participant is not met'。13 §13.8.2 改为：owner:\"other\" 的条目可以是已获全部输入披露的精确码（如 finance 看到的 date.after_deadline），也可以是 private.constraint_unmet。T06-U29 增加'只开 capCents 时码被替换'的断言。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-17",
+  "severity": "low",
+  "section": "05-protocol.md",
+  "description": "被规则阻断的 provider 候选是否插入提案，05 与 03/04/06/14 的说法相反，两种做法给买方的信息量不同。按 05，被阻断的 vN 带完整条款和金额对全员可见，customer 得到一个已知金额点上的掩码失败，精确到阈值；按 03/06，customer 只能从时间线看到'有一个选项被阻断'，不知道金额。DX-1 没有说明适用哪种，16 的非干扰前置条件随之不确定。",
+  "evidence": "05 P10：'provider 的提案被 checkProposal 阻断时照常插入提案行'；05 §5.15.1 第 6 步：'v2 $900 → blocked'；06 §9.2 turns.complete：'不通过 → 不插提案、不消耗版本号'；03 §3.9：'被规则阻断的候选不插提案'；14 S8：'买方时间线 Provider agent's option was blocked by the checks.'；07 DX-1：'当前提案 fit……room'。",
+  "suggested_fix": "以 03/04/06 为准，修改 05 P10、§5.15 的版本编号和 E2。07 DX-1 补充：被阻断的候选不成为提案，买方只得到'本轮有一个 provider 选项被阻断'，不含条款与金额，provider 只得到 blocked。16 的 declassified() 按此定义。",
+  "reviewer": "隐私预言机与泄露路径"
+ }
+]

@@ -1,0 +1,921 @@
+{
+  "probe": "reject_vs_last_approval",
+  "method": "multi_http_client",
+  "deployment": "dev",
+  "gitSha": "abcf1d0-drop-approval-run-status",
+  "n": 2,
+  "rounds": 20,
+  "validRounds": 20,
+  "maxOverlapPerRound": [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+  ],
+  "results": {
+    "ok": 20,
+    "rejected": 20,
+    "errorCodes": {
+      "approval.not_current": 6,
+      "approval.already_executed": 14
+    }
+  },
+  "invariant": {
+    "name": "reject_vs_last_approval",
+    "expected": 1,
+    "observed": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "pass": true
+  },
+  "startedAt": "2026-10-25T07:27:12.982Z",
+  "finishedAt": "2026-10-25T07:27:51.433Z",
+  "tier": "dev",
+  "occRetriesObserved": "unknown",
+  "preparationError": null,
+  "observations": [
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 15
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    },
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 15
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    },
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 0,
+        "changeOrders": 1,
+        "executedEvents": 1,
+        "executionIds": [
+          "k1749xtwd5kr9n2panh8b6x5dd8gygp3"
+        ],
+        "executions": 1,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 1,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 2,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 15
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    },
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 0,
+        "changeOrders": 1,
+        "executedEvents": 1,
+        "executionIds": [
+          "k17dm4j2kj9navvjm573vesbdn8gyp6t"
+        ],
+        "executions": 1,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 1,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 2,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 15
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    },
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 0,
+        "changeOrders": 1,
+        "executedEvents": 1,
+        "executionIds": [
+          "k17fdt9xescfm6jgb7t2pyrrmn8gyh68"
+        ],
+        "executions": 1,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 1,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 2,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 15
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    },
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 16
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    },
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 15
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    },
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 0,
+        "changeOrders": 1,
+        "executedEvents": 1,
+        "executionIds": [
+          "k17c318j0ntwwfbmgaqnm8gvzd8gypkf"
+        ],
+        "executions": 1,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 1,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 2,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 15
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    },
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 15
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    },
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 0,
+        "changeOrders": 1,
+        "executedEvents": 1,
+        "executionIds": [
+          "k17846p0btb4te8mxvtmwt9ts18gzk04"
+        ],
+        "executions": 1,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 1,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 2,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 15
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    },
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 0,
+        "changeOrders": 1,
+        "executedEvents": 1,
+        "executionIds": [
+          "k175vvqcreyv3w60bmravj2bkd8gyhq2"
+        ],
+        "executions": 1,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 1,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 2,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 15
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    },
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 0,
+        "changeOrders": 1,
+        "executedEvents": 1,
+        "executionIds": [
+          "k1773sv0fy743s4gb859j0jjv98gztyj"
+        ],
+        "executions": 1,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 1,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 2,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 15
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    },
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 15
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    },
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 0,
+        "changeOrders": 1,
+        "executedEvents": 1,
+        "executionIds": [
+          "k177anx7vk9czq7wa5qwjqw82d8gz4fj"
+        ],
+        "executions": 1,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 1,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 2,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 15
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    },
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 0,
+        "changeOrders": 1,
+        "executedEvents": 1,
+        "executionIds": [
+          "k1769fypr11m9zkzw6be5vj8ws8gyy6d"
+        ],
+        "executions": 1,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 1,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 2,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 15
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    },
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 0,
+        "changeOrders": 1,
+        "executedEvents": 1,
+        "executionIds": [
+          "k170a9wqz9nhr00vmztvj453dx8gy75h"
+        ],
+        "executions": 1,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 1,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 2,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 15
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    },
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 0,
+        "changeOrders": 1,
+        "executedEvents": 1,
+        "executionIds": [
+          "k17b1yybszrg40zbp2zh6tkeps8gyz5v"
+        ],
+        "executions": 1,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 1,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 2,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 15
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    },
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 0,
+        "changeOrders": 1,
+        "executedEvents": 1,
+        "executionIds": [
+          "k17a2pma0sdjk0rq8m6mht5f858gyrfd"
+        ],
+        "executions": 1,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 1,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 2,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 15
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    },
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 0,
+        "changeOrders": 1,
+        "executedEvents": 1,
+        "executionIds": [
+          "k1741v6dv779cn5d7xj0jevged8gyhsz"
+        ],
+        "executions": 1,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 1,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 2,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 15
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    },
+    {
+      "before": {
+        "activeRuns": 1,
+        "changeOrders": 0,
+        "executedEvents": 0,
+        "executionIds": [],
+        "executions": 0,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 0,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 0,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 14
+      },
+      "after": {
+        "activeRuns": 0,
+        "changeOrders": 1,
+        "executedEvents": 1,
+        "executionIds": [
+          "k1739c2742d5eb8rcgckg6z1d58gzrcn"
+        ],
+        "executions": 1,
+        "firstAttempts": 1,
+        "followUps": 0,
+        "ledgerCommits": 1,
+        "maxApprovalsPerUser": 1,
+        "maxMembersPerUser": 1,
+        "members": 3,
+        "providerMembers": 1,
+        "tasks": 2,
+        "unsafeExecutedDecision": false,
+        "writeSeq": 15
+      },
+      "variant": null,
+      "findings": [],
+      "overlaps": [
+        2
+      ]
+    }
+  ]
+}

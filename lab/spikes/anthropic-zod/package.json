@@ -1,0 +1,22 @@
+{
+  "name": "spike-anthropic-zod",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "schema": "node src/print-schema.ts",
+    "matrix": "node src/constraint-matrix.ts",
+    "gap": "node src/decode-gap.ts",
+    "stub": "env -u ANTHROPIC_API_KEY -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_PROFILE node src/stub-harness.ts",
+    "determinism": "node src/determinism.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.1.0",
+    "ajv": "8.17.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "typescript": "6.0.3"
+  }
+}

@@ -1,0 +1,11 @@
+--- a/convex/approvals.ts
++++ b/convex/approvals.ts
+@@ -48,7 +48,7 @@
+   if (room.status !== 'open') throw appError('run.invalid_state', { guard: 'room_status' });
+   if (args.decision === 'approve' && !scenarioOf(room)) throw appError('run.invalid_state', { guard: 'scenario_version' });
+   const run = room.currentRunId ? await ctx.db.get(room.currentRunId) : null;
+-  if (!run || run.roomId !== room._id || !isCurrentForApproval(currentApprovalInput(room, run, proposal))) throw appError('approval.not_current');
++  if (!run || run.roomId !== room._id || !isCurrentForApproval(currentApprovalInput(room, { ...run, status: 'pending_approval' }, proposal)) /* CE-164: approvals.record run-status guard bypass */) throw appError('approval.not_current');
+   const required = proposal.requiredApprovals.find(r => r.role === member.role);
+   if (!required) throw appError('auth.role_forbidden');
+   if (args.expectedConstraintsVersion !== room.constraintsVersion || args.expectedTermsKey !== proposal.termsKey) throw appError('approval.stale', { currentConstraintsVersion: room.constraintsVersion });

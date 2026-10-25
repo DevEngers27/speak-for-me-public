@@ -1,0 +1,11 @@
+--- a/convex/lib/db.ts
++++ b/convex/lib/db.ts
+@@ -60,7 +60,7 @@
+   const before = await ctx.db.get(roomId);
+   if (!before) throw appError('auth.not_member');
+   if (!opts.allow.includes(before.status)) throw appError('run.invalid_state', { guard: 'room_status' });
+-  await ctx.db.patch(roomId, { writeSeq: before.writeSeq + 1 });
++  // CE-164: mutation removes the writeSeq room lock.
+   const room = await ctx.db.get(roomId);
+   if (!room) throw appError('internal');
+   return makeRoomTx(ctx, room);

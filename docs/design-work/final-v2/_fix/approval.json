@@ -1,0 +1,65 @@
+[
+ {
+  "id": "names-07",
+  "severity": "high",
+  "section": "08-approval-execution-part4.md",
+  "description": "`isExecutable` 有两套互不兼容的定义。04 与 08 定义为\"规则通过且审批集合齐\"；canon D02/D03 与 INV-35、02、07、12、14 则把它当作\"状态 + 规则\"使用，并要求在每张 approve 写入之前调用。按 04/08 的定义，approve 前的 isExecutable 在最后一票之前永远为假，07、12 写的守卫会挡住所有审批。",
+  "evidence": "04 §4.1.1：\"isExecutable（通过且审批齐）\"、\"后者 = 前者 ∧ evaluateApprovalSet 完成\"；08 §8.4.2 `isExecutable(i: … & { verdict; approvalSet })` 把 approvalSet.reasons 计入，08 A4 自称把 canon \"精确化\"。另一方：INV-35 \"isExecutable(p) ⇔ p.status === 'active' ∧ … ∧ checkProposal(...).blocking = ∅ … 审批齐命名为 allApproved\"；02 part4 定义同此，02 §2.14 Q1 已点名冲突；07 §7.12.2 \"approve 前 isExecutable\"；12 §12.4 \"approve 前同事务 isExecutable 不通过\"；14 S5 `isExecutable(v1) = ['version.stale_constraints','budget.over']`。",
+  "suggested_fix": "采用 INV-35 与 02 的定义：`isExecutable` = 当前性 + `passesChecks`，审批集合另名 `allApproved`（即 `evaluateApprovalSet().complete`），执行条件写成 `isExecutable ∧ allApproved`。改 04 §4.1.1 第三行的派生列与其后一句；08 §8.4.2 去掉 `approvalSet` 参数，另写 `canExecuteNow = isExecutable ∧ approvalSet.complete` 供 X1 使用，并删去 A4 的\"精确化\"表述；14 S5、S7 改为返回布尔或 `{ ok, reasons }`，不再写码数组。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-26",
+  "severity": "medium",
+  "section": "08-approval-execution-part10.md",
+  "description": "D27 主线走查在 05、08、09、14 四章中的 cv 编号、提案版本号、$800 方案的产生方式和参数名互不一致。14 是 fixture 与走查的定稿章。",
+  "evidence": "14 §10：开房时 cv 1；下调后 cv 2；run 2 第 1 轮 O2 被阻断、不插提案；第 2 轮 v2 = $800；run 2 共 4 个回合。05 §5.15.1：v2 是被阻断但仍插入的 $900，v3 才是 $800，并写\"失效的是至多两条\"。08 §8.10.1：\"以进入协商时 cv = 3 示意\"，cv 3 → 4；\"provider 回合 + customer counter 只含必需项 → v2\"，与 05 \"counter 不直接成为提案\"冲突；调用写作 `budget.setCap({ newCapCents: 480_000 })`，12 的参数名是 `capCents`；revision cause 写 `budget`；reasonKey 写 `scope_mismatch`。09 §9.8.2 第 10 步 provider 直接选 O1，与 14 的 stub 先选 O2 不同。",
+  "suggested_fix": "以 14 §10 为准统一。08 §8.10.1、§8.6.3 改为 cv 1 → 2，v2 由 provider 在 run 2 第 2 轮提出（不是 customer counter），参数改 `capCents`，cause 改 `brief_confirmed`，reasonKey 改用 14 的人类枚举。05 §5.15.1 随 names-01 改为 v1 / v2。09 §9.8.2 第 10 步改为\"第 1 轮 stub 选 O2 被阻断 → 第 2 轮 O1 → v2\"（或注明非 stub 情形），并与 14 的回合数对齐。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-28",
+  "severity": "medium",
+  "section": "08-approval-execution-part3.md",
+  "description": "08 §8.3 给出的 validator 与 03 定稿不一致，而两者都声称落在同一文件 `convex/lib/validators.ts`。03 §3.20 Q8 已指出，08 未回改。",
+  "evidence": "08 §8.3.3 executions：`scenarioKey: v.string(), scenarioVersion: v.string()`，注释却写\"类型随 rooms.scenarioVersion（03）\"；03 §3.10 是 `scenarioKey: v.literal(\"scope_change\")`、`scenarioVersion: v.number()`。08 §8.3.1 `lineV = { itemKey, revision, title, priceCents, leadDays }`，03 §3.4 的 lineV 多一个 `kind: item | modifier`（12 §12.17 roomView 的 lines 也带 kind）；canon D25 列出的 lines 字段没有 kind。",
+  "suggested_fix": "08 §8.3.3 改为 `scenarioKey: v.literal('scope_change'), scenarioVersion: v.number()`；08 §8.3.1 的 lineV 删去自列定义，改为引用 03 §3.4（含 kind），并在 canon_objections 中登记\"D25 的 lines 需补 kind\"。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-29",
+  "severity": "medium",
+  "section": "08-approval-execution-part2.md",
+  "description": "关于谁能调用 `rooms.startFollowUp`，08 写的是 creator，04、07、09、12 都写旧房间任一成员。07 还把它计入 constraint_writes 节流桶，而 12 把它放在 room_create 桶。",
+  "evidence": "08 A9：\"例外只有 tasks.markDone … 与 creator 的 rooms.startFollowUp\"；08 §8.6.5 \"除 tasks.markDone 与 creator 的 rooms.startFollowUp 外\"；V8 \"执行后 creator 调 rooms.startFollowUp\"。04 §4.3.6：\"rooms.startFollowUp（任一成员）\"；07 §7.5.5：\"对旧房间任一成员开放\"；12 §12.6：\"调用者是旧房间任一成员（04 / 07 一致）\"。节流：07 §7.12.2 在 startFollowUp 行标 ⑥ ✔；12 §12.2 第 7 条与 B7 写\"room_create 桶覆盖 rooms.create 与 rooms.startFollowUp\"。",
+  "suggested_fix": "08 A9、§8.6.5、V8 的\"creator 的\"改为\"旧房间任一成员的\"；07 §7.12.2 的 startFollowUp 行把节流列改为\"room_create（12 B7）\"，不计入 ⑥。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "invariants-01",
+  "severity": "high",
+  "section": "08-approval-execution-part5.md",
+  "description": "approvals.record 的 S9 用一个全提案的读上限（201 行）把超限变成 internal，这个上限对 reject 同样生效。它实质上就是 canon D02 已否决的全局决定上限，会挡住唯一的逃生口 reject。provider 一人就能把它填满：每次改一个无关条目的价格触发 bump，R2 沿用同一提案后自己再批一次，每小时 6 次，约 33 小时后该提案上任何人的 reject / approve 都返回 internal，而且之后的 bump 仍会经 R2 沿用它，冻结一直持续。",
+  "evidence": "08 part5 S9：\"读本提案**全部**审批：`approvals.by_proposal_user.eq(proposalId).take(MAX_APPROVAL_ROWS_PER_PROPOSAL + 1)`（= 201）… 超上限或 seq 重复 → `internal`\"（位于 S13 的 reject / approve 分支之前）；同章 §8.5.2：\"reject 不受任何决定次数上限约束\"；part7 §8.7.4：\"触顶意味着同一保留提案经历约 45 次以上 bump，按 `internal` + critical opsLog 处理 … reject 不计入任何上限\"；09 M12 / V7：无关改价 bump 后 R2 沿用同一 proposalId。",
+  "suggested_fix": "改写 08 part5 S9：reject 与 withdraw 只读本人最新一行（`by_proposal_user.eq(proposalId).eq(userId).order('desc').first()`；同房间的冲突已由 M-ROOM 的 writeSeq 保证），不读整区间，也不设上限。approve 仍读整区间以判定集合，去掉 `internal` 上限，改为按人限额：新增 `MAX_APPROVE_ROWS_PER_USER_PER_PROPOSAL`，超限只对 approve 返回 `run.rate_limited`。同步修改 §8.7.4 的\"审批行上界\"、O4、K 表，以及 16 中 CE-056 的期望（增加\"200 行后 reject 仍成功\"一例）。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-16",
+  "severity": "medium",
+  "section": "08-approval-execution-part5.md",
+  "description": "场景版本守卫 S5 位于分支之前，对 reject / withdraw 同样生效。只要部署提升了场景版本，所有旧版本的 open 房间都无法拒绝，也无法批准，直到一次未定义的迁移（O12 自认迁移的 cause 待 canon 补录）。reject 不运行任何规则，不需要版本一致；这条守卫变相成了\"挡住 reject 的上限\"。",
+  "evidence": "08 S5：\"`getScenario(room.scenarioKey).version === room.scenarioVersion` | `run.invalid_state{guard:'scenario_version'}`\"（位于 S13 之前）；K28：\"运维按 15 迁移（bump 后重批）\"；O12：\"对受影响房间 `constraints.bump`（cause 取值待 canon 补录）后重批\"；06 §12.4：\"只钉 `id.version`，不符即拒绝写入\"。",
+  "suggested_fix": "S5 只对 approve 生效（approve 需要按当时规则重算）；reject / withdraw 跳过版本守卫照常记录，reject 后建回合的 createTurnTx 在版本不符时让 run 走 needs_input(agent_failed, end_run)。15 定义迁移流程，并请 canon 增加 cause `scenario_migrated`（或规定房间未全部终态前禁止提升场景版本）。12 §12.15 ④ 同步修改。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "privacy-07",
+  "severity": "medium",
+  "section": "08-approval-execution-part2.md",
+  "description": "人类拒绝理由 reasonKey 的受众在各章不一致。14 规定 finance 的 `over_our_limit` 不给 provider（只显示 'Finance rejected v{n}'）。08 A13、07 DX-6 和 12 的 DTO（rooms.view 的 currentProposal.approvals[].reasonKey、proposals.get 的 decisions[].reasonKey）却把 reasonKey 整体定为 room 可见。04 R10 还把 reasonKey 写进了 provider 代理的反馈，08 O14 已指出这条冲突。按 12 实现，provider 会看到 over_our_limit，即'金额超出 finance 的私密额度'这一与预算相关的 bit；经 04 R10 它还会进入 provider 代理的上下文。",
+  "evidence": "14 §3：'over_our_limit | 人（finance） | Finance rejected v{n}（不带理由）'；14 §8.5：'over_our_limit 不给 provider'；08 A13：'reasonKey……按 07 的 DX-6 对房间全员可见'；12 §12.17 `approvals: [{ …, reasonKey }]`，proposals.get：'reasonKey 房间可见'；04 R10：'反馈 = 被拒版本 + reasonKey'；14 §15 Q6 仍为开放问题。",
+  "suggested_fix": "场景插件新增 `humanReasonKeys: { key, audience: 'room' | 'buyers' }[]`，`over_our_limit` 标为 buyers。07 DX-6 改为'按 reasonKey 声明的受众'。XP-6、proposals.get 和 timeline 的 approval_recorded 渲染都按该受众裁剪。04 R10 删除'+ reasonKey'。16 TC-PRIV-20 增加：finance 以 over_our_limit 拒绝后，provider 的全部扫描面不出现该键及其文案。",
+  "reviewer": "隐私预言机与泄露路径"
+ }
+]

@@ -1,0 +1,1 @@
+{"extends":"../tsconfig.json","compilerOptions":{"incremental":false,"plugins":[]},"include":["./**/*.ts","./**/*.tsx","../src/**/*.ts","../src/**/*.tsx","../core/**/*.ts"],"exclude":["../node_modules"]}

@@ -1,0 +1,27 @@
+{
+  "name": "@speak-for-me/e2e-harness",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Playwright multi-role harness: three isolated browser contexts (role A/B/C) per test, page-object base class, Clerk testing-token auth strategy.",
+  "type": "module",
+  "engines": {
+    "node": ">=24.19"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "npm run test:unit && npm run test:list",
+    "test:unit": "node --test \"test/**/*.test.ts\"",
+    "test:list": "playwright test --list",
+    "test:self": "playwright test --project=self-test",
+    "e2e": "playwright test --project=smoke",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@clerk/testing": "2.2.45",
+    "@playwright/test": "1.64.0",
+    "@types/node": "24.19.2",
+    "typescript": "6.0.3"
+  }
+}

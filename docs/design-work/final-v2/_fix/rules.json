@@ -1,0 +1,119 @@
+[
+ {
+  "id": "names-08",
+  "severity": "high",
+  "section": "14-scenario-scope-change.md",
+  "description": "14 的简报字段、目录字段和写入口校验与 03/12/09/05 冲突。最关键的一条：必需项是否必须已在目录、能否为空，两边写法正好相反；另外文本上限、任务模板形状、软字段集合、标题闸门的失败码也都不一致。",
+  "evidence": "14 §4 `requiredItemKeys`：\"每个键是本房间目录中出现过的非草稿 item（item.unknown / item.unconfirmed）…可为空\"。03 §3.6 customerHardV：\"非空、去重、字典序、≤ 12；不要求已在目录（缺项 → item.required_missing）\"；12 §12.9 与 04 §4.2.1 同 03。notes：14 \"≤ 4,000 码点\"，03 TEXT_LIMITS 为 `softFields.notes 2,000`。任务模板：14 `maxTaskTemplatesPerRow: 3`、`taskTemplates: [{ title }]`（assigneeRole 恒为 provider）；03 为 \"item ≤ 5 条\"、`{ title, assigneeRole }`，12 §12.12 同 03。软字段：14 S-D4 删除 `preferredDate`，03 customerSoftV、07 SHAREABLE_FIELDS、12 §12.9 仍有；05 §5.9.1 话题引用的 `tradeoffPriority` 在 03 与 14 都不存在。标题注入：14 §9.6 写 `disclosure.blocked`（06 §6.1 同），09 §9.6.3 与 12 §12.12 写 `input.invalid{field}`。",
+  "suggested_fix": "以 03 和 12 为准改 14 §4：requiredItemKeys 改为\"非空、≤ 12、可不在目录，由规则报 item.required_missing\"（与 04 §4.2.1 的就绪说明一致）；notes 改为 ≤ 2,000；CatalogDecl 改为 `maxTaskTemplatesPerRow: 5`，taskTemplates 带 assigneeRole（默认 provider）。preferredDate 二选一：14 删除，就同步删 03 customerSoftV、07 §7.8.4 与 12 §12.9 中的 preferredDate；或者 14 保留它。05 §5.9.1 删去 `tradeoff_priority` 话题，或在 03 补字段。标题闸门的失败码在 06、09、12、14 之间统一为一个，建议用 `input.invalid{field:'title'}`，同时改 06 §6.1 中 `disclosure.blocked` 的产生者一栏。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-09",
+  "severity": "high",
+  "section": "14-scenario-scope-change-part3.md",
+  "description": "14 把 cause 和 actorRole 放进 `constraints_changed` 的 payload，并让 restrictedRef 指向简报行。events.payload 对全房间可见（canon D14），而 03 把 cause 与变更角色的披露类定为只给 customer 和 finance；照 14 写，provider 能读到\"finance 改了约束\"，这违背 D14 \"对 provider 只有 Constraints changed\"。命名上也与 03、09 的事件目录冲突。",
+  "evidence": "14 §8.3：\"payload = { fromVersion, toVersion, cause, actorRole }，不含任何数值；finance / customer 变体里的金额与日期来自 restrictedRef 指向的简报版本行\"；14 S7 事件 `constraints_changed { fromVersion: 1, toVersion: 2, cause: 'brief_confirmed', actorRole: 'finance' }`。03 §3.7：\"payload 只有 { fromVersion, toVersion }（room 类），cause / 变更角色 / 新旧值经 restrictedRef → constraintRevisions 在渲染时按查看者连接\"；03 §3.7 披露类：\"cause 与由 actorUserId 推出的角色为 roles: [customer, finance]\"；09 §9.4 `bump` 的事件同 03；03 §3.20 Q3 曾对 09 提出同样的问题。14 §16 仍声称满足 D14。",
+  "suggested_fix": "14 §8.3 的 payload 改为 `{ fromVersion, toVersion }`，restrictedRef 改为 `{ table: 'constraintRevisions', id }`，渲染器经 revision 的 sourceRefs 连接简报版本。S7 的事件写法同步修改，§16 的 D14 一行改为如实描述。目录类变更若要对 provider 显示 \"Provider retired …\"，需在 03 §3.11.1 的渲染规则中写明\"cause = catalog_changed 时 room 变体可读公开的目录 diff\"，并在 canon_objections 里登记，因为这偏离了 D14 的\"provider 只有 Constraints changed\"。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-10",
+  "severity": "high",
+  "section": "14-scenario-scope-change-part5.md",
+  "description": "14 的主走查自称\"事件类型名以 03/12 为准\"，实际用了一批 03 事件目录里没有的事件名、run cause、helper 名和返回形状。T14-G01 要断言\"事件类型序列\"和三方 golden JSON，照现稿必然失败。01 part4 也沿用了其中几个名字。",
+  "evidence": "14 S1 `ledger_baseline_recorded`，03 为 `baseline_recorded`；S2 `catalog_confirmed`（07 DX-2 同），03 为 `catalog_item_confirmed`；S5 `agent_recommended`（INV-20、CE-036 同）与 `run_pending_approval`，03 为 `turn_completed` 与 `run_awaiting_approval`；S7 `run_superseded`，03 为 `run_ended`；S11 `executed { changeOrderNo: 1 }`，03 为 `room_executed { changeOrderNumber }`；S3、S13 `runs.start({ cause: 'initial' })`，03/04 中由 `openIfReady` 调 `startRunTx(cause: 'room_opened')`，且 `runs.start` 没有 cause 参数；`createTurn`，04 为 `createTurnTx`；S12 返回 `{ status: 'already_executed', executionId }`，08 与 12 为 `{ status: 'executed', executionId, alreadyExecuted: true }`；`validateCapChange`、`validateCatalogRow` 在 12 中没有。",
+  "suggested_fix": "按 03 §3.11.1 的事件目录与 12 的签名逐条替换 14 §10 S0–S13 和 §11 A–G 中的名字：baseline_recorded、catalog_item_confirmed、turn_completed、run_awaiting_approval、run_ended、room_executed{changeOrderNumber}；第三份确认改写为 `openIfReady` → `bump(room_opened)` → `startRunTx(cause:'room_opened')`；createTurn 改 createTurnTx；S12 返回值改为 `{status:'executed', executionId, alreadyExecuted:true}`。同步改 01-product-part3/part4 和 07 DX-2 中的旧事件名，并把 INV-20、CE-036 的 `agent_recommended` 改为 `turn_completed`。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-14",
+  "severity": "medium",
+  "section": "14-scenario-scope-change.md",
+  "description": "14 的拒绝理由表允许 provider 看到\"Customer agent declined\"\"Finance agent declined\"这类按角色区分的代理拒绝信息，也允许看到原样的人类 reasonKey。这与 05 §5.12、07 PV-10 冲突（proposer 只得到不带角色和原因的 not_accepted），与 08 A13、07 DX-6 的口径也不一致（人类 reasonKey 对全房间可见，没有按角色隐藏的例外）。",
+  "evidence": "14 §3 拒绝理由表\"provider 看到的形式\"列：customer 模型拒绝 → \"Customer agent declined\"；finance 模型拒绝 → \"Finance agent declined\"；人类 reasonKey → \"原样\"；`over_our_limit` → \"Finance rejected v{n}\"（不带理由）。05 §5.12：\"他方代理的动作、reasonKey、rationale：无\"，轮次结果写作 \"vN not accepted\"；07 PV-10：\"not_accepted 不带评估方角色与 reasonKey\"；08 A13：人的 reasonKey \"对房间全员可见\"，不进任何他方代理上下文。",
+  "suggested_fix": "改写 14 §3 的拒绝理由表：所有代理拒绝对 provider 的人和代理都只显示 \"v{n} not accepted\"，不带角色和理由；人类拒绝在时间线上按 08 A13 / 07 DX-6 对全房间显示角色与 reasonKey，但不进他方代理上下文。删除 `over_our_limit` 的特殊隐藏规则；如果需要隐藏，就把它从封闭枚举里删掉，因为\"类别级、全员可见\"是 08 O6 的要求。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "completeness-02",
+  "severity": "high",
+  "section": "07-permissions-privacy-part4.md §7.8.4（对照 14-scenario-scope-change.md S-D6/§4、14-part4 §9.2、16-testing-part5.md §16.7.1/§16.7.4）",
+  "description": "主 fixture 中 customer 的 deadline 是否披露给 provider，07 与 14 相反；这决定 provider 首轮快照是 2 个候选还是 16 个截断为 12、stub 是否三轮被阻断、主走查调用次数与 golden 快照。16 的 C1 '默认配置'照抄了 07 的值。",
+  "evidence": "07 §7.8.4 表 deadline 行的'fixture 设定（D27）'列为'仅 finance（provider 侧金丝雀）'。14 S-D6：'主 fixture 的披露：customer 把必需项与截止日披露给 provider 与 finance'；14 §9.2 disclosures: { deadline: ['provider', 'finance'] }；14 §6.1：'截止 2026-11-20 已向 provider 披露…provider 视图只剩两个候选'。16 §16.7.4：'C1 fixture 默认（…deadline → finance…）'。01 C3、05 §5.15、06 T06-U18 均按 14 书写。",
+  "suggested_fix": "07 §7.8.4 deadline 行改为'provider、finance'，并把'provider 侧金丝雀'移到 canary 变体说明；16 §16.7.4 的 C1 改为与 14 §9.2 一致，把'deadline 只给 finance'作为 canary 变体（14 §9.4 F）单独列出。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-04",
+  "severity": "high",
+  "section": "06-rules-engine-part6.md §9.1 与 08-approval-execution-part4.md §8.4.2（同一文件 core/engine/executable.ts）",
+  "description": "两章各自给出 core/engine/executable.ts 的 isExecutable 完整实现，签名与语义不同：06 的版本不含审批集合，08 的版本把 approvalSet 并入；02 Q1/18 N-22 只记为待对齐。同一路径两份互斥的代码，实现者必须二选一。",
+  "evidence": "06 §9.1：'export function isExecutable<RI>(p, x: { room, run, proposal, input })…const blocking = [...new Set([...g, ...evaluation.blocking])]'，'审批是否齐由 08 的 evaluateApprovalSet 判定，不在此函数内'。08 §8.4.2：'export function isExecutable(i: … & { verdict: RuleVerdict; approvalSet: ApprovalSetResult })…for (const r of i.approvalSet.reasons) reasons.push(r)'，'08 对 canon isExecutable 的唯一定义'。04 §4.1.1：'isExecutable（通过且审批齐）'；13 FE-D12：'isExecutable 在 08 含审批已齐'。",
+  "suggested_fix": "保留一份：以 08 为准（含 approvalSet），06 §9.1 改名为 passesStateAndChecks 或删除代码块只保留对 08 的引用；02 §2.8 与 INV-35 改为'isExecutable = 状态守卫 ∧ passesChecks ∧ allApproved'，approve 前的纵深防御调用改写为 passesChecks + isCurrentForApproval；canon D02/D03 中'approve 前跑 isExecutable'注为'其规则与状态部分'。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-10",
+  "severity": "medium",
+  "section": "16-testing-part5.md §16.7.1（对照 14-scenario-scope-change-part4.md §9.5、16 TI-12）",
+  "description": "16 自带一套 canary 数字与披露配置，和 14 的 canary 变体不一致，违反 16 自己的 TI-12（金额与日期一律从 fixture 模块推出）；两份 golden 不可能同时为真。",
+  "evidence": "16 §16.7.1：capCents = 481_237、baseline 400_013、deadline = anchor + 47d、派生 headroom 81_224、overByCents 8_776、committedAfter 480_013。14 §9.5：capCents v1 512347 / 下调后 481237、基线 400219、headroom 112128 / 81018、执行后已承诺 480219、deadline 2026-11-20（只披露给 finance）。16 TI-12：'测试中的金额与日期一律从 fixture 模块推出'。",
+  "suggested_fix": "删除 16 §16.7.1 的硬编码数字，改为引用 14 §9.5 的 canary fixture 并由 canaryNeedles(fx) 计算；C0/C1/Ck 配置以 14 §9.2 为 C1 基线。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-26",
+  "severity": "medium",
+  "section": "06-rules-engine-part3.md §6.1/§6.2（对照 07-permissions-privacy-part6.md §7.11、03-schema.md §3.2、12-api.md §12.4、14-scenario-scope-change.md §5、10-agent-runtime-part5.md §10.15、11-architecture-part3.md §11.10、16-testing-part9 CE-093）",
+  "description": "reasonCode 的参数名与若干码的归属在各章漂移；PARAM_AUDIENCE 是 fail-closed（未声明的参数丢弃），所以参数名不一致会让界面静默缺字段。另外 11/15/16 使用的 attempt 错误码 config_invalid 不在 10 的封闭枚举 ATTEMPT_ERROR_CODES 中。",
+  "evidence": "item.required_missing 参数：06 'itemKeys、reason' vs 07 §7.11 'missingItemKeys'。run.rate_limited 参数：06 'retryAfterMinutes' vs 03 §3.11.3/07 §7.7/12 §12.4/13 'retryAfterMs'。目录标题闸门失败码：03 §3.2 与 12 §12.12 'input.invalid'，06 §4 与 14 §5/§9.6 'disclosure.blocked { field: title }'。10 §10.15.1 ATTEMPT_ERROR_CODES 无 config_invalid，但 11 §11.10 'live 模式缺 key → attempt error(config_invalid)'、15 §15.3 'attempt 进入 error…opsLog(config_invalid)'、16 §16.11 CE-093 'attempt error(config_invalid)'；10 把缺 key 映射为 auth。",
+  "suggested_fix": "06 §6.2 PARAM_AUDIENCE 作为唯一来源：07 §7.11 改为 itemKeys；06 §6.1 改 retryAfterMs；目录标题闸门统一为 disclosure.blocked（12 §12.12 ⑤ 改码）；10 §10.15.1 增加 'config_invalid' 并把 GatewayConfigError 映射到它。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "invariants-04",
+  "severity": "high",
+  "section": "06-rules-engine-part6.md",
+  "description": "`isExecutable` 有四种互不兼容的定义，06 和 08 还都把它放在 `core/engine/executable.ts` 里，签名不同。canon D02、12 和 06 的调用点表都写\"approve 前同事务 isExecutable\"。如果实现者用 08 那个含审批集合的定义，最后一票之前的每次 approve 都会因集合不齐被 `approval.not_executable` 拒绝，审批根本无法推进。",
+  "evidence": "04 §4.1.1：\"后者（isExecutable）= 前者 ∧ `evaluateApprovalSet` 完成\"；06 §9.1：isExecutable 只含状态守卫、termsKey 与 checkProposal，并注明\"审批是否齐由 08 的 `evaluateApprovalSet` 判定，不在此函数内\"；06 §9.2 的 approvals.record 行：\"approve：`isExecutable` 不通过 → `approval.not_executable`\"；08 §8.4.2：`for (const r of i.approvalSet.reasons) reasons.push(r);`，并称\"08 对 canon 'isExecutable' 的唯一定义\"；12 码表：\"approve 前同事务 `isExecutable` 不通过\"；INV-35：\"isExecutable(p) ⇔ p.status === 'active' ∧ … ∧ checkProposal(...).blocking = ∅\"。",
+  "suggested_fix": "只保留 08 §8.4.2 一个定义（当前性 ∧ passesChecks ∧ allApproved）。06 §9.1 那个函数改名为 `evaluateCurrentProposal`（只含状态守卫、termsKey 与 checkProposal），并移出 `core/engine/executable.ts`；06 §9.2 的 approvals.record 行、12 §12.15 与码表、INV-35 都改成\"approve 前跑 `isCurrentForApproval` ∧ `passesChecks`\"。canon D02 的措辞同理需要澄清（canon 意见）。增加一条结构测试：仓库内只有一个导出名为 `isExecutable` 的函数。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-12",
+  "severity": "medium",
+  "section": "06-rules-engine-part2.md",
+  "description": "06 写 bump 时与\"上一个约束版本存下的投影串\"比较，并举例存在 constraintRevisions 行；09 写投影只在事务内存中做前后比较、从不持久化。投影包含 finance 私密的 capCents，而 constraintRevisions 正是 provider 可见的 `constraints_changed` 事件通过 restrictedRef 指向的行；照 06 实现会把私密上限落进一张面向他方渲染的表。",
+  "evidence": "06 §5.3：\"写入口先写数据，再对写入后的全局输入算 `hardProjection`，与上一个约束版本存下的投影串比较（字段归 03/09，例如 `constraintRevisions` 行）\"；09 §9.1.1：\"投影只在事务内存中求值（before / after），**从不持久化**：它含 finance 私密的 `capCents`\"；09 §9.14 Q10。",
+  "suggested_fix": "06 §5.3 改为\"`withConstraintChange` 在同一事务内对写入前、写入后的全局输入各算一次 `hardProjection` 并比较；投影不持久化（09 §9.1.1）\"，删去\"存下的投影串\"。06 与 09 只保留一份 `hardProjection` 实现（目前两份对 undefined / null 的写法不同）。增加 schema 测试：`constraintRevisions` 无字符串型投影字段。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "privacy-03",
+  "severity": "high",
+  "section": "06-rules-engine-part6.md",
+  "description": "rooms.previewChange 的 finance 分支有三份互相冲突的规格，其中 06 和 14 的写法会给 finance 一个不留痕、不限频的预言机。06/14 要求对 finance 无条件做全局 feasibility 枚举并返回'仍存在可行方案'；09 只在 viewCoversRuleInput(finance) 为真时返回 feasibleAfter；07/12/13 只回答预算维度。C0 配置下 customer 没有把 requiredItemKeys/deadline 披露给 finance，此时 feasibility 结论依赖 customer 的私密值，finance 可以反复调用 preview 零成本二分出 customer 的必需集合与截止日。（对 canon 的异议：D12 ② 的前提'首个场景只有 finance 改上限能看到全部规则输入'在 U1/C0 配置下不成立。）",
+  "evidence": "06 §9.2：'rooms.previewChange……只对 finance 的上限变更返回 verdictAfter（对打补丁的输入跑 checkProposal 与 feasibility 枚举）'；14 S7：'只对 finance 返回 verdictAfter：当前提案将被阻断……仍存在可行方案'；09 §9.6.8：'viewCoversRuleInput(role)……verdictAfter { …, feasibleAfter }'；07 §7.11.1：'budgetAfter……只回答预算维度'；12 §12.17 returns 中没有 feasibility 字段；16 TC-PRIV-13 只测角色分支。",
+  "suggested_fix": "以 12 §12.17 的形状为唯一定义：verdictAfter 只含当前提案在新上限下的预算检查（budget.over / below_committed），删除 06 §9.2 的'feasibility 枚举'和 14 S7 的'仍存在可行方案'。09 §9.6.8 的 feasibleAfter 要么删除，要么在 07 写明它只在 viewCoversRuleInput 由当前 sharedFacts 动态判定为真时返回，并补进 12 的 returns。TC-PRIV-13 增加 C0 用例：finance 的 preview 结果在扰动 customer 未披露的必需项和截止日后逐字节不变。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-04",
+  "severity": "high",
+  "section": "14-scenario-scope-change.md",
+  "description": "评估方代理按角色的动作被渲染给了他方的人。14 的模板写着 provider 能看到 'Customer agent declined' / 'Finance agent declined'，room 变体里还有 'Customer agent recommends v1'；13 决策页的 'Learn more' 也展示'他方动作的模板化摘要'。这与 07 PV-10、07 §7.9.4（turns 的解析输出只给本方）、03 turn_completed（'他人只见 finished'）、05 §5.12（轮次结果只有 'vN not accepted'）直接冲突。按 14 实现，provider 每轮都能知道是 finance 的代理还是 customer 的代理没接受，这远多于 DX-4 规定的'每轮 1 bit'；按此实现 TC-PRIV-20 也会失败。",
+  "evidence": "14 §3 reasonKeys 表：'customer 模型 | Customer agent declined'、'finance 模型 | Finance agent declined（不带理由，D12 ①）'；14 §8.5 `agent.recommended` room 变体：'Customer agent recommends v1 (suggestion only).'；14 S5：'事件 agent_recommended ×2'；13 §13.5 区块 10：'他方动作的模板化摘要'；07 PV-10：'对他方代理的反馈只有公开提案、fit 与不带角色和原因的 not_accepted'；16 TC-PRIV-20：'代理动作、reasonKey、topicKey 不出现在他方任何面'。",
+  "suggested_fix": "14 §3 的'provider 看到的形式'一列改为'不显示'。§8.5 的 agent.recommended 只保留 owner 变体；room 和 buyer 变体改为只渲染轮次结局（DX-4），即 'v1 is ready for approval' 或 'Agents start round 2'。14 S5 的事件改为 turn_completed（他人只见 finished）。13 §13.5 区块 10 删除'他方动作的模板化摘要'，只保留本方 rationale 与公开提案序列。TC-PRIV-20 增加断言：provider 和 finance 的 timeline 中不出现 'agent declined' / 'recommends' 一类按角色动作文本。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-09",
+  "severity": "medium",
+  "section": "06-rules-engine-part5.md",
+  "description": "06 和 14 让买方的 rooms.view 对'刚被 bump 置为 stale 的提案'做实时重算投影，这与 07 §7.9.3、D12 ①、12 proposals.get 的'历史提案只显示存储状态、不重算'冲突。如果 bump 之后没有新提案（例如 run 进入 needs_input），stale 的 v1 会一直是'最新一份'，在之后每次 bump 下都被重算：finance 反复改上限时，customer 能看到 v1 在通过与不通过之间翻转，获得针对 v1 金额的阈值 bit。这条信道不在 DX 清单里，并且会按当前（而不是当时）的披露状态渲染，绕开了 PV-12 的'按值所属版本判定'。",
+  "evidence": "06 §8 末段：'买方对房间最新一份提案（当前提案，或刚被 bump 置为 stale 的那份）显示实时投影'；14 S7 customer 所见：'v1 卡：Checked against constraints v2……A constraint private to another participant is not met.'；07 §7.9.3：'历史提案在当前 cv 下的重算结论 ○……fit / checks 只对当前提案计算'；12 §12.17 proposals.get：'只有当它是当前提案时才带 fit / checks'。",
+  "suggested_fix": "06 §8 改为：fit 和 checks 只对 run.currentProposalId 计算；stale 提案只显示公开检查 version.stale_constraints {checkedAgainst}，不显示掩码检查和预算检查。14 S7 的 customer 所见改为 'This version no longer applies (constraints v2)'。16 TC-PRIV-14 增加：bump 后进入 needs_input，finance 再次改上限，customer 的 rooms.view 对 v1 的展示逐字节不变。",
+  "reviewer": "隐私预言机与泄露路径"
+ }
+]

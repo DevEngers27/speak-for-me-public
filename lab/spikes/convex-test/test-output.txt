@@ -1,0 +1,148 @@
+
+ RUN  v5.0.5 /private/tmp/claude-501/-Users-zhennn-cal-hack-2026-main/8539c825-8b44-4f0c-8956-406ed3a7762f/scratchpad/spikes/convex-test
+
+stdout | convex/auth.test.ts > (d) t.withIdentity and ctx.auth.getUserIdentity > withIdentity with only name: issuer/subject/tokenIdentifier are auto-generated
+[spike] auto-generated identity: {"issuer":"https://convex.test","name":"Alice","subject":"-1008044925","tokenIdentifier":"https://convex.test|-1008044925"}
+
+stdout | convex/auth.test.ts > (d) t.withIdentity and ctx.auth.getUserIdentity > withIdentity with subject+issuer: tokenIdentifier is derived
+[spike] explicit subject+issuer identity: {"issuer":"https://clerk.example.test","subject":"user_alice","tokenIdentifier":"https://clerk.example.test|user_alice"}
+
+stdout | convex/auth.test.ts > (d) t.withIdentity and ctx.auth.getUserIdentity > unauthenticated mutation -> ConvexError{code:UNAUTHENTICATED} reaches the test intact
+[spike] error class / data: {"isConvexError":true,"data":{"code":"UNAUTHENTICATED","message":"UNAUTHENTICATED"},"message":"{\"code\":\"UNAUTHENTICATED\",\"message\":\"UNAUTHENTICATED\"}"}
+
+stdout | convex/actions.test.ts > (f) actions are not transactional > throw between two runMutation calls: first write persists, second never happens
+[spike] action error: boom between mutations
+
+stdout | convex/idempotency.test.ts > (a) query-by-index-then-insert idempotency in one mutation > repeat call with same operationId returns existing record
+[spike] first: {"created":true,"executionId":"0000000000000000010003executions"}
+[spike] second: {"created":false,"executionId":"0000000000000000010003executions"}
+
+stdout | convex/validation.test.ts > (e) schema validation on write (v.union / v.literal / v.optional / v.id) > insert cases
+[spike] insert outcomes: 
+  valid_without_optional_note => accepted
+  optional_note_present => accepted
+  optional_note_wrong_type => rejected: Validator error: Expected `string`, got `42`
+  nullable_archivedAt_missing => rejected: Validator error: Missing required field `archivedAt` in object
+  nullable_archivedAt_number => accepted
+  literal_status_bogus => rejected: Validator error: Expected one of literal, literal, literal, got `"bogus"`
+  extra_unknown_field => rejected: Validator error: Unexpected field `extra` in object
+  id_wrong_table => rejected: Validator error: Expected ID for table "users", got `000000000000000000000010001rooms`
+  id_garbage_string => rejected: Validator error: Expected ID for table "users", got `not-an-id`
+  number_negative_fraction => accepted
+  number_NaN => accepted
+  empty_title_string => accepted
+
+stdout | convex/actions.test.ts > (f) actions are not transactional > throw between two runMutation calls: first write persists, second never happens
+[spike] events after failed action: {"step1":1,"step2":0}
+
+stdout | convex/scheduler.test.ts > (c) scheduler in convex-test > scheduled ACTION runs only when drained; no auth inside; runMutation commits
+[spike] run status right after startRun: queued
+[spike] job right after startRun: {"name":"runs:executeRunAction","state":{"kind":"pending"}}
+
+stdout | convex/idempotency.test.ts > (a) query-by-index-then-insert idempotency in one mutation > Promise.all of two identical calls: one created (convex-test serializes)
+[spike] parallel results: [{"created":true,"executionId":"0000000000000000010003executions"},{"created":false,"executionId":"0000000000000000010003executions"}]
+
+stdout | convex/auth.test.ts > (d) t.withIdentity and ctx.auth.getUserIdentity > public action: identity visible in action and propagated into ctx.runQuery
+[spike] action identity: {"inAction":{"issuer":"https://clerk.example.test","subject":"user_alice","tokenIdentifier":"https://clerk.example.test|user_alice"},"viaRunQuery":{"issuer":"https://clerk.example.test","subject":"user_alice","tokenIdentifier":"https://clerk.example.test|user_alice"}}
+
+stdout | convex/validation.test.ts > (e) schema validation on write (v.union / v.literal / v.optional / v.id) > patch cases
+[spike] patch outcomes: 
+  patch_valid_status => accepted
+  patch_bogus_status => rejected: Validator error: Expected one of literal, literal, literal, got `"bogus"`
+  patch_unknown_field => rejected: Validator error: Unexpected field `nope` in object
+  patch_set_optional => accepted
+  args_undefined_is_dropped_noop => accepted
+  handler_unset_optional => accepted
+  handler_unset_required => rejected: Validator error: Missing required field `archivedAt` in object
+[spike] room after patches: {"_creationTime":1792840460981.001,"_id":"000000000000000000000010001rooms","archivedAt":null,"constraintVersion":1,"ownerId":"000000000000000000000010000users","status":"executed","title":"Scope change"}
+
+stdout | convex/scheduler.test.ts > (c) scheduler in convex-test > scheduled ACTION runs only when drained; no auth inside; runMutation commits
+[spike] run after drain: {"status":"succeeded","output":"STUB(Scope change)","observedIdentity":null}
+[spike] job after drain: {"kind":"success"}
+
+ ✓ convex/auth.test.ts > (d) t.withIdentity and ctx.auth.getUserIdentity > no identity -> getUserIdentity() returns null (query does not throw) 6ms
+ ✓ convex/auth.test.ts > (d) t.withIdentity and ctx.auth.getUserIdentity > withIdentity with only name: issuer/subject/tokenIdentifier are auto-generated 1ms
+ ✓ convex/auth.test.ts > (d) t.withIdentity and ctx.auth.getUserIdentity > withIdentity with subject+issuer: tokenIdentifier is derived 0ms
+ ✓ convex/auth.test.ts > (d) t.withIdentity and ctx.auth.getUserIdentity > explicit tokenIdentifier is used verbatim 0ms
+ ✓ convex/auth.test.ts > (d) t.withIdentity and ctx.auth.getUserIdentity > withIdentity returns a new accessor; original t stays anonymous 0ms
+ ✓ convex/auth.test.ts > (d) t.withIdentity and ctx.auth.getUserIdentity > unauthenticated mutation -> ConvexError{code:UNAUTHENTICATED} reaches the test intact 1ms
+ ✓ convex/auth.test.ts > (d) t.withIdentity and ctx.auth.getUserIdentity > identity present but no users row -> USER_NOT_PROVISIONED (authn != authz) 3ms
+ ✓ convex/auth.test.ts > (d) t.withIdentity and ctx.auth.getUserIdentity > ensureUser is idempotent per tokenIdentifier 1ms
+ ✓ convex/auth.test.ts > (d) t.withIdentity and ctx.auth.getUserIdentity > public action: identity visible in action and propagated into ctx.runQuery 1ms
+stdout | convex/idempotency.test.ts > (a) query-by-index-then-insert idempotency in one mutation > different operationIds for the same proposal DO create duplicates
+[spike] executions after two client-random keys: 2
+
+stdout | convex/validation.test.ts > (e) schema validation on write (v.union / v.literal / v.optional / v.id) > v.id across tables and discriminated unions in nested objects
+[spike] id/union outcomes: 
+  approval_proposalId_is_users_id => rejected: Validator error: Expected ID for table "proposals", got `000000000000000000000010000users`
+  approval_decision_maybe => rejected: Validator error: Expected one of literal, literal, got `"maybe"`
+  msg_propose_ok => accepted
+  msg_propose_with_clarify_field => rejected: Validator error: Expected one of object, object, got `{"kind":"propose","question":"?"}`
+  msg_unknown_kind => rejected: Validator error: Expected one of object, object, got `{"kind":"accept"}`
+  msg_propose_negative_fraction_price => accepted
+  t_run_bypasses_functions_but_not_schema => rejected: Validator error: Missing required field `title` in object
+
+stdout | convex/idempotency.test.ts > (a) query-by-index-then-insert idempotency in one mutation > mutation is atomic: throw after writes leaves nothing; retry succeeds
+[spike] error data: {"code":"SIMULATED_FAILURE","message":"after writes"}
+
+stdout | convex/validation.test.ts > (e) schema validation on write (v.union / v.literal / v.optional / v.id) > argument and return validators
+[spike] args/returns outcomes: 
+  args_bad_literal => rejected: Validator error: Expected one of literal, literal, literal, got `"bogus"`
+  args_extra_field => rejected: Validator error: Unexpected field `x` in object
+  args_union_ok => accepted
+  returns_violated => rejected: Return value validation failed for mutation "validation:badReturn":
+
+stdout | convex/scheduler.test.ts > (c) scheduler in convex-test > scheduled MUTATION with delay: advanceTimersByTime + finishInProgressScheduledFunctions
+[spike] delayed mutation job: {"state":{"kind":"success"},"scheduledTimeMinusCreation":60000}
+
+ ✓ convex/validation.test.ts > (e) schema validation on write (v.union / v.literal / v.optional / v.id) > insert cases 10ms
+ ✓ convex/validation.test.ts > (e) schema validation on write (v.union / v.literal / v.optional / v.id) > patch cases 2ms
+ ✓ convex/validation.test.ts > (e) schema validation on write (v.union / v.literal / v.optional / v.id) > v.id across tables and discriminated unions in nested objects 1ms
+ ✓ convex/validation.test.ts > (e) schema validation on write (v.union / v.literal / v.optional / v.id) > argument and return validators 1ms
+stdout | convex/scheduler.test.ts > (c) scheduler in convex-test > scheduled MUTATION with delay: advanceTimersByTime + finishInProgressScheduledFunctions
+[spike] identity seen inside scheduled mutation: {"identity":null}
+
+stdout | convex/actions.test.ts > (g) Convex 1.48 nested ctx.runMutation inside a mutation = sub-transaction > inner throws and outer catches: inner writes rolled back, outer writes kept
+[spike] nested (caught): {"r":"caught","counts":{"before":1,"inner":0,"after":1}}
+
+ ✓ convex/actions.test.ts > (f) actions are not transactional > throw between two runMutation calls: first write persists, second never happens 10ms
+ ✓ convex/actions.test.ts > (f) actions are not transactional > happy path writes both 2ms
+ ✓ convex/actions.test.ts > (g) Convex 1.48 nested ctx.runMutation inside a mutation = sub-transaction > inner throws and outer catches: inner writes rolled back, outer writes kept 3ms
+ ✓ convex/actions.test.ts > (g) Convex 1.48 nested ctx.runMutation inside a mutation = sub-transaction > outer rethrows: everything rolled back 1ms
+stdout | convex/scheduler.test.ts > (c) scheduler in convex-test > finishAllScheduledFunctions drains chains (fn schedules fn)
+[spike] chain job states: ["runs:chain:success","runs:chain:success","runs:chain:success","runs:chain:success"]
+
+stdout | convex/scheduler.test.ts > (c) scheduler in convex-test > mutation that throws after runAfter: run row AND schedule are rolled back
+[spike] after failed startRun: {"runs":0,"jobs":0}
+
+stdout | convex/idempotency.test.ts > (b) approval upsert keyed by by_proposal_user > insert -> unchanged -> updated, one row per (proposal,user)
+[spike] alice r1/r2/r3: ["inserted","unchanged","updated",2]
+
+stdout | convex/scheduler.test.ts > (c) scheduler in convex-test > failing scheduled action ends in state failed (no retry in convex-test)
+[spike] failing action job: {"kind":"failed"}
+[spike] console.error calls: 1
+
+stdout | convex/idempotency.test.ts > (b) approval upsert keyed by by_proposal_user > .unique() turns a duplicate that bypassed the entry point into a hard error
+[spike] duplicate detection error: unique() query returned more than one result from table approvals:
+
+ ✓ convex/idempotency.test.ts > (a) query-by-index-then-insert idempotency in one mutation > repeat call with same operationId returns existing record 10ms
+ ✓ convex/idempotency.test.ts > (a) query-by-index-then-insert idempotency in one mutation > Promise.all of two identical calls: one created (convex-test serializes) 2ms
+ ✓ convex/idempotency.test.ts > (a) query-by-index-then-insert idempotency in one mutation > different operationIds for the same proposal DO create duplicates 1ms
+ ✓ convex/idempotency.test.ts > (a) query-by-index-then-insert idempotency in one mutation > mutation is atomic: throw after writes leaves nothing; retry succeeds 1ms
+ ✓ convex/idempotency.test.ts > (a) query-by-index-then-insert idempotency in one mutation > unauthenticated caller is rejected before any read 0ms
+ ✓ convex/idempotency.test.ts > (b) approval upsert keyed by by_proposal_user > insert -> unchanged -> updated, one row per (proposal,user) 7ms
+ ✓ convex/idempotency.test.ts > (b) approval upsert keyed by by_proposal_user > .unique() turns a duplicate that bypassed the entry point into a hard error 1ms
+ ✓ convex/scheduler.test.ts > (c) scheduler in convex-test > scheduled ACTION runs only when drained; no auth inside; runMutation commits 13ms
+ ✓ convex/scheduler.test.ts > (c) scheduler in convex-test > scheduled MUTATION with delay: advanceTimersByTime + finishInProgressScheduledFunctions 2ms
+ ✓ convex/scheduler.test.ts > (c) scheduler in convex-test > finishAllScheduledFunctions drains chains (fn schedules fn) 3ms
+ ✓ convex/scheduler.test.ts > (c) scheduler in convex-test > mutation that throws after runAfter: run row AND schedule are rolled back 2ms
+ ✓ convex/scheduler.test.ts > (c) scheduler in convex-test > failing scheduled action ends in state failed (no retry in convex-test) 2ms
+ ✓ convex/scheduler.test.ts > (c) scheduler in convex-test > ctx.scheduler.cancel before due time -> state canceled, never runs 1ms
+ ✓ convex/scheduler.test.ts > (c) scheduler in convex-test > internal functions are directly callable from tests; stale commit rejected 2ms
+ ✓ convex/scheduler.test.ts > (c') runAfter(0) with REAL timers > drained by finishAllScheduledFunctions even though fake timers were off at schedule time 2ms
+
+ Test Files  5 passed (5)
+      Tests  32 passed (32)
+   Start at  04:14:20
+   Duration  180ms (transform 43%, environment 22%, import 18%, tests 16%, worker 2%)
+

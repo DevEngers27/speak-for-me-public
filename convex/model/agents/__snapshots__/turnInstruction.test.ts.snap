@@ -1,0 +1,81 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`main fixture provider propose: snapshots the exact gateway request body 1`] = `
+{
+  "max_tokens": 16000,
+  "messages": [
+    {
+      "content": [
+        {
+          "text": "<principal_notes>"Team capacity is tight in December."</principal_notes>",
+          "type": "text",
+        },
+        {
+          "text": "<room_state>{"today":"2026-11-02","roundNo":1,"maxRounds":3}</room_state>",
+          "type": "text",
+        },
+        {
+          "text": "<candidates>[{"optionKey":"O1","candidateKey":"audit_log_export+sso_login","itemKeys":["audit_log_export","sso_login"],"modifiers":[],"amountCents":80000,"deliveryDate":"2026-11-16"},{"optionKey":"O2","candidateKey":"audit_log_export+sso_login+usage_dashboard","itemKeys":["audit_log_export","sso_login","usage_dashboard"],"modifiers":[],"amountCents":90000,"deliveryDate":"2026-11-18"}]</candidates>",
+          "type": "text",
+        },
+        {
+          "text": "<untrusted_data source="provider.catalog_titles" boundary="940fb59380c44f6f">
+{"sso_login":"SSO login (SAML)","audit_log_export":"Audit log export","usage_dashboard":"Usage dashboard","slack_alerts":"Slack alerts","custom_theme":"Custom theme","rush":"Rush delivery"}
+</untrusted_data>",
+          "type": "text",
+        },
+      ],
+      "role": "user",
+    },
+    {
+      "content": "This turn: kind propose. Allowed actions: propose, clarify, reject, escalate.",
+      "role": "system",
+    },
+  ],
+  "model": "claude-opus-5-5",
+  "output_config": {
+    "effort": "medium",
+    "format": {
+      "schema": {
+        "additionalProperties": false,
+        "properties": {
+          "turn": {
+            "additionalProperties": false,
+            "properties": {
+              "action": {
+                "enum": [
+                  "propose",
+                ],
+                "type": "string",
+              },
+              "optionKey": {
+                "type": "string",
+              },
+              "rationale": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "action",
+              "optionKey",
+              "rationale",
+            ],
+            "type": "object",
+          },
+        },
+        "required": [
+          "turn",
+        ],
+        "type": "object",
+      },
+      "type": "json_schema",
+    },
+  },
+  "system": [
+    {
+      "text": "You advise the provider. Humans approve proposals.",
+      "type": "text",
+    },
+  ],
+}
+`;

@@ -1,0 +1,433 @@
+{
+  "deployment": "benevolent-jackal-41",
+  "roomId": "m177v7fjwd2dgzaah2rdvb46p18gy5wv",
+  "authEvidence": "Synthetic admin identities; not Clerk or browser evidence.",
+  "exportScope": "Provider public timeline only; role-private events omitted. Internal model metadata excludes prompts, outputs and notes.",
+  "timeline": [
+    {
+      "type": "follow_up_started",
+      "at": 1792935576579.5496,
+      "actorKind": "human",
+      "actorRole": "customer",
+      "text": "Follow up started"
+    },
+    {
+      "type": "room_executed",
+      "at": 1792935555294.7698,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Room executed"
+    },
+    {
+      "type": "run_ended",
+      "at": 1792935555294.7695,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Run ended"
+    },
+    {
+      "type": "proposal_status_changed",
+      "at": 1792935555294.7693,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Proposal status changed"
+    },
+    {
+      "type": "approval_recorded",
+      "at": 1792935555294.7678,
+      "actorKind": "human",
+      "actorRole": "finance",
+      "text": "Approval recorded"
+    },
+    {
+      "type": "approval_recorded",
+      "at": 1792935551972.688,
+      "actorKind": "human",
+      "actorRole": "customer",
+      "text": "Approval recorded"
+    },
+    {
+      "type": "run_awaiting_approval",
+      "at": 1792935548469.9985,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Run awaiting approval"
+    },
+    {
+      "type": "human_request_answered",
+      "at": 1792935548469.9983,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Negotiation resumed"
+    },
+    {
+      "type": "run_waiting",
+      "at": 1792935377975.6262,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Negotiation is waiting"
+    },
+    {
+      "type": "run_waiting",
+      "at": 1792935377975.626,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Negotiation is waiting"
+    },
+    {
+      "type": "turn_completed",
+      "at": 1792935377975.6255,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Turn completed"
+    },
+    {
+      "type": "turn_scheduled",
+      "at": 1792935374164.0098,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Turn scheduled"
+    },
+    {
+      "type": "turn_completed",
+      "at": 1792935374164.0093,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Turn completed"
+    },
+    {
+      "type": "turn_scheduled",
+      "at": 1792935371104.3652,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Turn scheduled"
+    },
+    {
+      "type": "proposal_created",
+      "at": 1792935371104.3647,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Proposal created"
+    },
+    {
+      "type": "turn_completed",
+      "at": 1792935371104.3643,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Turn completed"
+    },
+    {
+      "type": "turn_scheduled",
+      "at": 1792935366802.7444,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Turn scheduled"
+    },
+    {
+      "type": "turn_completed",
+      "at": 1792935366802.744,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Turn completed"
+    },
+    {
+      "type": "turn_scheduled",
+      "at": 1792935362354.224,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Turn scheduled"
+    },
+    {
+      "type": "run_started",
+      "at": 1792935362354.2236,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Run started"
+    },
+    {
+      "type": "constraints_changed",
+      "at": 1792935362354.2231,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Constraints changed (v2)"
+    },
+    {
+      "type": "run_ended",
+      "at": 1792935362354.2227,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Run ended"
+    },
+    {
+      "type": "proposal_status_changed",
+      "at": 1792935362354.2224,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Proposal status changed"
+    },
+    {
+      "type": "approval_recorded",
+      "at": 1792935358802.5725,
+      "actorKind": "human",
+      "actorRole": "customer",
+      "text": "Approval recorded"
+    },
+    {
+      "type": "run_awaiting_approval",
+      "at": 1792935341772.194,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Run awaiting approval"
+    },
+    {
+      "type": "turn_completed",
+      "at": 1792935341772.1938,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Turn completed"
+    },
+    {
+      "type": "turn_scheduled",
+      "at": 1792935337666.0356,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Turn scheduled"
+    },
+    {
+      "type": "turn_completed",
+      "at": 1792935337666.0352,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Turn completed"
+    },
+    {
+      "type": "turn_scheduled",
+      "at": 1792935333963.7573,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Turn scheduled"
+    },
+    {
+      "type": "proposal_created",
+      "at": 1792935333963.7568,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Proposal created"
+    },
+    {
+      "type": "turn_completed",
+      "at": 1792935333963.7563,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Turn completed"
+    },
+    {
+      "type": "turn_scheduled",
+      "at": 1792935329853.6934,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Turn scheduled"
+    },
+    {
+      "type": "run_started",
+      "at": 1792935329853.6929,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Run started"
+    },
+    {
+      "type": "constraints_changed",
+      "at": 1792935329853.6924,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Constraints changed (v1)"
+    },
+    {
+      "type": "room_opened",
+      "at": 1792935329853.692,
+      "actorKind": "system",
+      "actorRole": "system",
+      "text": "Room opened"
+    },
+    {
+      "type": "brief_confirmed",
+      "at": 1792935318450.7646,
+      "actorKind": "human",
+      "actorRole": "customer",
+      "text": "customer confirmed a brief"
+    },
+    {
+      "type": "catalog_item_confirmed",
+      "at": 1792935318450.7622,
+      "actorKind": "human",
+      "actorRole": "provider",
+      "text": "Catalog item confirmed"
+    },
+    {
+      "type": "baseline_recorded",
+      "at": 1792935318450.7605,
+      "actorKind": "human",
+      "actorRole": "finance",
+      "text": "Committed baseline recorded"
+    },
+    {
+      "type": "member_joined",
+      "at": 1792935318450.76,
+      "actorKind": "human",
+      "actorRole": "finance",
+      "text": "Member joined"
+    },
+    {
+      "type": "invite_created",
+      "at": 1792935318450.7595,
+      "actorKind": "human",
+      "actorRole": "customer",
+      "text": "Invite created"
+    },
+    {
+      "type": "member_joined",
+      "at": 1792935318450.759,
+      "actorKind": "human",
+      "actorRole": "provider",
+      "text": "Member joined"
+    },
+    {
+      "type": "invite_created",
+      "at": 1792935318450.7585,
+      "actorKind": "human",
+      "actorRole": "customer",
+      "text": "Invite created"
+    },
+    {
+      "type": "member_joined",
+      "at": 1792935318450.7576,
+      "actorKind": "human",
+      "actorRole": "customer",
+      "text": "Member joined"
+    },
+    {
+      "type": "room_created",
+      "at": 1792935318450.7573,
+      "actorKind": "human",
+      "actorRole": "customer",
+      "text": "Room created"
+    }
+  ],
+  "modelAttempts": [
+    {
+      "costMicroUsd": 15157,
+      "model": "claude-opus-5-5",
+      "priceTableAsOf": "2026-10-06",
+      "requestId": "req_011CgP3Uxf4E8sHXGF9J4oo7",
+      "responseModel": "claude-opus-5-5",
+      "role": "provider",
+      "status": "completed",
+      "usage": {
+        "cacheCreationInputTokens": 1905,
+        "cacheReadInputTokens": 0,
+        "inputTokens": 763,
+        "outputTokens": 129,
+        "thinkingTokens": 0
+      }
+    },
+    {
+      "costMicroUsd": 18554,
+      "model": "claude-opus-5-5",
+      "priceTableAsOf": "2026-10-06",
+      "requestId": "req_011CgP3VGHhk96JHUqXQGBY9",
+      "responseModel": "claude-opus-5-5",
+      "role": "customer",
+      "status": "completed",
+      "usage": {
+        "cacheCreationInputTokens": 2538,
+        "cacheReadInputTokens": 0,
+        "inputTokens": 876,
+        "outputTokens": 118,
+        "thinkingTokens": 0
+      }
+    },
+    {
+      "costMicroUsd": 15949,
+      "model": "claude-opus-5-5",
+      "priceTableAsOf": "2026-10-06",
+      "requestId": "req_011CgP3VXgepc17kVHp6EL95",
+      "responseModel": "claude-opus-5-5",
+      "role": "finance",
+      "status": "completed",
+      "usage": {
+        "cacheCreationInputTokens": 1957,
+        "cacheReadInputTokens": 0,
+        "inputTokens": 681,
+        "outputTokens": 172,
+        "thinkingTokens": 86
+      }
+    },
+    {
+      "costMicroUsd": 8173,
+      "model": "claude-opus-5-5",
+      "priceTableAsOf": "2026-10-06",
+      "requestId": "req_011CgP3XP4JbkDTGirVpKr27",
+      "responseModel": "claude-opus-5-5",
+      "role": "provider",
+      "status": "completed",
+      "usage": {
+        "cacheCreationInputTokens": 0,
+        "cacheReadInputTokens": 1905,
+        "inputTokens": 763,
+        "outputTokens": 237,
+        "thinkingTokens": 142
+      }
+    },
+    {
+      "costMicroUsd": 14223,
+      "model": "claude-opus-5-5",
+      "priceTableAsOf": "2026-10-06",
+      "requestId": "req_011CgP3XgK8EnBGLQr1hNJ6h",
+      "responseModel": "claude-opus-5-5",
+      "role": "provider",
+      "status": "completed",
+      "usage": {
+        "cacheCreationInputTokens": 1899,
+        "cacheReadInputTokens": 0,
+        "inputTokens": 672,
+        "outputTokens": 102,
+        "thinkingTokens": 0
+      }
+    },
+    {
+      "costMicroUsd": 6564,
+      "model": "claude-opus-5-5",
+      "priceTableAsOf": "2026-10-06",
+      "requestId": "req_011CgP3Xzq75LmKhxJxxPQPU",
+      "responseModel": "claude-opus-5-5",
+      "role": "customer",
+      "status": "completed",
+      "usage": {
+        "cacheCreationInputTokens": 0,
+        "cacheReadInputTokens": 2538,
+        "inputTokens": 884,
+        "outputTokens": 126,
+        "thinkingTokens": 0
+      }
+    },
+    {
+      "costMicroUsd": 8229,
+      "model": "claude-opus-5-5",
+      "priceTableAsOf": "2026-10-06",
+      "requestId": "req_011CgP3YDmicmWEMmwWa67Pe",
+      "responseModel": "claude-opus-5-5",
+      "role": "finance",
+      "status": "completed",
+      "usage": {
+        "cacheCreationInputTokens": 172,
+        "cacheReadInputTokens": 1785,
+        "inputTokens": 673,
+        "outputTokens": 216,
+        "thinkingTokens": 102
+      }
+    }
+  ],
+  "estimatedTotalMicroUsd": 86849,
+  "estimate": true,
+  "createdAt": "2026-10-25T13:40:21.946Z"
+}

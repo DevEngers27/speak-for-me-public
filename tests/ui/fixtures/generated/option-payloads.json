@@ -1,0 +1,2336 @@
+{
+  "customer": {
+    "customer": {
+      "room": {
+        "budget": {
+          "capCents": null,
+          "committedCents": null,
+          "headroomCents": null,
+          "visibility": "customer"
+        },
+        "catalog": [
+          {
+            "itemKey": "audit_log_export",
+            "kind": "item",
+            "leadDays": 14,
+            "priceCents": 30000,
+            "revision": 1,
+            "title": "Audit log export"
+          },
+          {
+            "itemKey": "custom_theme",
+            "kind": "item",
+            "leadDays": 32,
+            "priceCents": 25000,
+            "revision": 1,
+            "title": "Custom theme"
+          },
+          {
+            "itemKey": "rush",
+            "kind": "modifier",
+            "leadDays": 4,
+            "priceCents": 15000,
+            "revision": 1,
+            "title": "Rush delivery"
+          },
+          {
+            "itemKey": "slack_alerts",
+            "kind": "item",
+            "leadDays": 25,
+            "priceCents": 25000,
+            "revision": 1,
+            "title": "Slack alerts"
+          },
+          {
+            "itemKey": "sso_login",
+            "kind": "item",
+            "leadDays": 11,
+            "priceCents": 50000,
+            "revision": 1,
+            "title": "SSO login (SAML)"
+          },
+          {
+            "itemKey": "usage_dashboard",
+            "kind": "item",
+            "leadDays": 16,
+            "priceCents": 10000,
+            "revision": 1,
+            "title": "Usage dashboard"
+          }
+        ],
+        "currentProposal": null,
+        "execution": null,
+        "followUpOf": null,
+        "header": {
+          "constraintsVersion": 1,
+          "isCreator": true,
+          "phase": {
+            "phase": "needs_input",
+            "you": true
+          },
+          "proposalVersion": null,
+          "provenanceBadge": "live",
+          "roomId": "rooms_1",
+          "scenarioKey": "scope_change",
+          "status": "open",
+          "title": "Q4 portal scope change (simulated)",
+          "viewingAs": "customer"
+        },
+        "members": [
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "customer",
+            "isMe": true,
+            "joinedVia": "creator",
+            "role": "customer"
+          },
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "finance",
+            "isMe": false,
+            "joinedVia": "invite",
+            "role": "finance"
+          },
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "provider",
+            "isMe": false,
+            "joinedVia": "invite",
+            "role": "provider"
+          }
+        ],
+        "openRequest": {
+          "expiresAt": 1794398400001,
+          "kind": "infeasible",
+          "mine": true,
+          "options": [
+            {
+              "answerable": true,
+              "effect": {
+                "itemKeys": [
+                  "audit_log_export"
+                ]
+              },
+              "effectView": {
+                "amountCents": 65000,
+                "deliveryDate": "2026-11-11",
+                "itemKeys": [
+                  "sso_login"
+                ],
+                "modifiers": [
+                  "rush"
+                ]
+              },
+              "optionKey": "A",
+              "shown": {
+                "amountCents": 65000,
+                "deliveryDate": "2026-11-11",
+                "itemKeys": [
+                  "sso_login"
+                ],
+                "modifiers": [
+                  "rush"
+                ]
+              },
+              "text": "Remove selected items",
+              "type": "drop_items"
+            },
+            {
+              "answerable": true,
+              "effect": {
+                "date": "2026-11-14"
+              },
+              "effectView": {
+                "amountCents": 95000,
+                "deliveryDate": "2026-11-14",
+                "itemKeys": [
+                  "audit_log_export",
+                  "sso_login"
+                ],
+                "modifiers": [
+                  "rush"
+                ]
+              },
+              "optionKey": "B",
+              "shown": {
+                "amountCents": 95000,
+                "deliveryDate": "2026-11-14",
+                "itemKeys": [
+                  "audit_log_export",
+                  "sso_login"
+                ],
+                "modifiers": [
+                  "rush"
+                ]
+              },
+              "text": "Extend the deadline",
+              "type": "extend_deadline"
+            },
+            {
+              "answerable": true,
+              "effectView": {},
+              "optionKey": "C",
+              "shown": {},
+              "text": "Ask the next participant",
+              "toRole": "finance",
+              "type": "pass_to_next"
+            },
+            {
+              "answerable": true,
+              "effectView": {},
+              "optionKey": "D",
+              "shown": {},
+              "text": "End this run",
+              "type": "end_run"
+            }
+          ],
+          "requestId": "humanRequests_1"
+        },
+        "proposalHistory": [],
+        "run": {
+          "activeRole": "customer",
+          "agentMode": "stub",
+          "attemptStatus": null,
+          "cause": "room_opened",
+          "endedReason": null,
+          "maxRounds": 3,
+          "roundNo": 1,
+          "runId": "runs_1",
+          "runNo": 1,
+          "staleDiscarded": 0,
+          "status": "needs_input",
+          "turnStatus": null,
+          "waiting": null
+        },
+        "seats": [
+          {
+            "inviteExpiresAt": null,
+            "inviteMode": null,
+            "invitedEmail": null,
+            "role": "customer",
+            "state": "filled"
+          },
+          {
+            "inviteExpiresAt": null,
+            "inviteMode": null,
+            "invitedEmail": null,
+            "role": "provider",
+            "state": "filled"
+          },
+          {
+            "inviteExpiresAt": null,
+            "inviteMode": null,
+            "invitedEmail": null,
+            "role": "finance",
+            "state": "filled"
+          }
+        ],
+        "sharedFacts": [],
+        "todos": [
+          {
+            "kind": "answer_request",
+            "priority": 0,
+            "refs": {
+              "requestId": "humanRequests_1",
+              "runId": "runs_1"
+            }
+          }
+        ]
+      },
+      "brief": {
+        "finance": null,
+        "latest": {
+          "confirmedAt": 1793793600001,
+          "disclosures": {},
+          "hardFields": {
+            "deadline": "2026-11-11",
+            "requiredItemKeys": [
+              "audit_log_export",
+              "sso_login"
+            ],
+            "schemaKey": "scope_change.customer.v1"
+          },
+          "softFields": {
+            "notes": "Security audit starts right after the deadline.",
+            "preferredItemKeys": [
+              "slack_alerts",
+              "usage_dashboard"
+            ],
+            "schemaKey": "scope_change.customer.v1"
+          },
+          "source": "form",
+          "version": 1
+        },
+        "othersSee": [
+          {
+            "fields": [],
+            "role": "provider"
+          },
+          {
+            "fields": [],
+            "role": "finance"
+          }
+        ],
+        "role": "customer",
+        "versions": [
+          {
+            "changedHardFields": [
+              "deadline",
+              "requiredItemKeys"
+            ],
+            "confirmedAt": 1793793600001,
+            "notes": "Security audit starts right after the deadline.",
+            "source": "form",
+            "version": 1
+          }
+        ]
+      },
+      "request": {
+        "answerOptionKey": null,
+        "closedAtConstraintsVersion": null,
+        "closedReason": null,
+        "expiresAt": 1794398400001,
+        "kind": "infeasible",
+        "mine": true,
+        "options": [
+          {
+            "answerable": true,
+            "effect": {
+              "itemKeys": [
+                "audit_log_export"
+              ]
+            },
+            "effectView": {
+              "amountCents": 65000,
+              "deliveryDate": "2026-11-11",
+              "itemKeys": [
+                "sso_login"
+              ],
+              "modifiers": [
+                "rush"
+              ]
+            },
+            "optionKey": "A",
+            "shown": {
+              "amountCents": 65000,
+              "deliveryDate": "2026-11-11",
+              "itemKeys": [
+                "sso_login"
+              ],
+              "modifiers": [
+                "rush"
+              ]
+            },
+            "text": "Remove selected items",
+            "type": "drop_items"
+          },
+          {
+            "answerable": true,
+            "effect": {
+              "date": "2026-11-14"
+            },
+            "effectView": {
+              "amountCents": 95000,
+              "deliveryDate": "2026-11-14",
+              "itemKeys": [
+                "audit_log_export",
+                "sso_login"
+              ],
+              "modifiers": [
+                "rush"
+              ]
+            },
+            "optionKey": "B",
+            "shown": {
+              "amountCents": 95000,
+              "deliveryDate": "2026-11-14",
+              "itemKeys": [
+                "audit_log_export",
+                "sso_login"
+              ],
+              "modifiers": [
+                "rush"
+              ]
+            },
+            "text": "Extend the deadline",
+            "type": "extend_deadline"
+          },
+          {
+            "answerable": true,
+            "effectView": {},
+            "optionKey": "C",
+            "shown": {},
+            "text": "Ask the next participant",
+            "toRole": "finance",
+            "type": "pass_to_next"
+          },
+          {
+            "answerable": true,
+            "effectView": {},
+            "optionKey": "D",
+            "shown": {},
+            "text": "End this run",
+            "type": "end_run"
+          }
+        ],
+        "requestId": "humanRequests_1",
+        "status": "open"
+      }
+    },
+    "provider": {
+      "room": {
+        "budget": {
+          "visibility": "none"
+        },
+        "catalog": [
+          {
+            "itemKey": "audit_log_export",
+            "kind": "item",
+            "leadDays": 14,
+            "priceCents": 30000,
+            "revision": 1,
+            "title": "Audit log export"
+          },
+          {
+            "itemKey": "custom_theme",
+            "kind": "item",
+            "leadDays": 32,
+            "priceCents": 25000,
+            "revision": 1,
+            "title": "Custom theme"
+          },
+          {
+            "itemKey": "rush",
+            "kind": "modifier",
+            "leadDays": 4,
+            "priceCents": 15000,
+            "revision": 1,
+            "title": "Rush delivery"
+          },
+          {
+            "itemKey": "slack_alerts",
+            "kind": "item",
+            "leadDays": 25,
+            "priceCents": 25000,
+            "revision": 1,
+            "title": "Slack alerts"
+          },
+          {
+            "itemKey": "sso_login",
+            "kind": "item",
+            "leadDays": 11,
+            "priceCents": 50000,
+            "revision": 1,
+            "title": "SSO login (SAML)"
+          },
+          {
+            "itemKey": "usage_dashboard",
+            "kind": "item",
+            "leadDays": 16,
+            "priceCents": 10000,
+            "revision": 1,
+            "title": "Usage dashboard"
+          }
+        ],
+        "currentProposal": null,
+        "execution": null,
+        "followUpOf": null,
+        "header": {
+          "constraintsVersion": 1,
+          "isCreator": false,
+          "phase": {
+            "phase": "needs_input",
+            "you": false
+          },
+          "proposalVersion": null,
+          "provenanceBadge": "live",
+          "roomId": "rooms_1",
+          "scenarioKey": "scope_change",
+          "status": "open",
+          "title": "Q4 portal scope change (simulated)",
+          "viewingAs": "provider"
+        },
+        "members": [
+          {
+            "briefConfirmed": true,
+            "briefVersion": null,
+            "displayName": "customer",
+            "isMe": false,
+            "joinedVia": "creator",
+            "role": "customer"
+          },
+          {
+            "briefConfirmed": true,
+            "briefVersion": null,
+            "displayName": "finance",
+            "isMe": false,
+            "joinedVia": "invite",
+            "role": "finance"
+          },
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "provider",
+            "isMe": true,
+            "joinedVia": "invite",
+            "role": "provider"
+          }
+        ],
+        "openRequest": {
+          "kind": "run_waiting",
+          "mine": false
+        },
+        "proposalHistory": [],
+        "run": {
+          "activeRole": null,
+          "agentMode": "stub",
+          "attemptStatus": null,
+          "cause": "room_opened",
+          "endedReason": null,
+          "maxRounds": 3,
+          "roundNo": 1,
+          "runId": "runs_1",
+          "runNo": 1,
+          "staleDiscarded": 0,
+          "status": "run_waiting",
+          "turnStatus": null,
+          "waiting": null
+        },
+        "seats": null,
+        "sharedFacts": [],
+        "todos": []
+      },
+      "brief": {
+        "finance": null,
+        "latest": {
+          "confirmedAt": 1793793600001,
+          "disclosures": {},
+          "hardFields": {
+            "schemaKey": "scope_change.provider.v1"
+          },
+          "softFields": {
+            "notes": "Team capacity is tight in December.",
+            "schemaKey": "scope_change.provider.v1"
+          },
+          "source": "form",
+          "version": 1
+        },
+        "othersSee": [
+          {
+            "fields": [],
+            "role": "customer"
+          },
+          {
+            "fields": [],
+            "role": "finance"
+          }
+        ],
+        "role": "provider",
+        "versions": [
+          {
+            "changedHardFields": [],
+            "confirmedAt": 1793793600001,
+            "notes": "Team capacity is tight in December.",
+            "source": "form",
+            "version": 1
+          }
+        ]
+      },
+      "request": {
+        "kind": "run_waiting",
+        "mine": false
+      }
+    },
+    "finance": {
+      "room": {
+        "budget": {
+          "baselineRecorded": true,
+          "baselineSuggestionCents": null,
+          "capCents": 500000,
+          "committedCents": 400000,
+          "headroomCents": 100000,
+          "overByCents": null,
+          "proposalCents": null,
+          "status": "no_proposal",
+          "totalAfterCents": null,
+          "visibility": "finance"
+        },
+        "catalog": [
+          {
+            "itemKey": "audit_log_export",
+            "kind": "item",
+            "leadDays": 14,
+            "priceCents": 30000,
+            "revision": 1,
+            "title": "Audit log export"
+          },
+          {
+            "itemKey": "custom_theme",
+            "kind": "item",
+            "leadDays": 32,
+            "priceCents": 25000,
+            "revision": 1,
+            "title": "Custom theme"
+          },
+          {
+            "itemKey": "rush",
+            "kind": "modifier",
+            "leadDays": 4,
+            "priceCents": 15000,
+            "revision": 1,
+            "title": "Rush delivery"
+          },
+          {
+            "itemKey": "slack_alerts",
+            "kind": "item",
+            "leadDays": 25,
+            "priceCents": 25000,
+            "revision": 1,
+            "title": "Slack alerts"
+          },
+          {
+            "itemKey": "sso_login",
+            "kind": "item",
+            "leadDays": 11,
+            "priceCents": 50000,
+            "revision": 1,
+            "title": "SSO login (SAML)"
+          },
+          {
+            "itemKey": "usage_dashboard",
+            "kind": "item",
+            "leadDays": 16,
+            "priceCents": 10000,
+            "revision": 1,
+            "title": "Usage dashboard"
+          }
+        ],
+        "currentProposal": null,
+        "execution": null,
+        "followUpOf": null,
+        "header": {
+          "constraintsVersion": 1,
+          "isCreator": false,
+          "phase": {
+            "phase": "needs_input",
+            "waitingOn": "customer",
+            "you": false
+          },
+          "proposalVersion": null,
+          "provenanceBadge": "live",
+          "roomId": "rooms_1",
+          "scenarioKey": "scope_change",
+          "status": "open",
+          "title": "Q4 portal scope change (simulated)",
+          "viewingAs": "finance"
+        },
+        "members": [
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "customer",
+            "isMe": false,
+            "joinedVia": "creator",
+            "role": "customer"
+          },
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "finance",
+            "isMe": true,
+            "joinedVia": "invite",
+            "role": "finance"
+          },
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "provider",
+            "isMe": false,
+            "joinedVia": "invite",
+            "role": "provider"
+          }
+        ],
+        "openRequest": {
+          "kind": "infeasible",
+          "mine": false,
+          "waitingOnRole": "customer"
+        },
+        "proposalHistory": [],
+        "run": {
+          "activeRole": null,
+          "agentMode": "stub",
+          "attemptStatus": null,
+          "cause": "room_opened",
+          "endedReason": null,
+          "maxRounds": 3,
+          "roundNo": 1,
+          "runId": "runs_1",
+          "runNo": 1,
+          "staleDiscarded": 0,
+          "status": "needs_input",
+          "turnStatus": null,
+          "waiting": null
+        },
+        "seats": null,
+        "sharedFacts": [],
+        "todos": []
+      },
+      "brief": {
+        "finance": {
+          "baselineRecorded": true,
+          "baselineSuggestionCents": null,
+          "committedCents": 400000
+        },
+        "latest": {
+          "confirmedAt": 1793793600001,
+          "disclosures": {},
+          "hardFields": {
+            "capCents": 500000,
+            "schemaKey": "scope_change.finance.v1"
+          },
+          "softFields": {
+            "notes": "Q4 forecast is tight; keep a reserve.",
+            "schemaKey": "scope_change.finance.v1"
+          },
+          "source": "form",
+          "version": 1
+        },
+        "othersSee": [
+          {
+            "fields": [],
+            "role": "customer"
+          },
+          {
+            "fields": [],
+            "role": "provider"
+          }
+        ],
+        "role": "finance",
+        "versions": [
+          {
+            "changedHardFields": [
+              "capCents"
+            ],
+            "confirmedAt": 1793793600001,
+            "notes": "Q4 forecast is tight; keep a reserve.",
+            "source": "form",
+            "version": 1
+          }
+        ]
+      },
+      "request": {
+        "kind": "infeasible",
+        "mine": false,
+        "requestId": "humanRequests_1",
+        "status": "open",
+        "waitingOnRole": "customer"
+      }
+    }
+  },
+  "finance": {
+    "customer": {
+      "room": {
+        "budget": {
+          "capCents": 470000,
+          "committedCents": 400000,
+          "headroomCents": 70000,
+          "visibility": "customer"
+        },
+        "catalog": [
+          {
+            "itemKey": "audit_log_export",
+            "kind": "item",
+            "leadDays": 14,
+            "priceCents": 30000,
+            "revision": 1,
+            "title": "Audit log export"
+          },
+          {
+            "itemKey": "custom_theme",
+            "kind": "item",
+            "leadDays": 32,
+            "priceCents": 25000,
+            "revision": 1,
+            "title": "Custom theme"
+          },
+          {
+            "itemKey": "rush",
+            "kind": "modifier",
+            "leadDays": 4,
+            "priceCents": 15000,
+            "revision": 1,
+            "title": "Rush delivery"
+          },
+          {
+            "itemKey": "slack_alerts",
+            "kind": "item",
+            "leadDays": 25,
+            "priceCents": 25000,
+            "revision": 1,
+            "title": "Slack alerts"
+          },
+          {
+            "itemKey": "sso_login",
+            "kind": "item",
+            "leadDays": 11,
+            "priceCents": 50000,
+            "revision": 1,
+            "title": "SSO login (SAML)"
+          },
+          {
+            "itemKey": "usage_dashboard",
+            "kind": "item",
+            "leadDays": 16,
+            "priceCents": 10000,
+            "revision": 1,
+            "title": "Usage dashboard"
+          }
+        ],
+        "currentProposal": null,
+        "execution": null,
+        "followUpOf": null,
+        "header": {
+          "constraintsVersion": 1,
+          "isCreator": true,
+          "phase": {
+            "phase": "needs_input",
+            "waitingOn": "finance",
+            "you": false
+          },
+          "proposalVersion": null,
+          "provenanceBadge": "live",
+          "roomId": "rooms_1",
+          "scenarioKey": "scope_change",
+          "status": "open",
+          "title": "Q4 portal scope change (simulated)",
+          "viewingAs": "customer"
+        },
+        "members": [
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "customer",
+            "isMe": true,
+            "joinedVia": "creator",
+            "role": "customer"
+          },
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "finance",
+            "isMe": false,
+            "joinedVia": "invite",
+            "role": "finance"
+          },
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "provider",
+            "isMe": false,
+            "joinedVia": "invite",
+            "role": "provider"
+          }
+        ],
+        "openRequest": {
+          "kind": "infeasible",
+          "mine": false,
+          "waitingOnRole": "finance"
+        },
+        "proposalHistory": [],
+        "run": {
+          "activeRole": null,
+          "agentMode": "stub",
+          "attemptStatus": null,
+          "cause": "room_opened",
+          "endedReason": null,
+          "maxRounds": 3,
+          "roundNo": 1,
+          "runId": "runs_1",
+          "runNo": 1,
+          "staleDiscarded": 0,
+          "status": "needs_input",
+          "turnStatus": null,
+          "waiting": null
+        },
+        "seats": [
+          {
+            "inviteExpiresAt": null,
+            "inviteMode": null,
+            "invitedEmail": null,
+            "role": "customer",
+            "state": "filled"
+          },
+          {
+            "inviteExpiresAt": null,
+            "inviteMode": null,
+            "invitedEmail": null,
+            "role": "provider",
+            "state": "filled"
+          },
+          {
+            "inviteExpiresAt": null,
+            "inviteMode": null,
+            "invitedEmail": null,
+            "role": "finance",
+            "state": "filled"
+          }
+        ],
+        "sharedFacts": [
+          {
+            "asOfBriefVersion": 1,
+            "field": "deadline",
+            "fromRole": "customer",
+            "value": {
+              "date": "2026-11-22",
+              "kind": "date"
+            }
+          },
+          {
+            "asOfBriefVersion": 1,
+            "field": "requiredItemKeys",
+            "fromRole": "customer",
+            "value": {
+              "itemKeys": [
+                "audit_log_export",
+                "sso_login"
+              ],
+              "kind": "itemKeys"
+            }
+          },
+          {
+            "asOfBriefVersion": 1,
+            "field": "capCents",
+            "fromRole": "finance",
+            "value": {
+              "cents": 470000,
+              "kind": "cents"
+            }
+          },
+          {
+            "asOfBriefVersion": 1,
+            "field": "committedCents",
+            "fromRole": "finance",
+            "value": {
+              "cents": 400000,
+              "kind": "cents"
+            }
+          },
+          {
+            "asOfBriefVersion": 1,
+            "field": "headroomCents",
+            "fromRole": "finance",
+            "value": {
+              "cents": 70000,
+              "kind": "cents"
+            }
+          }
+        ],
+        "todos": []
+      },
+      "brief": {
+        "finance": null,
+        "latest": {
+          "confirmedAt": 1793793600002,
+          "disclosures": {
+            "deadline": [
+              "finance"
+            ],
+            "requiredItemKeys": [
+              "finance"
+            ]
+          },
+          "hardFields": {
+            "deadline": "2026-11-22",
+            "requiredItemKeys": [
+              "audit_log_export",
+              "sso_login"
+            ],
+            "schemaKey": "scope_change.customer.v1"
+          },
+          "softFields": {
+            "notes": "Security audit starts right after the deadline.",
+            "preferredItemKeys": [
+              "slack_alerts",
+              "usage_dashboard"
+            ],
+            "schemaKey": "scope_change.customer.v1"
+          },
+          "source": "form",
+          "version": 1
+        },
+        "othersSee": [
+          {
+            "fields": [],
+            "role": "provider"
+          },
+          {
+            "fields": [
+              {
+                "asOfBriefVersion": 1,
+                "field": "deadline",
+                "value": {
+                  "date": "2026-11-22",
+                  "kind": "date"
+                }
+              },
+              {
+                "asOfBriefVersion": 1,
+                "field": "requiredItemKeys",
+                "value": {
+                  "itemKeys": [
+                    "audit_log_export",
+                    "sso_login"
+                  ],
+                  "kind": "itemKeys"
+                }
+              }
+            ],
+            "role": "finance"
+          }
+        ],
+        "role": "customer",
+        "versions": [
+          {
+            "changedHardFields": [
+              "deadline",
+              "requiredItemKeys"
+            ],
+            "confirmedAt": 1793793600002,
+            "notes": "Security audit starts right after the deadline.",
+            "source": "form",
+            "version": 1
+          }
+        ]
+      },
+      "request": {
+        "kind": "infeasible",
+        "mine": false,
+        "requestId": "humanRequests_2",
+        "status": "open",
+        "waitingOnRole": "finance"
+      }
+    },
+    "provider": {
+      "room": {
+        "budget": {
+          "visibility": "none"
+        },
+        "catalog": [
+          {
+            "itemKey": "audit_log_export",
+            "kind": "item",
+            "leadDays": 14,
+            "priceCents": 30000,
+            "revision": 1,
+            "title": "Audit log export"
+          },
+          {
+            "itemKey": "custom_theme",
+            "kind": "item",
+            "leadDays": 32,
+            "priceCents": 25000,
+            "revision": 1,
+            "title": "Custom theme"
+          },
+          {
+            "itemKey": "rush",
+            "kind": "modifier",
+            "leadDays": 4,
+            "priceCents": 15000,
+            "revision": 1,
+            "title": "Rush delivery"
+          },
+          {
+            "itemKey": "slack_alerts",
+            "kind": "item",
+            "leadDays": 25,
+            "priceCents": 25000,
+            "revision": 1,
+            "title": "Slack alerts"
+          },
+          {
+            "itemKey": "sso_login",
+            "kind": "item",
+            "leadDays": 11,
+            "priceCents": 50000,
+            "revision": 1,
+            "title": "SSO login (SAML)"
+          },
+          {
+            "itemKey": "usage_dashboard",
+            "kind": "item",
+            "leadDays": 16,
+            "priceCents": 10000,
+            "revision": 1,
+            "title": "Usage dashboard"
+          }
+        ],
+        "currentProposal": null,
+        "execution": null,
+        "followUpOf": null,
+        "header": {
+          "constraintsVersion": 1,
+          "isCreator": false,
+          "phase": {
+            "phase": "needs_input",
+            "you": false
+          },
+          "proposalVersion": null,
+          "provenanceBadge": "live",
+          "roomId": "rooms_1",
+          "scenarioKey": "scope_change",
+          "status": "open",
+          "title": "Q4 portal scope change (simulated)",
+          "viewingAs": "provider"
+        },
+        "members": [
+          {
+            "briefConfirmed": true,
+            "briefVersion": null,
+            "displayName": "customer",
+            "isMe": false,
+            "joinedVia": "creator",
+            "role": "customer"
+          },
+          {
+            "briefConfirmed": true,
+            "briefVersion": null,
+            "displayName": "finance",
+            "isMe": false,
+            "joinedVia": "invite",
+            "role": "finance"
+          },
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "provider",
+            "isMe": true,
+            "joinedVia": "invite",
+            "role": "provider"
+          }
+        ],
+        "openRequest": {
+          "kind": "run_waiting",
+          "mine": false
+        },
+        "proposalHistory": [],
+        "run": {
+          "activeRole": null,
+          "agentMode": "stub",
+          "attemptStatus": null,
+          "cause": "room_opened",
+          "endedReason": null,
+          "maxRounds": 3,
+          "roundNo": 1,
+          "runId": "runs_1",
+          "runNo": 1,
+          "staleDiscarded": 0,
+          "status": "run_waiting",
+          "turnStatus": null,
+          "waiting": null
+        },
+        "seats": null,
+        "sharedFacts": [],
+        "todos": []
+      },
+      "brief": {
+        "finance": null,
+        "latest": {
+          "confirmedAt": 1793793600002,
+          "disclosures": {},
+          "hardFields": {
+            "schemaKey": "scope_change.provider.v1"
+          },
+          "softFields": {
+            "notes": "Team capacity is tight in December.",
+            "schemaKey": "scope_change.provider.v1"
+          },
+          "source": "form",
+          "version": 1
+        },
+        "othersSee": [
+          {
+            "fields": [],
+            "role": "customer"
+          },
+          {
+            "fields": [],
+            "role": "finance"
+          }
+        ],
+        "role": "provider",
+        "versions": [
+          {
+            "changedHardFields": [],
+            "confirmedAt": 1793793600002,
+            "notes": "Team capacity is tight in December.",
+            "source": "form",
+            "version": 1
+          }
+        ]
+      },
+      "request": {
+        "kind": "run_waiting",
+        "mine": false
+      }
+    },
+    "finance": {
+      "room": {
+        "budget": {
+          "baselineRecorded": true,
+          "baselineSuggestionCents": null,
+          "capCents": 470000,
+          "committedCents": 400000,
+          "headroomCents": 70000,
+          "overByCents": null,
+          "proposalCents": null,
+          "status": "no_proposal",
+          "totalAfterCents": null,
+          "visibility": "finance"
+        },
+        "catalog": [
+          {
+            "itemKey": "audit_log_export",
+            "kind": "item",
+            "leadDays": 14,
+            "priceCents": 30000,
+            "revision": 1,
+            "title": "Audit log export"
+          },
+          {
+            "itemKey": "custom_theme",
+            "kind": "item",
+            "leadDays": 32,
+            "priceCents": 25000,
+            "revision": 1,
+            "title": "Custom theme"
+          },
+          {
+            "itemKey": "rush",
+            "kind": "modifier",
+            "leadDays": 4,
+            "priceCents": 15000,
+            "revision": 1,
+            "title": "Rush delivery"
+          },
+          {
+            "itemKey": "slack_alerts",
+            "kind": "item",
+            "leadDays": 25,
+            "priceCents": 25000,
+            "revision": 1,
+            "title": "Slack alerts"
+          },
+          {
+            "itemKey": "sso_login",
+            "kind": "item",
+            "leadDays": 11,
+            "priceCents": 50000,
+            "revision": 1,
+            "title": "SSO login (SAML)"
+          },
+          {
+            "itemKey": "usage_dashboard",
+            "kind": "item",
+            "leadDays": 16,
+            "priceCents": 10000,
+            "revision": 1,
+            "title": "Usage dashboard"
+          }
+        ],
+        "currentProposal": null,
+        "execution": null,
+        "followUpOf": null,
+        "header": {
+          "constraintsVersion": 1,
+          "isCreator": false,
+          "phase": {
+            "phase": "needs_input",
+            "you": true
+          },
+          "proposalVersion": null,
+          "provenanceBadge": "live",
+          "roomId": "rooms_1",
+          "scenarioKey": "scope_change",
+          "status": "open",
+          "title": "Q4 portal scope change (simulated)",
+          "viewingAs": "finance"
+        },
+        "members": [
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "customer",
+            "isMe": false,
+            "joinedVia": "creator",
+            "role": "customer"
+          },
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "finance",
+            "isMe": true,
+            "joinedVia": "invite",
+            "role": "finance"
+          },
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "provider",
+            "isMe": false,
+            "joinedVia": "invite",
+            "role": "provider"
+          }
+        ],
+        "openRequest": {
+          "expiresAt": 1794398400003,
+          "kind": "infeasible",
+          "mine": true,
+          "options": [
+            {
+              "answerable": true,
+              "effect": {
+                "amountCents": 480000
+              },
+              "effectView": {
+                "amountCents": 80000,
+                "deliveryDate": "2026-11-18",
+                "deltaCents": 10000,
+                "itemKeys": [
+                  "audit_log_export",
+                  "sso_login"
+                ],
+                "modifiers": []
+              },
+              "optionKey": "A",
+              "shown": {
+                "amountCents": 80000,
+                "deliveryDate": "2026-11-18",
+                "deltaCents": 10000,
+                "itemKeys": [
+                  "audit_log_export",
+                  "sso_login"
+                ],
+                "modifiers": []
+              },
+              "text": "Raise the cap",
+              "type": "raise_cap"
+            },
+            {
+              "answerable": true,
+              "effect": {
+                "amountCents": 490000
+              },
+              "effectView": {
+                "amountCents": 90000,
+                "deliveryDate": "2026-11-20",
+                "deltaCents": 20000,
+                "itemKeys": [
+                  "audit_log_export",
+                  "sso_login",
+                  "usage_dashboard"
+                ],
+                "modifiers": []
+              },
+              "optionKey": "B",
+              "shown": {
+                "amountCents": 90000,
+                "deliveryDate": "2026-11-20",
+                "deltaCents": 20000,
+                "itemKeys": [
+                  "audit_log_export",
+                  "sso_login",
+                  "usage_dashboard"
+                ],
+                "modifiers": []
+              },
+              "text": "Raise the cap",
+              "type": "raise_cap"
+            },
+            {
+              "answerable": true,
+              "effectView": {},
+              "optionKey": "C",
+              "shown": {},
+              "text": "End this run",
+              "type": "end_run"
+            }
+          ],
+          "requestId": "humanRequests_2"
+        },
+        "proposalHistory": [],
+        "run": {
+          "activeRole": "finance",
+          "agentMode": "stub",
+          "attemptStatus": null,
+          "cause": "room_opened",
+          "endedReason": null,
+          "maxRounds": 3,
+          "roundNo": 1,
+          "runId": "runs_1",
+          "runNo": 1,
+          "staleDiscarded": 0,
+          "status": "needs_input",
+          "turnStatus": null,
+          "waiting": null
+        },
+        "seats": null,
+        "sharedFacts": [
+          {
+            "asOfBriefVersion": 1,
+            "field": "deadline",
+            "fromRole": "customer",
+            "value": {
+              "date": "2026-11-22",
+              "kind": "date"
+            }
+          },
+          {
+            "asOfBriefVersion": 1,
+            "field": "requiredItemKeys",
+            "fromRole": "customer",
+            "value": {
+              "itemKeys": [
+                "audit_log_export",
+                "sso_login"
+              ],
+              "kind": "itemKeys"
+            }
+          },
+          {
+            "asOfBriefVersion": 1,
+            "field": "capCents",
+            "fromRole": "finance",
+            "value": {
+              "cents": 470000,
+              "kind": "cents"
+            }
+          },
+          {
+            "asOfBriefVersion": 1,
+            "field": "committedCents",
+            "fromRole": "finance",
+            "value": {
+              "cents": 400000,
+              "kind": "cents"
+            }
+          },
+          {
+            "asOfBriefVersion": 1,
+            "field": "headroomCents",
+            "fromRole": "finance",
+            "value": {
+              "cents": 70000,
+              "kind": "cents"
+            }
+          }
+        ],
+        "todos": [
+          {
+            "kind": "answer_request",
+            "priority": 0,
+            "refs": {
+              "requestId": "humanRequests_2",
+              "runId": "runs_1"
+            }
+          }
+        ]
+      },
+      "brief": {
+        "finance": {
+          "baselineRecorded": true,
+          "baselineSuggestionCents": null,
+          "committedCents": 400000
+        },
+        "latest": {
+          "confirmedAt": 1793793600002,
+          "disclosures": {
+            "capCents": [
+              "customer"
+            ],
+            "committedCents": [
+              "customer"
+            ],
+            "headroomCents": [
+              "customer"
+            ]
+          },
+          "hardFields": {
+            "capCents": 470000,
+            "schemaKey": "scope_change.finance.v1"
+          },
+          "softFields": {
+            "notes": "Q4 forecast is tight; keep a reserve.",
+            "schemaKey": "scope_change.finance.v1"
+          },
+          "source": "form",
+          "version": 1
+        },
+        "othersSee": [
+          {
+            "fields": [
+              {
+                "asOfBriefVersion": 1,
+                "field": "capCents",
+                "value": {
+                  "cents": 470000,
+                  "kind": "cents"
+                }
+              },
+              {
+                "asOfBriefVersion": 1,
+                "field": "committedCents",
+                "value": {
+                  "cents": 400000,
+                  "kind": "cents"
+                }
+              },
+              {
+                "asOfBriefVersion": 1,
+                "field": "headroomCents",
+                "value": {
+                  "cents": 70000,
+                  "kind": "cents"
+                }
+              }
+            ],
+            "role": "customer"
+          },
+          {
+            "fields": [],
+            "role": "provider"
+          }
+        ],
+        "role": "finance",
+        "versions": [
+          {
+            "changedHardFields": [
+              "capCents"
+            ],
+            "confirmedAt": 1793793600002,
+            "notes": "Q4 forecast is tight; keep a reserve.",
+            "source": "form",
+            "version": 1
+          }
+        ]
+      },
+      "request": {
+        "answerOptionKey": null,
+        "closedAtConstraintsVersion": null,
+        "closedReason": null,
+        "expiresAt": 1794398400003,
+        "kind": "infeasible",
+        "mine": true,
+        "options": [
+          {
+            "answerable": true,
+            "effect": {
+              "amountCents": 480000
+            },
+            "effectView": {
+              "amountCents": 80000,
+              "deliveryDate": "2026-11-18",
+              "deltaCents": 10000,
+              "itemKeys": [
+                "audit_log_export",
+                "sso_login"
+              ],
+              "modifiers": []
+            },
+            "optionKey": "A",
+            "shown": {
+              "amountCents": 80000,
+              "deliveryDate": "2026-11-18",
+              "deltaCents": 10000,
+              "itemKeys": [
+                "audit_log_export",
+                "sso_login"
+              ],
+              "modifiers": []
+            },
+            "text": "Raise the cap",
+            "type": "raise_cap"
+          },
+          {
+            "answerable": true,
+            "effect": {
+              "amountCents": 490000
+            },
+            "effectView": {
+              "amountCents": 90000,
+              "deliveryDate": "2026-11-20",
+              "deltaCents": 20000,
+              "itemKeys": [
+                "audit_log_export",
+                "sso_login",
+                "usage_dashboard"
+              ],
+              "modifiers": []
+            },
+            "optionKey": "B",
+            "shown": {
+              "amountCents": 90000,
+              "deliveryDate": "2026-11-20",
+              "deltaCents": 20000,
+              "itemKeys": [
+                "audit_log_export",
+                "sso_login",
+                "usage_dashboard"
+              ],
+              "modifiers": []
+            },
+            "text": "Raise the cap",
+            "type": "raise_cap"
+          },
+          {
+            "answerable": true,
+            "effectView": {},
+            "optionKey": "C",
+            "shown": {},
+            "text": "End this run",
+            "type": "end_run"
+          }
+        ],
+        "requestId": "humanRequests_2",
+        "status": "open"
+      }
+    }
+  },
+  "fallback": {
+    "customer": {
+      "room": {
+        "budget": {
+          "capCents": 400000,
+          "committedCents": 400000,
+          "headroomCents": 0,
+          "visibility": "customer"
+        },
+        "catalog": [
+          {
+            "itemKey": "audit_log_export",
+            "kind": "item",
+            "leadDays": 365,
+            "priceCents": 30000,
+            "revision": 1,
+            "title": "Audit log export"
+          },
+          {
+            "itemKey": "custom_theme",
+            "kind": "item",
+            "leadDays": 365,
+            "priceCents": 25000,
+            "revision": 1,
+            "title": "Custom theme"
+          },
+          {
+            "itemKey": "slack_alerts",
+            "kind": "item",
+            "leadDays": 365,
+            "priceCents": 25000,
+            "revision": 1,
+            "title": "Slack alerts"
+          },
+          {
+            "itemKey": "sso_login",
+            "kind": "item",
+            "leadDays": 365,
+            "priceCents": 50000,
+            "revision": 1,
+            "title": "SSO login (SAML)"
+          },
+          {
+            "itemKey": "usage_dashboard",
+            "kind": "item",
+            "leadDays": 365,
+            "priceCents": 10000,
+            "revision": 1,
+            "title": "Usage dashboard"
+          }
+        ],
+        "currentProposal": null,
+        "execution": null,
+        "followUpOf": null,
+        "header": {
+          "constraintsVersion": 1,
+          "isCreator": true,
+          "phase": {
+            "phase": "needs_input",
+            "you": true
+          },
+          "proposalVersion": null,
+          "provenanceBadge": "live",
+          "roomId": "rooms_1",
+          "scenarioKey": "scope_change",
+          "status": "open",
+          "title": "Q4 portal scope change (simulated)",
+          "viewingAs": "customer"
+        },
+        "members": [
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "customer",
+            "isMe": true,
+            "joinedVia": "creator",
+            "role": "customer"
+          },
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "finance",
+            "isMe": false,
+            "joinedVia": "invite",
+            "role": "finance"
+          },
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "provider",
+            "isMe": false,
+            "joinedVia": "invite",
+            "role": "provider"
+          }
+        ],
+        "openRequest": {
+          "expiresAt": 1794398400003,
+          "kind": "infeasible",
+          "mine": true,
+          "options": [
+            {
+              "answerable": true,
+              "disclose": {
+                "field": "requiredItemKeys",
+                "toRoles": [
+                  "finance"
+                ]
+              },
+              "effectView": {},
+              "optionKey": "A",
+              "shown": {},
+              "text": "Share this field",
+              "type": "disclose"
+            },
+            {
+              "answerable": true,
+              "effectView": {},
+              "optionKey": "B",
+              "shown": {},
+              "text": "Ask the next participant",
+              "toRole": "finance",
+              "type": "pass_to_next"
+            },
+            {
+              "answerable": true,
+              "effectView": {},
+              "optionKey": "C",
+              "shown": {},
+              "text": "End this run",
+              "type": "end_run"
+            }
+          ],
+          "requestId": "humanRequests_1"
+        },
+        "proposalHistory": [],
+        "run": {
+          "activeRole": "customer",
+          "agentMode": "stub",
+          "attemptStatus": null,
+          "cause": "room_opened",
+          "endedReason": null,
+          "maxRounds": 3,
+          "roundNo": 1,
+          "runId": "runs_1",
+          "runNo": 1,
+          "staleDiscarded": 0,
+          "status": "needs_input",
+          "turnStatus": null,
+          "waiting": null
+        },
+        "seats": [
+          {
+            "inviteExpiresAt": null,
+            "inviteMode": null,
+            "invitedEmail": null,
+            "role": "customer",
+            "state": "filled"
+          },
+          {
+            "inviteExpiresAt": null,
+            "inviteMode": null,
+            "invitedEmail": null,
+            "role": "provider",
+            "state": "filled"
+          },
+          {
+            "inviteExpiresAt": null,
+            "inviteMode": null,
+            "invitedEmail": null,
+            "role": "finance",
+            "state": "filled"
+          }
+        ],
+        "sharedFacts": [
+          {
+            "asOfBriefVersion": 1,
+            "field": "deadline",
+            "fromRole": "customer",
+            "value": {
+              "date": "2026-11-11",
+              "kind": "date"
+            }
+          },
+          {
+            "asOfBriefVersion": 1,
+            "field": "capCents",
+            "fromRole": "finance",
+            "value": {
+              "cents": 400000,
+              "kind": "cents"
+            }
+          },
+          {
+            "asOfBriefVersion": 1,
+            "field": "committedCents",
+            "fromRole": "finance",
+            "value": {
+              "cents": 400000,
+              "kind": "cents"
+            }
+          },
+          {
+            "asOfBriefVersion": 1,
+            "field": "headroomCents",
+            "fromRole": "finance",
+            "value": {
+              "cents": 0,
+              "kind": "cents"
+            }
+          }
+        ],
+        "todos": [
+          {
+            "kind": "answer_request",
+            "priority": 0,
+            "refs": {
+              "requestId": "humanRequests_1",
+              "runId": "runs_1"
+            }
+          }
+        ]
+      },
+      "brief": {
+        "finance": null,
+        "latest": {
+          "confirmedAt": 1793793600003,
+          "disclosures": {
+            "deadline": [
+              "finance"
+            ],
+            "requiredItemKeys": []
+          },
+          "hardFields": {
+            "deadline": "2026-11-11",
+            "requiredItemKeys": [
+              "audit_log_export",
+              "sso_login"
+            ],
+            "schemaKey": "scope_change.customer.v1"
+          },
+          "softFields": {
+            "notes": "Security audit starts right after the deadline.",
+            "preferredItemKeys": [
+              "slack_alerts",
+              "usage_dashboard"
+            ],
+            "schemaKey": "scope_change.customer.v1"
+          },
+          "source": "form",
+          "version": 1
+        },
+        "othersSee": [
+          {
+            "fields": [],
+            "role": "provider"
+          },
+          {
+            "fields": [
+              {
+                "asOfBriefVersion": 1,
+                "field": "deadline",
+                "value": {
+                  "date": "2026-11-11",
+                  "kind": "date"
+                }
+              }
+            ],
+            "role": "finance"
+          }
+        ],
+        "role": "customer",
+        "versions": [
+          {
+            "changedHardFields": [
+              "deadline",
+              "requiredItemKeys"
+            ],
+            "confirmedAt": 1793793600003,
+            "notes": "Security audit starts right after the deadline.",
+            "source": "form",
+            "version": 1
+          }
+        ]
+      },
+      "request": {
+        "answerOptionKey": null,
+        "closedAtConstraintsVersion": null,
+        "closedReason": null,
+        "expiresAt": 1794398400003,
+        "kind": "infeasible",
+        "mine": true,
+        "options": [
+          {
+            "answerable": true,
+            "disclose": {
+              "field": "requiredItemKeys",
+              "toRoles": [
+                "finance"
+              ]
+            },
+            "effectView": {},
+            "optionKey": "A",
+            "shown": {},
+            "text": "Share this field",
+            "type": "disclose"
+          },
+          {
+            "answerable": true,
+            "effectView": {},
+            "optionKey": "B",
+            "shown": {},
+            "text": "Ask the next participant",
+            "toRole": "finance",
+            "type": "pass_to_next"
+          },
+          {
+            "answerable": true,
+            "effectView": {},
+            "optionKey": "C",
+            "shown": {},
+            "text": "End this run",
+            "type": "end_run"
+          }
+        ],
+        "requestId": "humanRequests_1",
+        "status": "open"
+      }
+    },
+    "provider": {
+      "room": {
+        "budget": {
+          "visibility": "none"
+        },
+        "catalog": [
+          {
+            "itemKey": "audit_log_export",
+            "kind": "item",
+            "leadDays": 365,
+            "priceCents": 30000,
+            "revision": 1,
+            "title": "Audit log export"
+          },
+          {
+            "itemKey": "custom_theme",
+            "kind": "item",
+            "leadDays": 365,
+            "priceCents": 25000,
+            "revision": 1,
+            "title": "Custom theme"
+          },
+          {
+            "itemKey": "slack_alerts",
+            "kind": "item",
+            "leadDays": 365,
+            "priceCents": 25000,
+            "revision": 1,
+            "title": "Slack alerts"
+          },
+          {
+            "itemKey": "sso_login",
+            "kind": "item",
+            "leadDays": 365,
+            "priceCents": 50000,
+            "revision": 1,
+            "title": "SSO login (SAML)"
+          },
+          {
+            "itemKey": "usage_dashboard",
+            "kind": "item",
+            "leadDays": 365,
+            "priceCents": 10000,
+            "revision": 1,
+            "title": "Usage dashboard"
+          }
+        ],
+        "currentProposal": null,
+        "execution": null,
+        "followUpOf": null,
+        "header": {
+          "constraintsVersion": 1,
+          "isCreator": false,
+          "phase": {
+            "phase": "needs_input",
+            "you": false
+          },
+          "proposalVersion": null,
+          "provenanceBadge": "live",
+          "roomId": "rooms_1",
+          "scenarioKey": "scope_change",
+          "status": "open",
+          "title": "Q4 portal scope change (simulated)",
+          "viewingAs": "provider"
+        },
+        "members": [
+          {
+            "briefConfirmed": true,
+            "briefVersion": null,
+            "displayName": "customer",
+            "isMe": false,
+            "joinedVia": "creator",
+            "role": "customer"
+          },
+          {
+            "briefConfirmed": true,
+            "briefVersion": null,
+            "displayName": "finance",
+            "isMe": false,
+            "joinedVia": "invite",
+            "role": "finance"
+          },
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "provider",
+            "isMe": true,
+            "joinedVia": "invite",
+            "role": "provider"
+          }
+        ],
+        "openRequest": {
+          "kind": "run_waiting",
+          "mine": false
+        },
+        "proposalHistory": [],
+        "run": {
+          "activeRole": null,
+          "agentMode": "stub",
+          "attemptStatus": null,
+          "cause": "room_opened",
+          "endedReason": null,
+          "maxRounds": 3,
+          "roundNo": 1,
+          "runId": "runs_1",
+          "runNo": 1,
+          "staleDiscarded": 0,
+          "status": "run_waiting",
+          "turnStatus": null,
+          "waiting": null
+        },
+        "seats": null,
+        "sharedFacts": [],
+        "todos": []
+      },
+      "brief": {
+        "finance": null,
+        "latest": {
+          "confirmedAt": 1793793600003,
+          "disclosures": {},
+          "hardFields": {
+            "schemaKey": "scope_change.provider.v1"
+          },
+          "softFields": {
+            "notes": "Team capacity is tight in December.",
+            "schemaKey": "scope_change.provider.v1"
+          },
+          "source": "form",
+          "version": 1
+        },
+        "othersSee": [
+          {
+            "fields": [],
+            "role": "customer"
+          },
+          {
+            "fields": [],
+            "role": "finance"
+          }
+        ],
+        "role": "provider",
+        "versions": [
+          {
+            "changedHardFields": [],
+            "confirmedAt": 1793793600003,
+            "notes": "Team capacity is tight in December.",
+            "source": "form",
+            "version": 1
+          }
+        ]
+      },
+      "request": {
+        "kind": "run_waiting",
+        "mine": false
+      }
+    },
+    "finance": {
+      "room": {
+        "budget": {
+          "baselineRecorded": true,
+          "baselineSuggestionCents": null,
+          "capCents": 400000,
+          "committedCents": 400000,
+          "headroomCents": 0,
+          "overByCents": null,
+          "proposalCents": null,
+          "status": "no_proposal",
+          "totalAfterCents": null,
+          "visibility": "finance"
+        },
+        "catalog": [
+          {
+            "itemKey": "audit_log_export",
+            "kind": "item",
+            "leadDays": 365,
+            "priceCents": 30000,
+            "revision": 1,
+            "title": "Audit log export"
+          },
+          {
+            "itemKey": "custom_theme",
+            "kind": "item",
+            "leadDays": 365,
+            "priceCents": 25000,
+            "revision": 1,
+            "title": "Custom theme"
+          },
+          {
+            "itemKey": "slack_alerts",
+            "kind": "item",
+            "leadDays": 365,
+            "priceCents": 25000,
+            "revision": 1,
+            "title": "Slack alerts"
+          },
+          {
+            "itemKey": "sso_login",
+            "kind": "item",
+            "leadDays": 365,
+            "priceCents": 50000,
+            "revision": 1,
+            "title": "SSO login (SAML)"
+          },
+          {
+            "itemKey": "usage_dashboard",
+            "kind": "item",
+            "leadDays": 365,
+            "priceCents": 10000,
+            "revision": 1,
+            "title": "Usage dashboard"
+          }
+        ],
+        "currentProposal": null,
+        "execution": null,
+        "followUpOf": null,
+        "header": {
+          "constraintsVersion": 1,
+          "isCreator": false,
+          "phase": {
+            "phase": "needs_input",
+            "waitingOn": "customer",
+            "you": false
+          },
+          "proposalVersion": null,
+          "provenanceBadge": "live",
+          "roomId": "rooms_1",
+          "scenarioKey": "scope_change",
+          "status": "open",
+          "title": "Q4 portal scope change (simulated)",
+          "viewingAs": "finance"
+        },
+        "members": [
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "customer",
+            "isMe": false,
+            "joinedVia": "creator",
+            "role": "customer"
+          },
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "finance",
+            "isMe": true,
+            "joinedVia": "invite",
+            "role": "finance"
+          },
+          {
+            "briefConfirmed": true,
+            "briefVersion": 1,
+            "displayName": "provider",
+            "isMe": false,
+            "joinedVia": "invite",
+            "role": "provider"
+          }
+        ],
+        "openRequest": {
+          "kind": "infeasible",
+          "mine": false,
+          "waitingOnRole": "customer"
+        },
+        "proposalHistory": [],
+        "run": {
+          "activeRole": null,
+          "agentMode": "stub",
+          "attemptStatus": null,
+          "cause": "room_opened",
+          "endedReason": null,
+          "maxRounds": 3,
+          "roundNo": 1,
+          "runId": "runs_1",
+          "runNo": 1,
+          "staleDiscarded": 0,
+          "status": "needs_input",
+          "turnStatus": null,
+          "waiting": null
+        },
+        "seats": null,
+        "sharedFacts": [
+          {
+            "asOfBriefVersion": 1,
+            "field": "deadline",
+            "fromRole": "customer",
+            "value": {
+              "date": "2026-11-11",
+              "kind": "date"
+            }
+          },
+          {
+            "asOfBriefVersion": 1,
+            "field": "capCents",
+            "fromRole": "finance",
+            "value": {
+              "cents": 400000,
+              "kind": "cents"
+            }
+          },
+          {
+            "asOfBriefVersion": 1,
+            "field": "committedCents",
+            "fromRole": "finance",
+            "value": {
+              "cents": 400000,
+              "kind": "cents"
+            }
+          },
+          {
+            "asOfBriefVersion": 1,
+            "field": "headroomCents",
+            "fromRole": "finance",
+            "value": {
+              "cents": 0,
+              "kind": "cents"
+            }
+          }
+        ],
+        "todos": []
+      },
+      "brief": {
+        "finance": {
+          "baselineRecorded": true,
+          "baselineSuggestionCents": null,
+          "committedCents": 400000
+        },
+        "latest": {
+          "confirmedAt": 1793793600003,
+          "disclosures": {
+            "capCents": [
+              "customer"
+            ],
+            "committedCents": [
+              "customer"
+            ],
+            "headroomCents": [
+              "customer"
+            ]
+          },
+          "hardFields": {
+            "capCents": 400000,
+            "schemaKey": "scope_change.finance.v1"
+          },
+          "softFields": {
+            "notes": "Q4 forecast is tight; keep a reserve.",
+            "schemaKey": "scope_change.finance.v1"
+          },
+          "source": "form",
+          "version": 1
+        },
+        "othersSee": [
+          {
+            "fields": [
+              {
+                "asOfBriefVersion": 1,
+                "field": "capCents",
+                "value": {
+                  "cents": 400000,
+                  "kind": "cents"
+                }
+              },
+              {
+                "asOfBriefVersion": 1,
+                "field": "committedCents",
+                "value": {
+                  "cents": 400000,
+                  "kind": "cents"
+                }
+              },
+              {
+                "asOfBriefVersion": 1,
+                "field": "headroomCents",
+                "value": {
+                  "cents": 0,
+                  "kind": "cents"
+                }
+              }
+            ],
+            "role": "customer"
+          },
+          {
+            "fields": [],
+            "role": "provider"
+          }
+        ],
+        "role": "finance",
+        "versions": [
+          {
+            "changedHardFields": [
+              "capCents"
+            ],
+            "confirmedAt": 1793793600003,
+            "notes": "Q4 forecast is tight; keep a reserve.",
+            "source": "form",
+            "version": 1
+          }
+        ]
+      },
+      "request": {
+        "kind": "infeasible",
+        "mine": false,
+        "requestId": "humanRequests_1",
+        "status": "open",
+        "waitingOnRole": "customer"
+      }
+    }
+  }
+}

@@ -1,0 +1,74 @@
+[
+ {
+  "id": "names-11",
+  "severity": "high",
+  "section": "12-api-part5.md",
+  "description": "`rooms.previewChange` 的参数和返回形状在 07、09、12、14 四处各不相同，非所有者调用时是返回 null 还是抛错也不一致。12 让一个 query 抛 `auth.role_forbidden`，自相矛盾：它自己的 §12.2 第 2 条规定公共 query 一律返回 null。07 还把形状引向错误的章节号。",
+  "evidence": "07 §7.11.1：change ∈ `set_cap{capCents}` / `customer_hard` / `catalog_upsert` / `catalog_retire`，返回 `no_change` / `rejected` / `after{…budgetAfter, headroomAfterCents}` / `recheck{…willSupersedeRun}`，非所有者返回 null，并说\"形状以 12 §12.11 为准\"，但 12 §12.11 是 sharedFacts。09 §9.6.8：`{kind:'cap', capCents} | {kind:'customerHard'} | {kind:'catalog', items}`，返回 `{ projectionChanged, invalidatedApprovals }` 加 `verdictAfter` 或 `verdict:'recheck'`，低于已承诺时返回 `{ rejected: … }`，非所有者 null。12 §12.17：`{kind:'cap', newCapCents} | {kind:'customer_hard'} | {kind:'catalog', itemKey, …, retire}`，返回 `unchanged / recheck / after{verdictAfter, belowCommitted, minAllowedCapCents}`，非所有者\"抛 auth.role_forbidden\"。14 S7 写 `rooms.previewChange({ change: { capCents: 480000 } })`，没有 kind。canon D12 ② 的规范名是 `verdictAfter`。",
+  "suggested_fix": "以 12 §12.17 为唯一定义，但非所有者改为返回 null，删掉\"抛 auth.role_forbidden\"，并从 12 §12.4 该码的触发列表中移除 previewChange。07 §7.11.1 改为引用 \"12 §12.17\"，删去自列的形状，或照抄 12 的形状。09 §9.6.8 与 9.8.2 第 1 步改用 12 的形状（`kind:'cap', newCapCents`，返回 `verdict:'after', verdictAfter`）。14 S7 改为 `{ change: { kind: 'cap', newCapCents: 480000 } }`。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-33",
+  "severity": "medium",
+  "section": "12-api.md",
+  "description": "API 错误码的单一来源说法与 06 的码表对不上，各章使用的错误码也在漂移：12 B4 说 auth.* 等码与 reasonCode 同在 `core/engine/reasonCodes.ts`，但 06 的 REASON_CODES 里一个都没有；03、02 仍在用旧码；06 与 12 对 run.rate_limited 的参数名也不同。",
+  "evidence": "12 B4：\"错误码与 reasonCode 共用 core/engine/reasonCodes.ts，…新增 API 域 auth.*、invite.*、request.*、input.*\"；06 §6.2 的 REASON_CODES 数组不含这些域，06 §6.1 还写\"internal 不是 reasonCode，属于 12 的错误命名空间\"。03 §3.13.1 openRoomTx 写\"房间存在（auth.not_found）\"，02 part5 写 auth.not_found / auth.forbidden / auth.not_provisioned，12 §12.4 是 auth.not_member / auth.role_forbidden / auth.user_not_provisioned。06 §6.1 run.rate_limited 的 params 是 `retryAfterMinutes`，03 §3.11.3 与 12 §12.4 是 `retryAfterMs`。",
+  "suggested_fix": "在 06 §6.2 增设 `API_ERROR_CODES` 数组（auth.*、invite.*、request.*、input.*、internal），与 REASON_CODES 放在同一文件、派生同一个 validator，并在 12 B4 写明数组名。03 §3.13.1 改为 `auth.not_member`（与 12 一致，不区分不存在和非成员），02 part5 同步改。06 中 run.rate_limited 的参数改为 `retryAfterMs`。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "completeness-14",
+  "severity": "medium",
+  "section": "12-api-part5.md rooms.previewChange（对照 01-product-part3.md F5、07-permissions-privacy-part6.md §7.11.1、09-constraint-changes-part3.md §9.6.8、13-frontend-part3.md §13.8.1/part5 §13.10 B）",
+  "description": "rooms.previewChange 的参数与返回形状有四种写法，前端章按 07 的形状消费而 12 定了另一套；实现者不知道该实现哪一个。",
+  "evidence": "01 F5：'change: { kind: \"set_cap\", capCents }'、返回 '{ verdict: \"after\", budgetAfter, headroomAfterCents, invalidatedApprovals, willSupersedeRun }'；07 §7.11.1：change ∈ set_cap / customer_hard / catalog_upsert / catalog_retire，返回 no_change / rejected / after{budgetAfter, headroomAfterCents} / recheck{willSupersedeRun}；09 §9.6.8：'{ kind: \"cap\" } | { kind: \"customerHard\" } | { kind: \"catalog\", items }'，返回 '{ projectionChanged, invalidatedApprovals }' + verdictAfter{feasibleAfter}；12 §12.17：'{ kind: \"cap\", newCapCents } | { kind: \"customer_hard\" } | { kind: \"catalog\", itemKey, …, retire }'，返回 unchanged / recheck / after{verdictAfter: checksViewV, belowCommitted, minAllowedCapCents}，无 rejected、无 willSupersedeRun；13 §13.8.1 与 §13.10 B 按 07 的 set_cap/catalog_upsert 与 rejected 分支书写。",
+  "suggested_fix": "以 12 为准定稿一份（含 willSupersedeRun 与 rejected 分支，因为 13 需要），01/07/09/13 全部改引 12 §12.17 的 validator；16 TC-PRIV-13 按 12 断言。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-17",
+  "severity": "medium",
+  "section": "01-product-part3.md P2、13-frontend-part5.md §13.10 B 步 3、18-decisions-open-questions-part7.md N-24（对照 12-api-part3.md §12.12、03-schema-part4.md §3.7、09-part3 §9.6.3）",
+  "description": "12 已把 catalog.confirm 定为批量 rows[]（计一次节流），但 01/13/18 仍描述 12 是单条 item 并把'6 行撞节流'列为未决冲突；读者会以为问题未解决，前端会按单条实现。",
+  "evidence": "12 §12.12：'args { roomId, expectedConstraintsVersion, rows: v.array(…) }，rows 1–14 行（一次确认一批，避免 seed 与正常使用撞上 6 次 / 小时）'。01 P2：'按 12 现签名每行一次 catalog.confirm({ roomId, expectedConstraintsVersion, item })…单条确认会让 6 行目录撞上每小时 6 次的约束写入节流，见 18 N-24'；13 §13.10 B 步 3：'catalog.confirm({ roomId, expectedConstraintsVersion, item })（按 12 现签名每行一次）'；18 N-24：'catalog.confirm 单条（12）vs 批量（03 / 09）'。",
+  "suggested_fix": "01 P2、13 §13.10 B、14 S2 改为批量签名并删除'每行一次'；18 N-24 改为已解决并注明 12 §12.12 为准。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-24",
+  "severity": "low",
+  "section": "12-api-part7.md seed.fromFixture、14-scenario-scope-change-part4.md §9.1、15-operations-part4.md §15.9（对照 canon D18、00-invariants INV-63、02-domain-model-part6.md INV-63）",
+  "description": "seed 的终止状态表述自相矛盾：canon/02/INV-63 说停在'三份简报已确认、首个 run 即将开始'之前，但第三份确认与开 run 在同一事务，这个状态不可达；12/14/16 实际让第三份确认按生产路径自动开 stub run。演示与 E2E 的起点因此不明确。",
+  "evidence": "canon D18：'停在\"三份简报已确认、首个 run 即将开始\"之前，不预置提案 / 审批 / 执行'；INV-63 同句；04 M2/INV-75：第三份确认同事务 openIfReady → bump → startRunTx。12 §12.20：'第三份确认按生产路径 openIfReady 并自动开 run'；14 §9.1：'第三份确认按生产路径自动 runs.start'；16 T14-F03：'seed 结束时无提案、审批、执行，run 1 已由第三份确认按生产路径开始'。",
+  "suggested_fix": "canon D18 与 INV-63/02 INV-63 改为'seed 只写输入链；缺省让第三份确认自动开首个 run（stub），stopBeforeRole 可留一方不确认以停在 setup'；01 X8 同步。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "invariants-06",
+  "severity": "high",
+  "section": "12-api-part2.md",
+  "description": "\"执行后再次承诺已执行范围\"并没有被杜绝。startFollowUp 把旧房间全部已确认目录（包括 CO-1 已执行的条目）复制为新房间的草稿，provider 确认后它们就进入候选。provider stub 选\"条目数最多、金额最高\"的候选，customer stub 只要必需项被覆盖就建议接受，finance 只要预算够就接受，所以只要余量允许，默认路径会把已执行的 sso_login / audit_log_export 再提一次、再承诺一次（再写一条台账 commit 和任务）。D04 / INV-52 声称新房间\"天然杜绝\"，CE-112、CE-168 只依赖 customer 去掉必需项，没有测代理会不会重新提议。",
+  "evidence": "12 §12.6：\"`appendCatalogRow` 把旧房间每个 itemKey 的当前已确认行复制为新房间的 `status: \\\"draft\\\"`\"；05 §5.14 provider stub：\"选'条目数最多 → 金额最高 → candidateKey 字典序最小'的候选（最大范围）\"，customer stub：\"base 满足本方硬约束（必需项 ⊆ itemKeys、deliveryDate ≤ deadline）→ recommend_accept\"；08 A9：\"新房间以零新不变量得到同一旅程，并天然杜绝'已执行范围被再承诺一次'\"；01 part2：\"已执行的条目不会在新房间被重复要求（它们不在新房间的必需项里）\"。",
+  "suggested_fix": "12 §12.6 与 04 C1 改为：只复制 itemKey 不在 `followedExecution.terms.itemKeys` 中的行（modifier 可以复制）；已执行条目在新房间只读显示为 \"Delivered in CO-n\"。provider 若确实要再卖同一项，必须用新的 itemKey 显式确认（这是新范围，由人决定）。CE-112 / CE-168 / TC-EXE-06 增加断言：follow-up 房间的 provider 快照不含旧执行的 itemKey。00-invariants INV-52 补\"跨房间\"一句。这是对 canon D04\"目录复制为 draft\"的细化（canon 意见）。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "privacy-06",
+  "severity": "medium",
+  "section": "12-api-part5.md",
+  "description": "回合失败和 attempt 状态对 provider 可见，provider 能借此还原出 agent_failed 请求的 kind 和 toRole，违反 D12 ⑦。03 把 turn_failed{role, failureKind}、attempts.status 和 runs.lastFailure.code 都定为 room 类；12 的 rooms.view.run 没有为 provider 投影 attemptStatus 和 activeRole；13 只在组件层'折叠失败 lane'（E27），这又违反 FE-D16（数据存在与否必须由视图模型决定），网络帧里仍能看到。另外 turns 的 role/status 对 room 可见：customer 的 evaluate 回合结束后紧接 run_waiting，provider 可以推断出 customer 的代理做了 clarify（customer 唯一可问的话题指向 finance 的预算）或 escalate。",
+  "evidence": "03 §3.11.1：`turn_failed` payload `role、failureKind`，'他人只见粗类'；03 §3.8：'lastFailure.code 为 room 的粗粒度类'；03 attempts 披露类：'status（粗粒度）与 attemptNo 为 room'；07 §7.9.4：`attempts.status / attemptNo / stopReason` 为'本'；12 §12.17：`run: { …, activeRole, attemptStatus, … }`；13 E27：'provider 视图折叠失败 lane'；FE-D16：'组件……不能决定是否显示某个数据字段'。",
+  "suggested_fix": "03 把 attempts.status、runs.lastFailure 的披露类改为 self。turn_failed 增加 provider 变体：非本人回合渲染为 'turn finished'，不带 failureKind。12 §12.17 在 provider 投影中把 run.attemptStatus 置 null；run_needs_input 时 activeRole 置 null；evaluate 回合在 needs_input 前的最后一条状态统一投影为 'done'。13 删除 E27 的组件层折叠，改为依赖视图模型。TC-PRIV-02 增加 refusal → agent_failed(toRole: finance) 用例，断言 provider 的 rooms.view 和 timeline 中没有任何 failed 痕迹。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-14",
+  "severity": "low",
+  "section": "12-api-part5.md",
+  "description": "rooms.view 的检查结果在 DTO 中仍带开放记录 params，与 13 FE-D03/E20 的'不用 v.record params，服务端按受众渲染文案'不一致。returns 探测器对 record 字段无效，真正的防线只有 06 PARAM_AUDIENCE 的 fail-closed。两章的参数名也不同：06 写 itemKeys/reason，07 写 missingItemKeys；06 的 budget.over 带 headroomCents，07 只有 overByCents。参数受众表因此有两个来源，对账测试会漂移。",
+  "evidence": "12 §12.17：`checks: [{ code, owner: \"self\" | \"other\", params }]`；06 §6.2：`vCheckResult.params: v.record(...)`、PARAM_AUDIENCE 中 'item.required_missing': { itemKeys, reason }；07 §7.11 参数表：`missingItemKeys`、budget.over 只有 overByCents；13 FE-D03 与 E20。",
+  "suggested_fix": "12 §12.17 的 checks 改为按 code 判别的联合 validator，每个 code 声明精确参数，由 06 REASON_CODES/PARAM_AUDIENCE 生成；或者只返回 `{ code, owner, text }`。07 §7.11 的参数表改为引用 06 §6.2，删除自有参数名。T06-S4 同时断言 DTO validator 的参数键集合与 PARAM_AUDIENCE 相等。",
+  "reviewer": "隐私预言机与泄露路径"
+ }
+]

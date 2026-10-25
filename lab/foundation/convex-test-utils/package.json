@@ -1,0 +1,24 @@
+{
+  "name": "@speak-for-me/convex-test-utils",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Domain-agnostic helpers on top of convex-test: role identities, scheduler draining, forbidden-field assertions, and a dedup test recipe.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "@edge-runtime/vm": "^5.0.0",
+    "convex": "^1.48.0",
+    "convex-test": "^0.0.65",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}

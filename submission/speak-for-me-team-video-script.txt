@@ -1,0 +1,35 @@
+Let agents negotiate. Let people decide.
+A new feature, a fixed deadline, and a tighter budget. One change can leave three people talking past each other. Speak for Me gives each participant an agent, while people keep the final say.
+
+A software launch with competing priorities.
+Imagine a customer preparing a software launch. Single sign on and audit log export are essential. A usage dashboard is optional. The provider confirms the catalog. Finance sets the spending limit.
+
+Private priorities. Explicit sharing.
+Each person confirms a structured private brief and chooses which fields to share. The provider never receives private budget numbers. Customer visibility depends on Finance’s explicit disclosure choices.
+
+Three agents. One checked proposal.
+Claude agents negotiate using isolated role contexts and confirmed catalog options. Code checks amounts, scope, delivery dates, and sources. Model recommendations cannot approve an agreement.
+
+A nine hundred dollar change.
+The first proposal adds the two essential features and the dashboard for nine hundred dollars. Customer and Provider approve. Finance has not approved yet, so nothing executes.
+
+Then the budget changes.
+Finance lowers the cap from five thousand to forty eight hundred dollars, with four thousand already committed. The previous proposal no longer fits. Both approvals become stale; the system must negotiate again.
+
+Eight hundred. Exactly within the cap.
+A supported eight hundred dollar option keeps single sign on and audit log export. When agents disagree, the Customer explicitly chooses it. Four thousand committed plus eight hundred equals the new cap. Fresh human approvals are still required.
+
+The final approval records the result.
+All three people approve the same exact version. The last required approval atomically records the execution, commitment, change order, and tasks. There is no separate execute button, and retries cannot duplicate the result.
+
+No feasible agreement is a valid result.
+What if Finance lowers the cap further, to forty seven hundred? The confirmed options cannot fit. Finance receives a specific request to raise the cap or end the run. The agents never invent a discount.
+
+A finished agreement stays intact.
+Delivery tasks and a timeline preserve the handoff. A later scope change starts a linked follow up room. The original agreement remains intact, and the next change requires new decisions.
+
+Real services. Clear boundaries.
+Google verifies identity, Convex synchronizes rooms and executes transactions, and Claude proposes choices. These are illustrative project inputs. The system records internal work only; it sends no payment and signs no contract.
+
+Private priorities. Shared decisions.
+Speak for Me turns a scope change into a decision people can understand, approve, and trace. Three agents. Deterministic checks. Your final say.

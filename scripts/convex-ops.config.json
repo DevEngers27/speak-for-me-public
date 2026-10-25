@@ -1,0 +1,34 @@
+{
+  "operations": {
+    "seed": {
+      "function": "seed:fromFixture",
+      "destructive": false,
+      "allowedDeploymentTypes": ["dev", "preview"]
+    },
+    "reset": {
+      "function": "seed:reset",
+      "destructive": true,
+      "allowedDeploymentTypes": ["dev", "preview"]
+    },
+    "drain": {
+      "function": "ops:setDraining",
+      "destructive": false,
+      "allowedDeploymentTypes": ["dev", "preview", "prod"]
+    },
+    "health": {
+      "function": "ops:configHealth",
+      "destructive": false,
+      "allowedDeploymentTypes": ["dev", "preview", "prod"]
+    },
+    "inflight": {
+      "function": "ops:activeAttemptCount",
+      "destructive": false,
+      "allowedDeploymentTypes": ["dev", "preview", "prod"]
+    },
+    "metrics": {
+      "function": "ops:metrics",
+      "destructive": false,
+      "allowedDeploymentTypes": ["dev", "preview", "prod"]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+import {provenanceV} from '../../lib/sourceValidators';
+import {v} from 'convex/values';
+import {roleV,roomStatusV} from '../../lib/validators';
+import {factValueV} from '../../lib/sourceValidators';
+export const nullableNumberV=v.union(v.number(),v.null());
+export const nullableStringV=v.union(v.string(),v.null());
+export const phaseV=v.object({phase:v.union(v.literal('setup'),v.literal('negotiating'),v.literal('needs_input'),v.literal('awaiting_approval'),v.literal('stopped'),v.literal('executed'),v.literal('closed')),gaps:v.optional(v.array(v.object({gap:v.string(),ownerRole:roleV}))),reason:v.optional(v.union(v.literal('ended_no_agreement'),v.literal('canceled'))),activeRole:v.optional(roleV),roundNo:v.optional(v.number()),you:v.optional(v.boolean()),waitingOn:v.optional(roleV),proposalVersion:v.optional(v.number()),pendingRoles:v.optional(v.array(roleV)),youPending:v.optional(v.boolean())});
+export const todoV=v.object({kind:v.string(),priority:v.number(),refs:v.object({proposalId:v.optional(v.id('proposals')),proposalVersion:v.optional(v.number()),requestId:v.optional(v.id('humanRequests')),runId:v.optional(v.id('runs'))})});
+export const sharedFactViewV=v.object({fromRole:roleV,field:v.string(),value:factValueV,asOfBriefVersion:v.union(v.number(),v.null())});
+export const catalogRowViewV=v.object({itemKey:v.string(),kind:v.union(v.literal('item'),v.literal('modifier')),title:v.string(),priceCents:v.number(),leadDays:v.number(),revision:v.number(),editNo:v.number(),status:v.union(v.literal('draft'),v.literal('confirmed'),v.literal('retired')),taskTemplates:v.array(v.object({title:v.string(),assigneeRole:roleV}))});
+export const inboxCardV=v.object({roomId:v.id('rooms'),title:v.string(),myRole:roleV,status:roomStatusV,phase:phaseV,inboxSection:v.union(v.literal('needs_you'),v.literal('agents_working'),v.literal('waiting'),v.literal('done')),topTodo:v.union(v.null(),v.object({kind:v.string(),proposalVersion:nullableNumberV,constraintsVersion:v.number()})),waitingOn:v.union(v.array(roleV),v.literal('others'),v.null()),notice:v.union(v.null(),v.literal('approval_no_longer_applies'),v.literal('request_closed')),provenanceBadge:provenanceV,updatedAt:v.number()});

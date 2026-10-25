@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "deployment": "benevolent-jackal-41",
+  "startedAt": "2026-10-25T14:29:13.437Z",
+  "pass": true,
+  "roomId": "m17c50jcts345rvbwd385gphx18gzc3p",
+  "authEvidence": "Synthetic seed identities via logged-in Convex CLI admin impersonation; NOT Clerk/browser login evidence.",
+  "scope": "Canonical $4,000 commitment plus $800 required scope exceeds a $4,700 cap. Verify precheck, private Finance request, and explicit end without agreement.",
+  "stages": [
+    {
+      "stage": "infeasible_precheck",
+      "at": "2026-10-25T14:29:21.971Z",
+      "capCents": 470000,
+      "committedCents": 400000,
+      "requiredScopeCents": 80000,
+      "status": "needs_input",
+      "requestKind": "infeasible",
+      "addressedTo": "finance",
+      "optionTypes": [
+        "raise_cap",
+        "raise_cap",
+        "end_run"
+      ],
+      "firstTurnAttempts": 0,
+      "proposalPresent": false,
+      "executionPresent": false,
+      "providerSeesGenericWait": true,
+      "providerBudgetFieldsAbsent": true
+    },
+    {
+      "stage": "explicit_end_without_agreement",
+      "at": "2026-10-25T14:29:26.654Z",
+      "status": "ended_no_agreement",
+      "capUnchanged": true,
+      "committedAmountUnchanged": true,
+      "firstTurnAttempts": 0,
+      "executions": 0,
+      "ledgerCommits": 0,
+      "tasks": 0,
+      "invariantFindings": 0
+    }
+  ],
+  "errorCode": null,
+  "finishedAt": "2026-10-25T14:29:26.655Z"
+}

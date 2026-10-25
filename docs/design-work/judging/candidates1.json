@@ -1,0 +1,633 @@
+{
+ "ranking": [
+  {
+   "title": "领域与不变量优先",
+   "total": 45.7
+  },
+  {
+   "title": "安全、隐私与信任边界优先",
+   "total": 45.7
+  },
+  {
+   "title": "产品体验与可扩展引擎优先",
+   "total": 45.7
+  },
+  {
+   "title": "运行时与可靠性优先",
+   "total": 45.3
+  }
+ ],
+ "judging": [
+  {
+   "title": "领域与不变量优先",
+   "total": 45.7,
+   "avg": {
+    "completeness": 8.0,
+    "invariants": 4.0,
+    "security_privacy": 6.0,
+    "runtime_feasibility": 6.666666666666667,
+    "simplicity": 7.0,
+    "extensibility": 6.0,
+    "clarity": 8.0
+   },
+   "judges": [
+    {
+     "judge": "security_runtime",
+     "scores": {
+      "completeness": 8,
+      "invariants": 4,
+      "security_privacy": 5,
+      "runtime_feasibility": 6,
+      "simplicity": 7,
+      "extensibility": 6,
+      "clarity": 8
+     },
+     "strongest_ideas": [
+      "M-ROOM 房间聚合写锁（02-domain-model-part1.md §0、18 ADR-01）：房间内每个业务 mutation 都 patch rooms.eventSeq，同房间的先查后写守卫因此在 OCC 下串行执行，不依赖待验证的“索引区间读是否进入读集”（inputs/04 待验证 #2）。",
+      "约束版本做成实体 constraintSets（03-schema-part1.md §8、09-constraint-changes-part1.md §1–§4）：每行记录各角色确认版本的指针元组和 committedCents 快照；唯一写者是 bumpConstraints；规则输入只有两种写入（简报确认、执行），二者都调用它。任一提案在任一历史版本下的评估都可复现。",
+      "预算是 finance 简报里的规则字段；已承诺 = externalCommittedCents + 本系统台账，executeIfReady 执行前做 CS-4 台账断言，不等则整笔回滚（18 ADR-02/04、08-approval-execution-part1.md §4）。这样“改了预算没递增版本”在结构上不可能发生。",
+      "提案与审批都不存状态，全部读取时派生：rules_blocked/current/executed/superseded，以及 approved/stale_approve/stale_reject（04-state-machines-part2.md §7–§8）。绑定 proposalId 即绑定不可变条款，不需要内容哈希（ADR-06）。",
+      "db 写门面（APPEND_ONLY + MUTABLE_FIELDS 白名单）加 lint 禁止裸 ctx.db.patch/replace/delete，把“只追加”和“字段不可变”变成机械保证（02-domain-model-part3.md §4、11-architecture.md §3）。",
+      "检查参数带 Param.requires 可见性标签，即“派生闭包”；模板分 withNumbers/withoutNumbers 两种措辞。provider 永远看不到可反推已承诺额的 $4,900（06-rules-engine-part1.md §3–§4、07-permissions-privacy-part2.md §8）。",
+      "clarify 改为向字段所有者本人发 disclosure 请求，被问方的代理不替委托人回答；跨方只有结构化动作和模板文本，rationale 只给本方委托人（05-protocol-part2.md §3、ADR-08）。",
+      "执行放在最后一票的同一 mutation 里：状态守卫 + by_proposalId + 服务端派生的 operationKey 三重幂等，不调度任何函数，并记录 budgetSnapshot（08-approval-execution-part1.md §4）。符合 spike B2“客户端 operationId 防不住重复”的结论。",
+      "回合运行时：每次尝试一行 agentTurns；scheduleTurn 在同一事务里调度 action 和 watchdog；模型调用后只做一次 completeTurn/failTurn 提交；assertTurnLive 只比较信封快照（run 当前、negotiating、turn 在 pending 中、cv 一致）（10-agent-runtime-part1.md §2–§3、04-state-machines-part2.md §4）。这与 Convex 的 at-most-once action 语义吻合。",
+      "模型调用规范：messages.create + 自建 toStructuredOutputSchema（保留 enum/const）+ 根包一层对象 + Zod safeParse；无论成败先记 usage；按 stop_reason 分支；SDK 显式 timeout/maxRetries；不传采样参数、thinking、强制 tool_choice（05-protocol-part1.md §4、10-agent-runtime-part2.md §8）。与 inputs/04 §4 和 spike A1–A3 一致。",
+      "可行性枚举设规模上限（请求项 ≤ 8、变体 ≤ 3），保证穷举，“无可行方案”因此是真陈述；性质测试断言枚举器与 evaluateProposal 不分歧（06-rules-engine-part2.md §8、ADR-20）。取舍选项的数值只来自公开提案（HR-3、05-protocol-part2.md §4）。",
+      "每个 convex-test 用例结束都调用 ops.auditRoom 复核不变量，另有每日 cron；并发不变量单独用脚本在真实部署上测（16-testing.md §1、§5）。"
+     ],
+     "fatal_flaws": [
+      "choose_package 违反设计自己的派生闭包（BR-4c），把 finance 的私密余量泄露给 customer（05-protocol-part2.md §2“用尽处理”、06-rules-engine-part2.md §8–§9、07-permissions-privacy-part1.md P11）。反例：finance 把 budgetCapCents/externalCommittedCents 设为不披露给 customer；provider 代理连续 3 轮都提超预算方案，没有有效提案；系统用 enumerateFeasible 按“项多 → 金额低”排序，把前 3 个可行包（含金额与日期）发给 customer。customer 由此得知余量 ≥ 最大列出金额，且项更多的组合不可行（得到上界）。finance 没有做任何披露决定。ADR-07 正是以“最贵可行包 ≈ 余量”为由不让 provider 代理看可行集，同一推理在这里被违反。这条构成对核心 1 的反例。",
+      "“已接受的残余推断风险”给出的上界是错的，provider 实际能精确探出余量（07-permissions-privacy-part1.md §3、18 ADR-08、04-state-machines-part1.md R-0a/R-0b）。机制：provider 每次重新确认 offerLines 都会 bump，onConstraintsChanged 随即 startRun 做预检；可行集为空时走 R-0b，直接 awaiting_input 并给 provider 发 revise_offer 请求，**不调用模型**；可行时走 negotiating，只花 1 次调用。run 状态对房间公开（P9）。provider 把必需项只报一行、价格 X，二分约 17 次确认即可得到 finance 的精确余量，最多约 9 次模型调用，在默认 40 次预算内。“每 run 3 轮”的上限不起作用，因为每次确认都会开新 run。简报确认也没有频率限制。spike C4 建议 provider 只看到 blocked 并对频率限流，本设计没有采纳。",
+      "简报版本的读取来源前后矛盾，按文中函数签名实现会违反核心 1（02-domain-model-part1.md BR-2、07-permissions-privacy-part2.md §7 与 §12、06-rules-engine-part1.md §2、07 §6 的 projectSharedFacts(viewerRole, inputs)）。这几处规定投影和代理只读约束集引用的版本，而 RuleInputs 来自 constraintSet；可是只改披露、notes 或软字段的确认不 bump（09-constraint-changes-part1.md §2、05-protocol-part2.md §3）。按字面实现会出三个问题：(a) finance 用新版本撤回对 customer 的预算披露，在下一次 bump 之前不生效，customer 继续看到上限；(b) clarify → disclose 的答案到不了提问方代理，R-4 重跑看到的上下文不变，clarify 功能失效；(c) 委托人更新 notes，自己的代理看不到。",
+      "并行评估存在活性漏洞，run 会永久卡在 negotiating（04-state-machines-part1.md R-3/R-12、04-state-machines-part2.md T-2/T-3、10-agent-runtime-part1.md §3）。反例：评估方 A 自动尝试耗尽，run 转为 failed，但 R-3 不调用 cancelLiveTurns；同一时刻 B 仍在途，它的 completeTurn 到达时 run 不是 negotiating，于是被标 stale，却留在 pendingTurnIds 里；runs.retry 只为 failedTurnId 重排 A；A' 完成后 pendingTurnIds 仍含 B，settleStep 永远不触发；B 的 watchdog 看到它不是 running，也不处理。结果 run 一直停在 negotiating，只能靠人工 requestRenegotiation 脱困。这与 RN-4 的“回合必然进入终态 / run 不会一直 negotiating”矛盾。",
+      "tradeoffs 在 mutation 内的最坏情况复杂度没有分析，可能超出 mutation 时限，导致预算下调本身失败（06-rules-engine-part2.md §9、09-constraint-changes-part2.md §5）。make_optional 最多遍历 255 个必需项子集，每个子集跑一次完整的 enumerateFeasible（≤ 65,536 个叶子，每个叶子都要物化并执行 evaluateProposal），整个过程在 commitBriefVersion → onConstraintsChanged → startRun 的同一 mutation 里同步完成；V15 只计划测单次枚举。在设计允许的规模上限内（8 项 × 3 变体）可能是数百万次评估；若超过 Convex mutation 时限（待验证，文档通常约 1 秒），finance 的 updateBudgetCap 会直接抛错，核心转折流程无法完成。"
+     ],
+     "missing": [
+      "反推攻击的对策：简报确认/提案频率限流；provider 侧把 OVER_BUDGET 降级为不区分原因的 blocked（spike C4）；按约束集计数的“探测预算”。",
+      "结构化输出的隐蔽信道分析：include/exclude、preferLineKeys、reasonCodes、动作选择、deliveryDate 各能泄露多少信息。provider 代理的 deliveryDate 只有下界没有上界，而被阻断的提案仍经 proposal_created 事件公开交付日，可被注入引导编码私密值（spike C3 要求日期窗口校验）。16 §4 的注入用例只扫描数字，测不出编码泄露；“结构上应当总是通过”的说法过于乐观。",
+      "人写自由文本缺少写入时的披露闸门：requestedItems.description 强制对房间公开，publicNote、changeReason 也可公开，customer 可以把从 finance 处获得的上限原样粘进去（spike C3 第 3 条泄露路径）。",
+      "/invite/[token] 页面在接受前要显示房间标题和将获得的角色，但 12 中没有对应的 query/action（需要先对 token 做哈希再查）。",
+      "events.list 用一个 paginationOpts 合并 room 与本人 participant 两路索引，标准的 paginate/usePaginatedQuery 做不到（设计又排除了 convex-helpers），需要给出自定义游标规范。",
+      "R-3 进入 failed 时如何处理同步骤的在途回合，以及 runs.retry 要重排哪些角色，都没有定义。",
+      "重试分层自相矛盾：HTTP_429/5XX/TIMEOUT 同时被 SDK（maxRetries 1）和应用层（attempt+1）重试，违背 10 §5 宣称的“一类错误只由一层负责”。TRUNCATED 重试没有提高 max_tokens。60 秒 HTTP 超时与 Opus 5.5 生成 6000 token（含 thinking）是否匹配未论证，可能需要流式。",
+      "输出 Zod 用了 .optional()（clarify.itemKey）和条件键（preferLineKeys），与 spike A5“全部 required、用 nullable 代替 optional”不符；封装层没有运行时参数白名单（spike A4：thinking/temperature 等写错能通过 tsc）。",
+      "命名没有按 spike D 统一：reasonCode 用了 UPPER_SNAKE 而不是小写点分；收件人字段叫 targetRole/targetRoleKey 而不是 toRole；动作集里没有 escalate 的说明。",
+      "requests.answer 应用改规则的选项时，commitBriefVersion 内的 CS-6 先把正在回答的这条请求关为 cancelled，第 5 步的 closeRequest(answered) 不再执行，历史里记录的是“取消”而不是“已回答”。",
+      "引擎与场景边界有泄漏：engine 里的 executeIfReady 直接读 inputs.finance.brief.externalCommittedCents/budgetCapCents，并向 financeParticipantId 发 execution_budget_detail；executions.budgetSnapshot、approvalKind 的 terms/budget 字面量、RuleInputs 都写死了 scope_change 的形状。这与 17 §1“第二场景不改 engine”的说法矛盾。",
+      "“每次真实模型调用都写 modelCalls”的说法偏强：action 在模型返回后、提交前被平台中断时用量会丢失，没有说明如何补记或在界面标注。",
+      "briefs.saveDraft 的“每参与方一份草稿”没有走 M-ROOM，唯一性依赖待验证的索引 OCC，未列入唯一性落点的残余风险。",
+      "系统提示词与 roleCharter 的正文、untrusted 块转义规则只有概述，没有可直接实现的模板。"
+     ],
+     "verdict": "这份候选（/private/tmp/claude-501/-Users-zhennn-cal-hack-2026-main/8539c825-8b44-4f0c-8956-406ed3a7762f/scratchpad/design/candidates/invariants）是目前结构最严谨的一份：56 条不变量逐条落到“表字段 + 唯一写者 + 守卫”，M-ROOM、constraintSets、只追加门面、派生状态和最后一票内执行都在 Convex 1.48 的真实语义下成立，模型调用规范也与 inputs/04 和 spike 结论一致。问题集中在隐私：设计自定义的“派生闭包”被 choose_package 直接违反；“残余推断风险有界”的论证是错的，provider 通过反复确认报价、几乎不花模型调用就能二分出 finance 的精确余量；“投影/代理只读约束集引用版本”与“披露变更不 bump”互相矛盾，按文中签名实现会让撤回披露不生效。运行时有两处必须修：并行评估回合失败后 run 可能永久卡在 negotiating，以及 tradeoffs 在 mutation 内的最坏复杂度未分析。建议最终设计吸收其骨架（约束集、M-ROOM、门面、派生状态、执行事务、回合守卫、模型调用规范），同时修补以上隐私与活性缺口，并把 engine 中写死的 finance 字段收回到场景接口。"
+    },
+    {
+     "judge": "product_extensibility",
+     "scores": {
+      "completeness": 8,
+      "invariants": 4,
+      "security_privacy": 7,
+      "runtime_feasibility": 7,
+      "simplicity": 7,
+      "extensibility": 6,
+      "clarity": 8
+     },
+     "strongest_ideas": [
+      "房间聚合写锁 M-ROOM：房间内每个业务 mutation 都 patch rooms（至少 eventSeq += 1），让所有先查后写的唯一性守卫在 OCC 下串行，不依赖待验证的索引区间读集语义（02-domain-model-part1.md §0，18 ADR-01）",
+      "约束版本做成实体 constraintSets：内容是各角色确认版本指针加 committedCents 快照，唯一写者是 bumpConstraints；递增点穷举（规则字段变化的简报确认、执行），任一历史评估都能复现（03-schema-part1.md §8，09-constraint-changes-part1.md §2–§4）",
+      "预算是 finance 简报里的规则字段；已承诺 = externalCommittedCents + 本系统台账，CS-4 在执行前断言二者一致，约束变化因此只有 commitBriefVersion 一条路径（18 ADR-02/ADR-04，08-approval-execution-part1.md §4 步骤 4）",
+      "提案完全不可变，状态全部派生；决定只追加，用 roomSeq 排序；approvalState 区分 stale_approve 和 stale_reject；约束变化后若当前提案仍全部通过，run 不迁移，只要求在新约束版本上重新批准，不复制提案（04-state-machines-part2.md §7–§8，04-state-machines-part1.md §3.3 R-10）",
+      "执行放在最后一票的同一 mutation 里，三重幂等：状态守卫 + by_proposalId + 服务端派生的 operationKey；执行同事务 bump 约束，executeIfReady 不调度、不 fetch（08-approval-execution-part1.md §4，08 part2 §5 的并发逐案表）",
+      "派生闭包：检查参数带 Param.requires 可见性标签，投影函数是唯一出口；代理上下文直接复用委托人工作台的同一批投影函数，provider 永远拿不到能反推已承诺额的 committedAfterCents（06-rules-engine-part1.md §4，07-permissions-privacy-part2.md §6–§7）",
+      "clarify 一律转成发给字段所有者本人的 disclosure 请求，代理之间不互答，也就不存在“代理替委托人披露”；跨方文本只有结构化动作、reasonCode 和模板（05-protocol-part2.md §3，18 ADR-08）",
+      "在规模上限内穷举可行集，叶子节点直接调用 evaluateProposal，枚举器与评估器不可能分歧，配套性质测试；“无可行方案”因此是一个真陈述（06-rules-engine-part2.md §8，18 ADR-20）",
+      "取舍选项的数值只取自公开提案：raise_cap_to_fit 只能引用“唯一失败项是 OVER_BUDGET 的公开提案”；revise_offer 是导航型选项；请求并行发出，第一个改动规则字段的回答经 bump 关闭其余（05-protocol-part2.md §4，06-rules-engine-part2.md §9）",
+      "db 写门面：APPEND_ONLY + MUTABLE_FIELDS 白名单，lint 禁止裸 ctx.db.patch/replace/delete；每个 convex-test 用例结束都调用 ops.auditRoom，功能测试同时就是不变量测试（02-domain-model-part3.md §4，16-testing.md §1）",
+      "offerLines 的任何属性（包括 label、taskTitle、validUntil）都算规则字段，改动即 bump；SOURCE_MISMATCH 用来发现被引用行改价（09-constraint-changes-part1.md §2，06-rules-engine-part1.md §3 #4）",
+      "fixture 拆成 renegotiate / tradeoff 两个变体，stub 下逐步确定，并逐角色列出可见文本；canary 变体用罕见上限 501337 和三方金丝雀串（14-scenario-scope-change-part2.md §6–§8）"
+     ],
+     "fatal_flaws": [
+      "【违反核心 1，派生信息未经披露决定到达他方】取舍选项是否“存在”，是用 finance 未披露的上限算出来的，然后发给 customer。BR-4(d) 和 P11 把它当作“存在位”放行，但 finance 的必需 acknowledgements 里没有对应项（只有 agent_moves_public、check_outcomes_public）。反例：finance 的 disclosures=[]，committed 400000，cap 445000；v1/v2 已公开 SSO $500、REPORTS $400，可行集为空 → tradeoffs 给 customer 的选项只有 make_optional[SSO_LOGIN]（另有两项都改为可延后的选项），没有 make_optional[USAGE_REPORTS] → customer 推出余量落在 [$400,$500)。choose_package 列出的可行包同样暴露余量下界。文件：07-permissions-privacy-part1.md §3（BR-4 第 5 类、P11），06-rules-engine-part2.md §9 第 1 项，02-domain-model-part1.md BR-4。HR-3 只约束“数值参数”，16 §3 的性质测试 ③ 测不出这条泄露。",
+      "【活性：并行评估失败后 run 永久卡住】customer 评估回合自动尝试耗尽 → R-3 run → failed，但 R-3 不取消同步骤的 finance 回合。finance 回合随后完成，assertTurnLive 因 run 不是 negotiating 判为 stale；按 T-4 和 10 §3 只记用量、不写业务表，于是它的 id 一直留在 run.pendingTurnIds 里。runs.retry（R-12）只为 failedTurnId 的角色重排 attempt+1；新的 customer 回合完成后 pendingTurnIds 仍不为空，settleStep 永远不会被调用，又没有 running 回合可以触发 watchdog → run 停在 negotiating，唯一出口是人工 requestRenegotiation（丢掉本轮并消耗调用预算）。这与 04-state-machines-part2.md §9 “run 一直 negotiating → watchdog 兜底”的说法矛盾。文件：04-state-machines-part1.md R-3/R-12，04-state-machines-part2.md T-4，10-agent-runtime-part1.md §3。",
+      "【追溯断链，削弱核心 6】requests.answer 的步骤 4 对改规则字段的选项调用 commitBriefVersion → bump → onConstraintsChanged → cancelOpenRequests，会把正在回答的这条请求也取消；步骤 5 只在“尚未被第 4 步间接关闭”时才 closeRequest(answered)。结果这条请求以 cancelled 结束，answer 和 answeredByUserId 都不会写入；briefVersions 只有 origin=request_answer，没有 requestId 字段。于是“约束 v5 是哪个人工取舍选择造成的”在房间层面无法从数据追溯，只剩一条目标本人可见的 participant 事件。文件：12-api-part1.md §3.2 与 04-state-machines-part2.md H-1、09-constraint-changes-part1.md §4 冲突。",
+      "【后续变更会重复承诺已执行的范围】执行后 customer 简报里的 requestedItems 和 requiredItemKeys 仍包含已执行的 SSO_LOGIN、USAGE_REPORTS；scope.required 和 request.current 迫使任何后续提案重新包含它们。stub provider 的起点是“最近一个可见提案”，也就是已执行的 v3，会原样再提。反例：CO-0001 之后 finance 上调上限 → 有人 runs.start → v4 与 v3 条款相同（界面只标“same terms as v3”）→ 三方批准 → 同一工作产生第二条 commitment 和第二组任务。08-approval-execution-part2.md §9 声称“把延后项做成二期”只需新开 run，但规则层完全不知道哪些项已执行；这条旅程没有闭环。文件：08-approval-execution-part2.md §9，06-rules-engine-part1.md §3 #6/#7，10-agent-runtime-part2.md §10。",
+      "【按原文多半无法实现，待验证】events.list 要求“按 audienceKey='room' 和本人 participantId 两次索引读取，再按 seq 合并分页”，并配合 usePaginatedQuery。Convex 每个查询函数只允许一次 .paginate()（后端限制，本地源码无法核对，待验证），两路游标合并也不兼容响应式分页的 endCursor/splitCursor。改法简单：单索引 by_roomId_and_seq + 对 audienceKey 过滤 + 一次 paginate。文件：07-permissions-privacy-part2.md §9，12-api-part1.md §2。"
+     ],
+     "missing": [
+      "引擎与场景边界泄漏，与 17 §1 “第二场景不修改 convex/engine/**”的验收承诺矛盾：executeIfReady 直接读 inputs.finance.brief.externalCommittedCents，并向 financeParticipantId 发 execution_budget_detail；schema 里写死了 rooms.scenarioKey: v.literal(\"scope_change\")、executions.recordKind: v.literal(\"change_order\")、executions.budgetSnapshot、tasks.itemKey、humanRequests.options = scRequestOptionV（含 make_optional/revise_offer 等场景效果），EVENT_SPECS 带 scope/schedule/offer/budget 类别；briefs.updateBudgetCap 是引擎 API；turnPlan 只支持单一 proposer。没有预算或 finance 角色的第二场景无法满足引擎层的 EX-5/CS-4。",
+      "调用预算耗尽后没有只靠人的降级路径：可行集非空时本可以不调模型、直接给 customer 发 choose_package，现设计却进入 failed，只能由运维 CLI ops.setRoomCallBudget 解救；R-12 对 R-0c 起步的 failed run（没有 failedTurnId）行为未定义。",
+      "/invite/[token] 页面要在接受前显示房间标题和角色，但 12 里没有对应的预览函数（按 token 哈希查询需要 action 或 mutation 内的 crypto，待验证）。",
+      "只改软字段或只改披露的确认版本不进入 constraintSet：06 §2 的 RuleInputs 和 07 §6 的 projectSharedFacts(viewerRole, inputs) 读约束集引用的旧版本，而 BR-4 和 07 §7 的 myBrief 说用“当前确认版本”。date.preferred 检查、共享事实、代理上下文可能各自用不同版本。另外 commitBriefVersion 在 request_answer 路径上会把草稿的 baseVersionNo 更新到新版本，而草稿内容仍是旧的；下次从草稿确认时，会静默回滚请求应答刚做的改动（例如 make_optional、disclose）。",
+      "可执行性在 rooms.workspace 查询里用 Date.now() 计算；响应式查询不会因为跨日重跑（待验证），界面可能一直显示可批准，直到别的写入触发刷新。设计没有定时 nudge，也没有标注这一点。",
+      "tradeoffs 最多对 255 个子集各跑一次 enumerateFeasible（单次最多 65,536 个叶子），而且在 decisions.record(reject)、commitBriefVersion 等用户触发的 mutation 内同步执行；V15 只覆盖单次枚举。enumerate 返回全集，而这里只需要“是否存在”，也没有提前终止。",
+      "与 inputs/05 实测结论不一致：reasonCode 用大写常量（05 D 建议统一为小写点分）；模型输出 schema 用 Item.optional() 和条件属性 preferLineKeys（05 A5 要求全部 required + nullable）。",
+      "provider 二分探测余量的残余风险被低估：房间调用预算 40 次，再加上 requestRenegotiation（只有 10 秒冷却）和改报价触发的新 run，足以做约 20 次以上的探测，把上限逼近到美分级。没有每 run 的提案频率限制，也没有对 provider 粗化 OVER_BUDGET 信号的选项（spike C4 的建议未采纳）。",
+      "跨章节小矛盾：14 §8 的 8'c 写 no_agreement 后 phase 为 idle，04 roomPhase 算出来是 ready；P4 说 choose_package 选项引用的行对房间可见，矩阵却写“人工请求选项仅目标”；“披露被拒”这一事实对提问方可见（05 part2 §3），但不在号称穷举的 P1–P12 里；HR-3 说数值只来自公开提案，choose_package 的行却来自 provider 未公开的目录。",
+      "没有通知（v1 只有应用内待办），而人工请求不会自动过期，取舍与披露旅程完全依赖用户自己回来看；没有运维或房主的管理界面（调整预算、处理卡住的 run）；成员移除、房主转移、删除与匿名化都留作开放问题。"
+     ],
+     "verdict": "这份设计的工程化程度最高：全部 19 个文件齐全，核心章节都写到字段、守卫、事务步骤和走查，fixture 数字我逐步核对过，全部吻合。M-ROOM、约束集实体、提案不可变加决定只追加、末票同事务执行、派生闭包、clarify 转披露请求，都值得直接进入最终设计。但我找到一个能违反核心 1 的反例：取舍选项和 choose_package 是否存在，是用 finance 未披露的上限算出来的，customer 能据此推出余量区间，而 finance 从未做过对应的披露决定。按评分规则 invariants 封顶为 4。另外两条旅程没有闭环：并行评估一方失败后 run 卡死；执行后的后续变更会重复承诺已执行的范围。还有一处追溯断链：请求应答被 bump 取消，answer 不落库。引擎层写死了 finance、预算和 scope_change 的字面量，第二场景做不到只写插件。修好这些点之后，它可以作为最终设计的主干。"
+    },
+    {
+     "judge": "invariants",
+     "scores": {
+      "completeness": 8,
+      "invariants": 4,
+      "security_privacy": 6,
+      "runtime_feasibility": 7,
+      "simplicity": 7,
+      "extensibility": 6,
+      "clarity": 8
+     },
+     "strongest_ideas": [
+      "房间聚合写锁 M-ROOM（02-domain-model-part1.md §0、18 ADR-01）：房间内每个业务 mutation 都 patch rooms（至少 eventSeq），让“先查后写”的唯一性守卫不依赖待验证的 OCC 索引区间读语义；03-schema-part3.md §21 的唯一性落点表把每个逻辑唯一键对应到唯一写入口。",
+      "约束集做成实体（03-schema-part1.md §8、09-constraint-changes-part1.md §1–§4、ADR-03）：constraintSets = 各角色确认版本指针 + committedCents 快照，唯一写者是 bumpConstraints。规则输入的变化只有两个来源（ruleDiff≠∅ 的简报确认，以及执行），所以任一提案在任一历史版本下的评估都能重现。",
+      "预算放进 finance 简报的规则字段，committed = externalCommittedCents + Σ commitments，不单设 budgets 表（ADR-02/ADR-04、CS-4）。executeIfReady 执行前重算台账并断言，不等就整笔回滚（08-approval-execution-part1.md §4 第 4 步）。",
+      "提案完全不可变，展示状态与审批状态都在读取时派生（04-state-machines-part2.md §7–§8）。decisions 只追加，用 roomSeq 而非 _creationTime 取最新一条，并补了 stale_reject（03-schema-part2.md §14），审批按集合计数而非按条数。",
+      "写门面 db.ts 用 APPEND_ONLY 与 MUTABLE_FIELDS 两张白名单，配合 ESLint 禁止裸调 ctx.db.patch/replace/delete，把“只追加”从文档约定变成机械保证（02-domain-model-part3.md §4、11-architecture.md §3）。",
+      "派生闭包：检查参数带 Param.requires；模板按参数是否可见在 withNumbers/withoutNumbers 两个变体间自动切换；committedAfterCents 依赖 externalCommittedCents，因此 provider 看不到，避开了 F07.1 的文案陷阱（06-rules-engine-part1.md §3–§4、07-permissions-privacy-part1.md §3–§4、14-scenario-scope-change-part1.md §5）。",
+      "clarify 改为向字段所有者本人发 disclosure 请求，代理不能替委托人回答（05-protocol-part2.md §3、ADR-08）。跨方没有任何模型自由文本，rationale 只给本方委托人看，也不进他方代理上下文，从结构上切断了代理对代理的注入通道。",
+      "代理上下文复用委托人工作台所用的同一批投影函数（07-permissions-privacy-part2.md §7、RN-6）。“代理只知道委托人能知道的内容加委托人自己的简报”由构造保证，不靠代码审查。",
+      "可行性枚举设规模上限以保证穷举，叶子节点直接调用 evaluateProposal，枚举器与评估器不会分歧，并配 fast-check 双向性质测试（06-rules-engine-part2.md §8、ADR-20）；“无可行方案”因此是真陈述，满足核心 8。",
+      "HR-3：取舍选项里的数值只来自公开提案或目标本人的数据。raise_cap_to_fit 只引用“唯一失败项是 OVER_BUDGET”的公开提案；没有这样的提案时，只给不带数字的提示（05-protocol-part2.md §4、06-rules-engine-part2.md §9）。",
+      "执行放在最后一票的同一事务里：先 transitionRun(executed)，再 bumpConstraints，避免复评误触发；operationKey 由服务端派生；budgetSnapshot 存快照，不靠减法推算；by_proposalId 加 operationKey 两道索引（08-approval-execution-part1.md §4）。",
+      "每个 convex-test 用例结束时调用 ops.auditRoom，每个功能测试同时也是不变量测试；生产环境每日 cron 复核（16-testing.md §1、02-domain-model-part3.md §7）。",
+      "持久化守卫 assertTurnLive 只读信封快照与当前房间；每次模型调用之后只提交一次 internal mutation；迟到结果只记 modelCalls 用量（10-agent-runtime-part1.md §2–§3）。"
+     ],
+     "fatal_flaws": [
+      "【反例 1 · 违反核心 1，provider 可零成本二分出 finance 的余量】相关文件：04-state-machines-part1.md R-0a/R-0b/R-0c，09-constraint-changes-part1.md §4（onConstraintsChanged 在 run 非终态时同事务 startRun 并做预检），06-rules-engine-part2.md §9，07-permissions-privacy-part1.md §3 末段“已接受的残余推断风险”，以及 07 part2 威胁 #13。操作序列：finance 不向 provider 披露任何预算字段 → provider 把 offerLines 改成每个必需项只有一行、earliestDeliveryDate 设为明天、SSO 价格为 X、其余必需行价格为 0（assertCents 允许 0），然后确认 → ruleDiff 非空，bump → 旧 run 被 superseded → 新 run 预检 enumerateFeasible。可行时进入 negotiating（调用预算耗尽后为 failed），不可行时进入 awaiting_input，同时 provider 收到 revise_offer 请求，房间看到 request_waiting。这两种状态通过 P9/P10 对 provider 可见，而 run 始终保持非终态，所以每次再确认都会重新触发预检。不可行的探测不花模型调用；调用预算耗尽后，R-0c 与 R-0b 仍可区分，探测次数不受限。commitBriefVersion 没有任何冷却或限流（只有 runs.start 有 10 秒冷却）。对 X 二分约 20 次即可得到 cap − committed，精确到美分。同一方法改 earliestDeliveryDate 可以二分出 customer 未披露的 deadline。07 §3 所说“轮次上限与调用预算把它限制在少数几次”不成立。同类问题：P11（取舍选项中的存在位）不在 finance 任何必需 acknowledgement 之内（14 part1 §2）。finance 取消对 customer 的披露后，customer 从 make_optional 选项组合中可得知 headroom ∈ [$500, $900)。",
+      "【反例 2 · 声明的全局不变量 EX-5（committed ≤ cap）可被违反】相关文件：09-constraint-changes-part1.md §3 第 3–4 步（committed = currentConstraintSet.committedCents，即旧外部已承诺 + 台账），06-rules-engine-part2.md §10（finance 只校验 externalCommittedCents ≤ cap 与 cap ≥ ctx.committedCents），02-domain-model-part2.md EX-5，18 ADR-11。操作序列：按 14 §7 走到 CO-0001 → cap 480000，external 400000，台账 75000，committed 475000。finance 调用 briefs.confirm，把 externalCommittedCents 改成 450000，cap 不变 → 两项校验都通过（450000 ≤ 480000，480000 ≥ 475000）→ bumpConstraints 算出 committed = 450000 + 75000 = 525000 > 480000。ADR-11 声称“恒成立、可审计”，但 ops.auditRoom 的复核清单不含 EX-5（12-api-part2.md §5），违规不会被发现，headroomCents 为负。修法：校验时用“新 external + 台账”计算 committed。",
+      "【反例 3 · 执行后系统主动引导重复承诺同一范围（核心 5 的语义层面）】相关文件：08-approval-execution-part2.md §9（“后续变更 = 同一房间新开 run”），06-rules-engine-part1.md §3 #7 scope.required，06-rules-engine-part2.md §9 第 3 条，10-agent-runtime-part2.md §10 stub 第 1、3 条。操作序列：按 14 §7 执行 CO-0001（SSO + REPORTS lite，$750，committed 475000，cap 480000）→ 房间进入 idle，任一方 runs.start（manual）→ customer.requiredItemKeys 仍是 [SSO_LOGIN, USAGE_REPORTS]，每个候选都必须重新包含已执行的项 → 预检无可行方案 → tradeoffs 把已执行的 v3 当作“唯一失败项是 OVER_BUDGET 的公开提案”，向 finance 生成 raise_cap_to_fit{v3, 550000} → finance 接受 → bump → stub provider 以最近可见提案 v3 为起点，检查全部通过，原样再提出 v4（“same terms as v3”）→ 两个评估方 recommend_accept → 三方批准 → CO-0002 再次承诺 SSO 与报表 $750，并重复生成“Implement SSO login”等任务。引擎没有“已执行范围”的概念；08 §9 举例的“二期只做 CSV_EXPORT”也做不到，因为会触发 REQUIRED_ITEM_MISSING，除非 customer 先改简报。",
+      "【活性缺陷 · run 卡在 negotiating：既没有在跑的回合，也没有 watchdog】相关文件：04-state-machines-part2.md T-2/T-4、04-state-machines-part1.md R-3/R-12、10-agent-runtime-part1.md §3。操作序列：评估步骤中 customer 回合两次 invalid_output → R-3 run 进入 failed（R-3 不取消同步骤的兄弟回合，也不清理 pendingTurnIds）→ finance 回合此时返回，assertTurnLive 因 run 不是 negotiating 而失败 → 回合被置为 stale，并且“不写任何业务表”，所以它的 id 留在 pendingTurnIds 里 → 有人调用 runs.retry（R-12 只重排 failedTurnId 对应的回合）→ customer 新回合完成后 pendingTurnIds 仍为 [finance(stale)]，settleStep 永远不会触发；finance 的 watchdog 因回合不是 running 而 no-op。04 §9 声称“run 一直 negotiating 会由 watchdog 兜住”，在这里不成立，只能靠人发现后调用 requestRenegotiation。此外，R-0c 起步的 failed run 没有 failedTurnId，R-12 的语义未定义。",
+      "【运行时风险 · 约束变更事务可能因计算量超限而整体回滚】相关文件：06-rules-engine-part2.md §8–§9，09-constraint-changes-part1.md §4。startRun 的预检与 tradeoffs 都在 commitBriefVersion 的同一 mutation 内同步执行。make_optional 最多对 255 个必需项子集各做一次完整的 enumerateFeasible，每次最多 4^8 个叶子，每个叶子都调用 evaluateProposal，最坏情况是千万次级别，远超 mutation 的执行时限（V15 只评估了单次枚举，没有评估这里的 255 倍）。报价目录由 provider 控制，可以构造剪枝很晚才生效的目录，让 finance 的 updateBudgetCap 或 customer 的确认整体失败，约束变化因此无法录入，间接破坏核心 3。"
+     ],
+     "missing": [
+      "探测与限流：commitBriefVersion、requestRenegotiation 与 provider 的反复改价都没有频率与次数上限；隐私残余风险分析漏掉了预检和 tradeoff 两条通道；没有采纳 inputs/05 C.4 的建议（provider 只看到泛化的 blocked）。",
+      "后续变更语义：缺少“已执行范围”或“已承包条目”的概念，也没有说明执行后 requiredItemKeys 怎样扣减或是否需要 customer 先改简报。tradeoffs 的 publicProposals 应排除已执行提案。enumerateFeasible 应显式排除空包（requiredItemKeys = [] 时，零行、$0 的包会“可行”并可能被执行）。",
+      "EX-5 的校验口径（应使用新的 external 加台账）以及把 EX-5 加入 ops.auditRoom 的复核清单。",
+      "pendingTurnIds 的卫生规则：R-3 应同时取消同步骤的兄弟回合并清空 pendingTurnIds，stale 路径也要移出该回合；R-0c 起步的 failed run 怎样重试未定义。",
+      "requests.answer 的步骤顺序（12-api-part1.md §3.2 第 4–5 步与 04 H-1 不一致）：改规则字段的回答会被它自己引发的 bump（CS-6）先取消，最终状态记为 cancelled 而不是 answered，answeredByUserId 也缺失；briefVersions 没有 requestId 字段，无法追溯“v5 是回答哪个请求产生的”（核心 6）。",
+      "跨章不一致：14 part2 §8 8'c 写 no_agreement 后 phase 为 idle，而 04 part1 §2.2 的 roomPhase 返回 ready；07 §7 规定 myBrief 用当前确认版本，07 §12 却说代理只读约束集引用的版本，两者在不 bump 的新版本上会分歧；07 P4 说 choose_package 选项引用的行对房间公开，矩阵却写人工请求选项仅目标可见；03 §12 自称与 05 的 Zod 输出“一一对应”，实际字段形状不同，靠 10 的 normalizeOutput 转换；executeTurn 读取 c.agentMode，但 AgentContext 类型里没有这个字段。",
+      "没有采纳 inputs/05 D 的统一命名：reasonCode 应为小写点分并按领域分组、动作集应含 escalate、收件人字段应叫 toRole。clarify 的 itemKey 用了 .optional()，而 spike 建议全部字段 required 并用 nullable。",
+      "“今天”与响应式查询：rooms.workspace 在 query 中用 Date.now() 计算 todayIn，跨日或报价过期时订阅是否会重跑没有讨论（待验证），界面可能把已不可执行的提案显示为可执行。",
+      "provider 代理自选的 deliveryDate 没有上界窗口：日期可以编码私密信息（spike C3），且“日期只能来自确认信息”只被弱满足。建议限定为 max(earliest) 或代码给出的窗口。",
+      "briefs.mine 的“他方能看到什么”预览以他方角色调用完整投影生成，没有规定只渲染本人字段，可能把第三方定向披露给该角色的字段暴露给查看者。",
+      "缺少 ANTHROPIC_API_KEY 时强制 stub：生产环境可能静默产生 isSimulated 的提案、执行与承诺，并混入真实房间的台账（CS-4 的 Σ 不区分模拟记录）。没有“生产房间拒绝 stub”的守卫。",
+      "tradeoffs 与 enumerateFeasible 在 mutation 内的复杂度上界与基准（V15 应覆盖 255 个子集的情形），以及超时后的降级策略（例如改为只判断存在性并提前停止，或放到 action 中预计算）。"
+     ],
+     "verdict": "这是四份候选里在不变量上最下功夫的一份。我逐章核对过 02–10、12、14：56 条不变量都落到了“表字段、唯一写者、守卫”，03 的字段、04 的迁移、08 的事务步骤、12 的函数签名大体对得上；M-ROOM、约束集实体、预算并入 finance 规则字段、提案不可变配派生状态、写门面、派生闭包、clarify 改为披露请求、代理上下文复用投影，这些都值得最终设计直接吸收。但我构造出 3 个可以执行的反例：第一，provider 借预检结果零成本二分出 finance 的余量，违反核心 1，且设计自己的残余风险论证不成立；第二，finance 上调外部已承诺可以打破 EX-5，而审计不检查它；第三，执行后的后续 run 被规则强制重新包含已执行项，系统还会生成选项引导重复承诺。此外还有一条 run 卡在 negotiating 的活性缺陷，以及约束变更事务可能因计算量超限而回滚。按评分规则，invariants 不高于 4。修复成本不大：给简报确认和预检限流或泛化可见性，修正 EX-5 的校验口径并纳入审计，引入“已执行范围”，修好 R-3 与 stale 回合的 pendingTurnIds 清理，给 tradeoffs 设复杂度上界。修完后它适合作为最终设计中领域、schema 与审批执行部分的底稿。评审对象目录：/private/tmp/claude-501/-Users-zhennn-cal-hack-2026-main/8539c825-8b44-4f0c-8956-406ed3a7762f/scratchpad/design/candidates/invariants。"
+    }
+   ]
+  },
+  {
+   "title": "安全、隐私与信任边界优先",
+   "total": 45.7,
+   "avg": {
+    "completeness": 8.0,
+    "invariants": 4.0,
+    "security_privacy": 6.0,
+    "runtime_feasibility": 6.666666666666667,
+    "simplicity": 7.0,
+    "extensibility": 6.0,
+    "clarity": 8.0
+   },
+   "judges": [
+    {
+     "judge": "product_extensibility",
+     "scores": {
+      "completeness": 8,
+      "invariants": 4,
+      "security_privacy": 6,
+      "runtime_feasibility": 7,
+      "simplicity": 7,
+      "extensibility": 6,
+      "clarity": 8
+     },
+     "strongest_ideas": [
+      "06-rules-engine.md §6.2/§6.7 + 07-permissions-privacy-part4.md §7.13 + ADR-07：同一个 evaluate 在『视图输入』下跳过未知字段对应的检查，候选枚举（enumerateCandidates）与放宽选项（relaxations）都只读目标角色的 RoleView。这样『代码枚举可行组合』和『候选集与请求选项不泄露他方约束』可以同时成立，正好修掉跨候选共性缺陷里『用全量私密数据生成候选/请求选项』那类泄露。",
+      "05-protocol.md §5.4 + ADR-05：模型输出空间就是安全边界。服务端每回合手工生成扁平 JSON Schema，只用 object/string/enum/required/additionalProperties:false，『不适用』用 NONE 哨兵值。candidateId、rejectReason、clarifyTarget 都是服务端枚举，模型写不出金额、日期、条目键、身份或版本；解码后再过 Zod 和语义校验（interpretOutput）。",
+      "07-permissions-privacy-part3.md §7.11 + ADR-01：一表一受众（R/P/F/O/S），跨受众读取只允许五条受控投影 X1–X5，每条只有一个实现函数。隐私审查面因此从『每个字段』缩小到『五个函数 + R 表新增字段』。",
+      "03-schema-part3.md §3.11 + 07-permissions-privacy-part4.md §7.14：事件只存公开值的结构化载荷（eventPayloadV 有字段白名单测试），在 events.list 里按查看者读时渲染。同一个 constraints_changed 事件，finance、customer、provider 看到三种不同的文本。",
+      "07-permissions-privacy-part4.md §7.13 + 16-testing.md §16.4 + 14-scenario-scope-change-part2.md §14.9：把隐私定义写成可测试的非干扰性质（扰动对 R 不可见的值，R 的视图与 AgentContext 逐字节不变），扰动清单由字段声明自动生成；再加上值全局唯一的 canary fixture，多时间点扫描 query、事件、错误参数、请求体和日志。",
+      "08-approval-execution.md §8.1–8.4 + 02-domain-model-part2.md §2.7：决定只追加（撤回也是一行），绑定 (proposalId, cv)，调用时必须携带 expectedConstraintsVersion。完成判定按集合，并断言 userId 互不相同。决定状态全部派生，包括 stale_approve、stale_reject、used_for_execution。",
+      "08-approval-execution-part2.md §8.5 + ADR-09/ADR-17：执行只发生在最后一票的 decide 事务里，以 run 状态守卫为主防线、operationKey 为辅。变更单本身就是执行记录（带 decisionIds、rulesVersion、templateVersion），承诺带执行时的预算快照；执行后 cv+1，使『cv=M 时的已承诺额』只由 cv<M 的承诺决定，任何历史求值都能精确重算（03-schema.md §3.4）。",
+      "09-constraint-changes.md §9.1–9.4：cv 的唯一写入口是 bumpConstraints，入口全表列出；用 hardDigest 判断是否递增，constraintSnapshots 把 cv 映射到当时的简报版本和目录版本。新 run 的起始状态有三种分支：carry-over 进入 awaiting_approval、running、needs_human；执行后的约束变化不会自动花钱调模型。",
+      "05-protocol-part2.md §5.8 + ADR-06：澄清就是向目标本人发结构化披露请求，不阻塞 run，有限额和过期时间。代理之间没有任何自由文本通道，跨代理注入和未经人决定的披露被结构性排除。",
+      "06-rules-engine.md §6.4 + 07-permissions-privacy-part3.md §7.12：reasonCode 声明带 owner、requiresFields、publicClass，按『查看者是否拥有或已获披露全部依赖字段』决定看精确 code 还是粗类，粗化后去重。同一个 viewEvaluation 被 DTO、事件渲染和 PROPOSAL_BLOCKED 错误参数共用。",
+      "14-scenario-scope-change.md §14.3 + 06-rules-engine.md §6.3：加急费与绝对交付日都由 provider 发布的目录承载，靠重算 pricingKey 做来源核对（CATALOG_STALE）。这避免了其他候选里『插件写死费用』和『today+leadDays 跨午夜漂移』的反例。",
+      "04-state-machines-part2.md §4.9 + 10-agent-runtime.md §10.4/§10.6：审批守卫与回合持久化守卫分开并给出代码；重试只在应用层一层（SDK maxRetries:0），每次尝试一行 agentTurns，各带独立看门狗；除每 run 调用上限外还有每房间每日调用计数，堵住了『新 run 让 callCount 归零』这类成本滥用。"
+     ],
+     "fatal_flaws": [
+      "【违反核心 1：私密请求范围经公开条款泄露】03-schema-part2.md §3.7、14-scenario-scope-change.md §14.3、07-permissions-privacy-part3.md §7.9。insertProposal 用 customer 的完整简报计算 terms.deferredItemKeys = requestedItemKeys − itemKeys，并写进 R 表 proposals、termsKey、changeOrders，以及 provider 的 AgentContext.proposals；而 7.9 与 14.2 都把 requestedItemKeys 标为 D（仅在披露时可见），固有披露清单 ID-1…ID-7 里也没有它。反例：customer 把 requestedItemKeys 的受众设为 []，provider 代理提出 [LOGIN]，provider 立即在公开提案 v1 里看到 deferred [EXPORT, REPORTS]，从而得知 customer 的完整请求集合。按 TC-PRIV-05 扰动 requestedItemKeys，provider 视图会变化，但 canary fixture 恰好把 requested 披露给了 provider，这个缺陷被掩盖。",
+      "【活性死锁：并行评审 + run failed + 迟到完成】04-state-machines.md R8/R14、04-state-machines-part2.md T5、05-protocol-part2.md §5.5、12-api-part2.md。反例：round 1 中 customer 与 finance 并行评审。finance 回合得到 STOP_REFUSAL（不可重试），run 转 failed（R7）。10 秒后 customer 回合完成，turnIsCurrent 因 run.status≠running 不成立，被记为 rejected_stale（T5），结果丢弃。成员点 runs.retry，R8 只为失败的 finance 回合插入新尝试；新尝试成功后，resolveRound 要求『本轮全部 review 均 succeeded』，而 customer 的最新尝试是 rejected_stale，所以永不触发。run 停在 running，没有在途回合，看门狗不再触发。runs.retry 要求 run 为 failed，requestRenegotiation 要求 run 不在 running，两条出路都被堵死；只能改硬约束（或 provider 同价重发目录）触发 bump，或者关房间。这与 01-product.md J7『房间永远不会停在无出路的状态』矛盾。",
+      "【J9 修订流程会对已执行范围重复承诺】08-approval-execution-part2.md §8.9、01-product.md J9、06-rules-engine.md §6.3。规则里没有『已执行条目』的概念，执行也不消耗 customer 简报。反例：CO-1 执行了 LOGIN+REPORTS 之后，有人 requestRenegotiation 想处理延后的 EXPORT。customer 的 requiredItemKeys 仍是 [LOGIN]，新 run 中每个可行候选都必须包含 LOGIN；只要余量足够（例如 finance 上调了上限），代理就会再提出含 LOGIN 的方案，人再批一次就生成第二张同范围的变更单和承诺。这不是幂等漏洞（需要人重新批准），但 J9 的承诺在设计上无法正确兑现，也没有提示 customer 先修改简报。"
+     ],
+     "missing": [
+      "引擎/场景边界被预算概念穿透，与 02 §2.1 原则 4『引擎不认识业务字段』矛盾。executeInTx（引擎）直接读 input.financeHard.capCents 和 committedCents；commitments 表的 snapshot.capCents/headroomAudience 以及 F 受众写死为 finance；budget.update、budget.myLedger 和 X2 budgetPanelFor 位于引擎层；loadConstraintInput/derive.ts 用 baselineCommittedCents 计算已承诺额。ScenarioPlugin 缺少 ledger、预算断言、预算面板之类的钩子，没有预算方的第二场景就必须改引擎。",
+      "引擎表与枚举带着首场景的词汇和市场假设：changeOrders、catalogVersions、requestOptionV.revise_catalog，以及 reasonCode publicClass 固定为 CATALOG/TIMING/BUYER_CONSTRAINT/SELLER_CONSTRAINT。17 §17.1 宣称『第二场景不改引擎表』，但没有逐项论证多卖方（场地 + 餐饮）时 SELLER_CONSTRAINT 粗类本身是否泄露。",
+      "05-protocol-part2.md §5.5『提议方无候选 → 无主题提案分支』未定义；『本轮全部 review 均 succeeded』没有说明是按角色取最新尝试，按字面读，正常自动重试留下的 failed 行也会永久阻塞 resolveRound。",
+      "跨章不一致：候选排除集在 05-part2 §5.5 与 06-part2 §6.7 写作『本 run 中已出现』，而 14-part3 第 9 步、10′a 和 05-part3 §5.12 实际排除的是上一个 run 的 v1/v2；06-part2 §6.8 给 provider 的 amend_brief{minChangeOrderCents} 在 03-part2 §3.9 的 briefHardPatchV 中不存在；10.2 说 completeTurn 调用 interpretOutput，但 runTurn 代码在 action 内调用；05-part3 §5.11 中 finance reject 与 14 第 5 步中 finance counter 的走查口径不一致。",
+      "人的拒绝没有进入候选排除：R10 后拒绝者的 stub 代理可能按排名重新提出与被拒提案相同 pricingKey 的条款。relaxations 的 adopt_candidate 不排除已知被阻断的候选，customer 可以反复采纳同一个失败候选，每次都产生一个公开提案，且没有限流。只含 decline 的请求（例如 10′b 中 finance 视图仍可行时）应当不发送或另给兜底选项。",
+      "推断泄露被低估：proposals.list 在每次 cv 变化后为 provider 重算全部历史提案的粗化结果，provider 凭已知价格和日期可以夹出余量或截止日的区间，远超『每个提案 1 位』；目录重发还构成零模型调用的可行性预言机（每日 5 次）。inherentDisclosuresAck 的文案『never the limits themselves』有误导性，非干扰测试的前置条件按定义排除了这些信道。",
+      "人类自由文本的再披露没有处理：获披露 headroom 的 customer 可以把数值写进拒绝备注或房间目标，从而对 provider 可见，绕开 finance 的披露决定（inputs/05 C3 已实测出这条路径）。缺少写入时提示或 canary lint。",
+      "代理 counter 被采纳为提案时，作者角色公开，等于公开了该代理『不接受当前提案』这一结论；这与 7.9 隐藏评审结论的理由矛盾，而且不在固有披露清单里。",
+      "invites.peek（query）与 invites.accept（mutation）需要在 query/mutation 运行时计算 SHA-256，但 V-6 只覆盖 action；hardDigest 为了回避 crypto.subtle 改用规范化字符串，令牌哈希却没有同样处理。",
+      "FieldDecl.read(owner) 的签名无法计算依赖台账的派生字段 headroomCents（7.10 文字说『用当前台账计算』，但签名里没有台账）；decisions 表的 userId 在 R 表中，DTO 是否剔除未写明。",
+      "多方异步产品的『轮到你』只有站内待办，通知只列在路线图里；awaiting_approval 和 needs_human 没有任何期限或提醒，长期无人响应的房间除关闭外没有处置。"
+     ],
+     "verdict": "这份设计的隐私与信任边界架构是本轮最扎实的之一：按视图枚举候选和放宽选项、模型只输出枚举、一表一受众加五条受控投影、事件读时渲染、非干扰测试，都值得最终设计吸收；审批绑定、在最后一票事务内原子执行、cv 单一入口与快照这几块也写得具体、可以直接实现。但我核对出一个违反核心 1 的反例：公开条款里的 deferredItemKeys 泄露了标为可披露（D）的 requestedItemKeys，fixture 恰好把这个字段披露了，所以测试发现不了。另外，并行评审在 run 失败后有一条活性死锁，这时 retry 和重新协商的入口同时被堵死。产品层面，J9 修订会重复承诺已执行的范围；引擎直接读 finance 的预算字段，与它自己『引擎不认识业务字段』的原则相悖，第二个场景只能做成同样带预算的形态。整体可作为最终设计的骨干之一，前提是先修这三处反例，并把预算和账本抽成场景钩子。"
+    },
+    {
+     "judge": "invariants",
+     "scores": {
+      "completeness": 8,
+      "invariants": 4,
+      "security_privacy": 6,
+      "runtime_feasibility": 7,
+      "simplicity": 7,
+      "extensibility": 6,
+      "clarity": 8
+     },
+     "strongest_ideas": [
+      "05-protocol.md §5.4 + 10-agent-runtime-part2.md §10.9：模型输出空间就是服务端按回合手工生成的扁平 JSON Schema，只用 object/string/enum/required/additionalProperties:false，以 \"NONE\" 作哨兵，不用 union、null、$ref；候选 ID 与理由码都是枚举。解码后用 Zod strictObject，再按 beginTurn 时冻结的候选核对一次；调用用 messages.create 并先查 stop_reason，SDK maxRetries:0。这样避开了 zodOutputFormat 会降级约束、$ref 会被 Convex 拒收这两个实测问题。",
+      "06-rules-engine.md §6.2、06-rules-engine-part2.md §6.7/§6.8、ADR-07：同一个 evaluate 既跑完整输入，也跑角色视图输入，视图里未知字段对应的检查直接跳过；代理候选集和人工请求的放宽选项都只从目标角色的视图计算。这样代理和人看到的数字只可能是他们本来就能推出的值。",
+      "07-permissions-privacy-part3.md §7.11：一表一受众，跨受众读取只允许五条受控投影 X1–X5，每条只有一个实现函数；DTO 构造器禁止 ...doc 展开，并配 returns 校验器。隐私审查面因此缩小到五个函数加上 R 表新增的字段。",
+      "03-schema-part3.md §3.11 + 07-permissions-privacy-part4.md §7.14 + ADR-01：事件载荷只放公开值，有公开字段白名单的静态测试（TC-PRIV-03）；事件文本在读取时按查看者渲染，不存预渲染文本。",
+      "05-protocol-part2.md §5.8 + ADR-06：代理之间没有自由文本通道。clarify 被定义为发给目标「人」的结构化披露请求，不阻塞流程，有限额，7 天过期，披露永远由人决定；代理的 rationale 只写入本方的 agentNotes。",
+      "02-domain-model.md §2.4 + 03-schema.md §3.4 + 09-constraint-changes.md §9.1/§9.7：cv 定义为「规则求值全部输入的版本」，唯一写入口是 bumpConstraints，执行也让 cv+1；每个 cv 一行 constraintSnapshots，committed = baseline + Σcommitments(cv<M)，因此任意历史 (proposal, cv) 都能精确重算。",
+      "08-approval-execution.md §8.1–8.4 + 04-state-machines-part2.md §4.9 + ADR-08：决定只追加（撤回也追加一行），绑定 (proposalId, cv)；decide 必须带 expectedConstraintsVersion，防止旧页面上的批准被绑到新约束；完成判定按集合，并断言审批人 userId 互不相同；审批/执行守卫和回合持久化守卫分成两组写成代码，并说明为何不能混用。",
+      "08-approval-execution-part2.md §8.5 + ADR-09：执行只发生在最后一票的 decide 事务里，没有独立的执行入口，变更单本身就是执行记录；承诺附带执行时的预算快照和 headroomAudience，结果页直接读快照，不靠减法推算。",
+      "06-rules-engine.md §6.4 + 07-permissions-privacy-part3.md §7.12 + §6.2：reasonCode 声明 owner/requiresFields/publicClass，viewEvaluation 粗化后去重，provider 只看到 BUYER_CONSTRAINT，也看不出失败了几条；预算检查只用派生的 headroom 表达，披露 headroom 就够了，不必披露 cap 和 baseline。",
+      "14-scenario-scope-change.md §14.3 + 06-rules-engine.md §6.3：交付日是目录里的绝对日期，加急费也是目录字段，价格和日期全部来自 provider 发布的不可变目录；CATALOG_STALE 靠逐项重算 pricingKey 来做来源核对。这样避开了别的候选里「today + leadDays」跨午夜漂移、加急费写死成常量的问题。",
+      "09-constraint-changes.md §9.4 + ADR-10：约束变化后 startNextRunAfterChange 分三支：当前提案仍通过就原提案 carry-over 重新审批；否则有可行组合就开新 run；没有可行组合就进 needs_human 且不调用模型。不复制 revalidated 提案；执行后的约束变化不会自动触发模型调用花钱。",
+      "16-testing.md §16.3–16.6 + 14-scenario-scope-change-part2.md §14.9：金丝雀 fixture 用全系统唯一的值，展开多种写法，在多个时间点扫描 query 返回、事件、ConvexError、代理上下文和日志；另有非干扰 metamorphic 测试、不可变表写入的静态扫描，以及 public 函数快照（禁止出现 userId/roleKey/participantId 参数）。"
+     ],
+     "fatal_flaws": [
+      "【违反核心 1，直接泄露】03-schema-part2.md §3.7 规定 scopeTermsV.deferredItemKeys = customer.requestedItemKeys − itemKeys，它写进了 R 表的 proposals.terms、termsKey（\"defer:\" 段）和 changeOrders.terms，出现在 14-scenario-scope-change.md §14.5 的提案摘要模板「deferred: EXPORT」和 13-frontend.md 的版本对比表里，也进入 provider 的 RoleView.proposals。而 07-permissions-privacy-part3.md §7.9 把 requestedItemKeys 对 provider 标为 D（需披露）。反例：customer 只把 requested 披露给 finance，只把 required[LOGIN] 披露给 provider；provider 代理提出 LOGIN standard，v1 的 terms.deferredItemKeys=[EXPORT,REPORTS]，provider 在 rooms.view、渲染事件和自己的代理上下文里都能看到 customer 的完整请求范围，中间没有任何披露决定。fixture 和 canary fixture 都恰好把 requested 披露给了 provider，所以 TC-PRIV-01/05 测不出来。06 §6.3 特意把 DEFERRED_MISMATCH/ITEM_NOT_REQUESTED 粗化成 BUYER_CONSTRAINT，与公开的 deferred 字段自相矛盾。",
+      "【核心 5/4：已执行的范围会被再次承诺】08-approval-execution-part2.md §8.9、01-product.md J9、06-rules-engine-part2.md §6.7、14 §14.4、08-part2 §8.5。反例：CO-1（LOGIN+REPORTS standard $750，执行后 cv 2→3）之后，finance 把上限调到 $6,000（cv4，按设计不开 run）；customer 按 J9 调 requestRenegotiation 想处理 EXPORT。此时 customer 的硬约束仍是 requested[EXPORT,LOGIN,REPORTS]、required[LOGIN]，所以每个候选都必须含 LOGIN。在 customer 视图里（headroom $1,250，deadline 11-27），排名第一的是 LOGIN+REPORTS rush $900：覆盖 2 项且交付日恰好等于首选日，排在 LOGIN+EXPORT rush $1,100 前面。stub 还价被采纳，provider/finance recommend_accept，三人批准后生成 CO-2：再承诺 $900，再派生 \"Implement login & SSO revamp\" 和 \"Build usage reports\" 两个任务。执行不会消耗 customer 的请求范围，evaluate/enumerate 也没有「已承诺条目」这项输入；operationKey = exec:{proposalId}:{cv}，而执行本身让 cv+1，executeInTx 也不查 changeOrders.by_proposal，所以「第二道保险」对同一提案在之后的 cv 下同样不起作用。§8.9「EXPORT 就是这样在后续变更中处理」不成立。",
+      "【状态机活性死锁】05-protocol-part2.md §5.5、04-state-machines.md R7/R8/R14、04-state-machines-part2.md §4.6/§4.9。反例：round 1 并行调度 customer 和 finance 两个 review；finance 回合得到 STOP_REFUSAL（不可重试），按 R7 run→failed；customer 回合这时还在途，completeTurn 因为 run.status≠running 被判为 rejected_stale。成员点 runs.retry，R8 只为「失败的回合」插入新尝试，run→running，finance 的新尝试成功，但「本轮全部 review 均 succeeded」永远不会成立（customer 那一行是 rejected_stale），resolveRound 不会触发。此后没有在途回合，也没有看门狗；runs.retry 要求 run 为 failed，requestRenegotiation 要求 run 不在 running，decide 要求 awaiting_approval，房间就卡在 running，只能等有人改硬约束或关房。这与 J7 和 05 §5.9「房间永远不会停在无出路的状态」矛盾。",
+      "【违反核心 1：事后披露泄露历史值】06-rules-engine.md §6.4 规定 viewEvaluation 的 disclosed 集合「由 computeSharedFacts 的同一份数据计算」，也就是当前的披露设置；而 06 §6.1、12-api.md 的 proposals.get({atConstraintsVersion})、07-part4 §7.14 都用它渲染历史 cv 下的求值和事件。反例：cv1 时 finance 没有把 headroom 披露给 customer，v1 $1,400 对 customer 只显示 BUYER_CONSTRAINT；finance 降到 $4,800（cv2）后，决定把当前余量披露给 customer（只改披露的新版本，不递增 cv）；customer 调 proposals.get(v1, atConstraintsVersion:1)，得到 OVER_BUDGET shortfall $400，由此推出 cv1 余量 $1,000、上限被下调了 $200。这些值属于 finance 简报 v1，而 v1 的 disclosures 不含 customer。07 §7.8 把披露定义为逐版本、撤回不溯及既往，commitments.snapshot.headroomAudience 也按执行时刻冻结，只有求值和事件用了当前集合。",
+      "【隐私推断：零成本预言机，与承诺文案冲突】09-constraint-changes.md §9.4 + 10-agent-runtime.md §10.6 + 07-permissions-privacy-part2.md T-09/§7.5。provider 每次修改自己的 minChangeOrderCents（briefs.confirm 的硬约束变化，没有任何限流；被限流的只有目录发布，5 次/日）都会触发 bumpConstraints → globalFeasible，新 run 以 R1 running 或 R3 needs_human(NO_FEASIBLE_OPTION) 公开开始，R3 不调用模型。反例：cv2 余量 $800 时，provider 把最低额设为 $760 得到 needs_human，设为 $700 得到 running，结合已知目录价和已披露的必需项 LOGIN，就知道余量 ∈ [$750,$900)；配合改目录价格还能进一步细化。另外 proposals.list 给每个历史提案附上「当前 cv 下的粗化求值」，每次约束变化后 provider 不需要新提案，就能用价格已知的历史提案夹出余量（v4 $750 通过、v2 $900 被阻断）。TC-PRIV-05 以「粗化结果相同」为前提，结构上就排除了这类推断；inherentDisclosuresAck 的文案「never the limits themselves」说过头了。"
+     ],
+     "missing": [
+      "evaluate/enumerateCandidates 缺少「已执行/已承诺条目」这项输入，执行后也没有消耗或标记 customer 的请求范围；变更单修订和冲销只列为扩展点（08-part2 §8.9、17 §17.5），J9 的后续修订实际走不通。",
+      "executeInTx 没有按 changeOrders.by_proposal 断言「每个提案至多一张变更单」；I-15 只保证 (proposalId, cv) 唯一，强度不够（03-part3 §3.13、08-part2 §8.5）。",
+      "R8 runs.retry 只重试「失败的回合」，没有说明本轮里 rejected_stale 或从未开始的兄弟 review 怎么办；run 处于 running 但没有在途回合时，没有看门狗或兜底迁移（04 R8、05 §5.5）。",
+      "候选排除范围前后不一致：05-part2 §5.5 和 06-part2 §6.7 写的是「本 run 中已出现」，但 05-part3 §5.12、14-part3 §14.11 第 9 步和 §14.12 10′a 的走查用的是跨 run 排除（run 2 排除了 run 1 的 v1、v2）。按规则原文，provider 会在 run 2 重新提出 v1 的条款。",
+      "resolveRound 的签名里 current 是必填的，但 05 §5.5 说的「提议方无候选 → 无主题提案分支」没有定义，也没说 scheduleTurn 和 beginTurn 由谁做这项判断。",
+      "provider 的放宽选项三处对不上：06-part2 §6.8 提供 amend_brief{minChangeOrderCents}，但 03-schema-part2 §3.9 的 briefHardPatchV 没有 provider 补丁成员，05-part2 §5.7 又说 provider 只有 revise_catalog/decline。R3/R6 是否总是向三方都发请求（targetRoleKeys 公开）也没写清。",
+      "引擎和场景的边界在预算上不干净：commitments.snapshot 里的 capCents/headroomAudience、executeInTx 读取 input.financeHard.capCents、budget.update 函数和 Capability、X2 budgetPanelFor 都在引擎层，引擎实际上认识 finance（02 §2.5 的承诺不成立）。",
+      "披露的时间语义（事件发生时 vs 当前）只对 commitments 定义了，events.list、proposals.get 的历史求值和 constraints_changed 的渲染都没有定义。",
+      "房间每日 40 次调用的上限触发后 run 进入什么状态没有规定，T1 的守卫也只检查 callCount < maxCalls（10 §10.6 vs 04-part2 §4.6）。",
+      "budget.update 和 briefs.confirm 的硬约束修改没有频率限制：每次都会让全部批准失效并开新 run，既是骚扰手段，也是推断信道。",
+      "决定备注和请求备注都是全房间可见的自由文本，没有转披露闸门，customer 可以把 finance 披露给自己的余量贴给 provider（inputs/05 C3 建议加闸门）。",
+      "代理还价出来的提案来自按本方私密约束过滤的候选，stub 排名又是确定性的，所以委托人可行域的边界会暴露给对方；固有披露清单 ID-1..7 没有列出这一点。",
+      "tryCancelPendingTurns 只取消 runFnId，不取消 watchdogFnId，回合状态也没有 cancelled；被取代的回合最后会被记成 failed/WATCHDOG_TIMEOUT，污染运维指标。",
+      "R12 补充规则：人选中的候选被阻断后会「为同一目标重新生成请求」，但没有排除已试过的候选，可以无限产生公开提案。",
+      "运行时自相矛盾：03 §3.3 和 08 §8.1 以「crypto.subtle 不确定」为由避开哈希，但 invites.accept 是 mutation，必须在里面算 SHA-256；V-6 只验证 action 运行时。",
+      "小的不一致：07-part3 §7.12 的示例把「v1」写成 LOGIN+REPORTS 加急 $900（05、14 里那是 v2）；07 动作矩阵写「请求 open 且约束版本未变」，与 04-part2 H2「披露请求不要求 cv 一致」冲突；runOutcomeV 里的 AGENTS_DISABLED/TURN_FAILED 对应的是非终态 failed，语义不清。"
+     ],
+     "verdict": "这份设计的威胁建模很系统。最值得吸收的是：模型输出只能是候选 ID 和枚举，候选与放宽选项按角色视图计算，一表一受众加五条受控投影，决定只追加并携带期望 cv，执行只在最后一票的事务里；03、04、08、09、12 在字段、迁移和函数层面大体对得上。但我构造出了能违反核心 1 的直接反例：deferredItemKeys 把未披露的请求范围写进了公开提案；事后披露还会泄露历史值。此外还有两个机制性缺陷：执行后重新协商会让人在不知情时再次批准并重复承诺已执行的范围；并行评审中一方失败后，run 会永久卡在 running。因此 invariants 只能给 4。隐私承诺低估了推断信道，包括公开的可行性结论、历史提案的实时重评和不限流的硬约束修改。这些问题修复成本都不高：deferred 按 requested 的披露设置投影或移出公开条款；披露集合按版本冻结；执行时消耗请求范围并在 executeInTx 查 by_proposal；R8 改为重试本轮所有非 succeeded 回合；给硬约束修改限流并把推断写进固有披露。修复后可以作为最终设计的安全骨架。"
+    },
+    {
+     "judge": "security_runtime",
+     "scores": {
+      "completeness": 8,
+      "invariants": 4,
+      "security_privacy": 6,
+      "runtime_feasibility": 6,
+      "simplicity": 7,
+      "extensibility": 6,
+      "clarity": 8
+     },
+     "strongest_ideas": [
+      "07-permissions-privacy-part3.md §7.11 + 18 ADR-01：一表一受众（R/P/F/O/S），跨受众读取只允许五条受控投影 X1–X5，每条只有一个实现函数。隐私审查面从逐字段缩小到五个函数加 R 表新增字段，TC-PRIV-03 用 schema 分类测试把关。",
+      "06-rules-engine.md §6.2 + 06-rules-engine-part2.md §6.7–6.8 + ADR-07：同一个 evaluate 在完整输入和角色视图输入上都能跑（查看者不知道的字段对应的检查直接跳过）。代理候选集和人工请求的放宽选项都只用目标角色的视图计算，globalFeasible 只以有/无影响流程，候选集和请求里的数字因此只可能是收件人本来就能推出的值。",
+      "05-protocol.md §5.4 + ADR-05：输出 schema 由服务端按回合手工生成，只用 object/string/enum/required/additionalProperties:false，不适用时填 \"NONE\"，枚举值来自本回合冻结的候选 ID 和本角色理由词表。解码后再做 strictObject + 语义校验；输出里没有任何金额、日期、条目键或身份字段。这和 inputs/05 的实测（zodOutputFormat 会丢掉 enum）一致。",
+      "05-protocol-part2.md §5.8 + ADR-06：澄清就是向对方本人发结构化披露请求，非阻塞，有限额，可请求的目标由输出 enum 限定。代理之间没有自由文本通道，同时堵住了未经人决定的披露和跨代理注入。",
+      "07-permissions-privacy-part4.md §7.13 + 16-testing.md §16.4：把隐私写成可测试的非干扰性质，扰动按字段声明自动生成，作为 metamorphic 测试，要求 RoleView 和 rooms.view 逐字节相同。再配合 14-part2 §14.9 的多写法金丝雀扫描，覆盖 query、事件、ConvexError.data、代理上下文和日志。",
+      "04-state-machines-part2.md §4.9：审批/执行守卫和回合持久化守卫分开写成代码，并说明混用会导致什么错误。每个 agentTurns 行就是一次尝试，有自己的 turnId 和 watchdog，所以迟到的结果靠本行状态拒收，不会和新尝试混淆（03-schema-part2.md §3.6）。",
+      "08-approval-execution-part2.md §8.5–8.6 + ADR-09：执行只发生在最后一票的 decide 事务里，主防线是 run 状态守卫，operationKey 是第二道防线。changeOrders 本身就是执行记录（含 decisionIds、规则和模板版本），承诺带执行时的预算快照；重复点击返回同一张变更单并标 duplicate:true。",
+      "03-schema.md §3.4 + ADR-17：每次执行也让 cv +1，cv 为 M 时的已承诺额 = baseline + Σ commitments(cv < M)，任何历史求值都能从不可变快照精确重算。决定只追加，绑定 (proposalId, cv)，并要求调用方带 expectedConstraintsVersion，防止在旧页面上点的批准被绑到新约束上（08 §8.1）。",
+      "10-agent-runtime.md §10.4 + 10-agent-runtime-part2.md §10.9：重试只在应用层做一层。SDK 设 maxRetries:0、timeout:90s，watchdog 150s；每次 HTTP 尝试记一行 modelCalls；调用用 messages.create，先记 usage 再看 stop_reason，然后自己 JSON.parse/safeParse，并用运行时白名单挡住会 400 的参数。",
+      "07-permissions-privacy-part4.md §7.14 + 03-schema-part3.md §3.11：事件载荷只放公开值，用 commitTs 全序；文本在读取时按查看者用模板渲染，需要检查结果时从不可变快照重算再经 X5 粗化。对他方可见的文本没有一处来自模型。",
+      "07-permissions-privacy-part4.md §7.16 + ADR-14：类型化的 logEvent(SafeLogFields) 是唯一日志出口，ESLint 禁 console；ConvexError 的 params 按 code 类型化，只含调用者本人拥有的值；不保存 prompt 和模型原文，只存 contextDigest。",
+      "07-permissions-privacy-part2.md §7.7 + ADR-12：建房时一次性插入全部席位；邀请令牌在 action 里用真随机数生成，256 位，只存 SHA-256，72h，一次性；accept 时检查一人一席；业务函数参数里没有 userId/roleKey/participantId，并用 public 函数快照测试强制。"
+     ],
+     "fatal_flaws": [
+      "违反核心 1（私密委托），文件：14-scenario-scope-change.md §14.2/§14.3、03-schema-part2.md §3.7、05-protocol-part3.md 第 2 步、07-permissions-privacy-part3.md §7.9。deriveTerms 用 customer 的完整 requestedItemKeys 算出 terms.deferredItemKeys 和 termsKey，并写进 R 表 proposals/changeOrders、公开时间线（\"deferred: EXPORT\"）以及他方代理上下文的 proposals 列表。但 requestedItemKeys 在矩阵里是 D（可选披露）。反例：customer 只把 requestedItemKeys 披露给 finance，provider 代理提出 LOGIN，v1 公开显示 \"deferred: EXPORT, REPORTS\"，provider 没经过任何披露决定就得知了 customer 的私密请求范围。fixture 恰好把 requested 披露给了 provider，把这个缺陷掩盖了，非干扰测试也测不到。修法：deferred 只对有权查看者投影，或把 requestedItemKeys 设为激活时必须公开的字段。",
+      "活性死锁，与房间永远有出路的承诺矛盾。文件：04-state-machines.md R7/R8/R14、04-state-machines-part2.md T5/T6、05-protocol-part2.md §5.5。反例：第 1 轮 customer、finance 两个评审回合并行，finance 回合得到 STOP_REFUSAL（不可重试），run 立刻变为 failed；customer 回合随后完成，completeTurn 要求 run.status===\"running\" 不成立，被记为 rejected_stale。成员调用 runs.retry 只为失败的 finance 回合插入新尝试，run 回到 running；finance 成功后，resolveRound 要求本轮全部评审都是 succeeded，但 customer 那一行是 rejected_stale，于是永不触发。此时 run 停在 running，没有任何非终态回合，也没有 run 级 watchdog；R14 禁止在 running 时请求重新协商，runs.retry 又要求 run 为 failed。房间卡死，只能等某次约束变化或房主关房。",
+      "执行后修订会重复承诺已执行的范围，违背核心 5 的意图（不得产生重复承诺或任务）。文件：08-approval-execution-part2.md §8.9、09-constraint-changes.md §9.3、06-rules-engine-part2.md §6.7、01-product.md J9。执行不会消耗 customer 的 requested/required，LOGIN 仍是必需条目，所以重新协商 run 里的每个提案都必须再包含 LOGIN。候选去重只排除本 run 的提案，operationKey 含新的 proposalId，挡不住。反例：CO-1（LOGIN+REPORTS，$750）执行后，finance 把上限提到 $6,000，customer 请求重新协商以处理 EXPORT；provider 代理提出含 LOGIN 的组合，三方一批准就生成第二条 LOGIN 承诺和重复任务，deferredItemKeys 还会把已执行的 REPORTS 标成 deferred。如果余量只剩 $50，系统会让 finance「把上限提到 $5,200 以允许 LOGIN」，而 LOGIN 已经买过了。"
+     ],
+     "missing": [
+      "派生字段（deferredItemKeys、termsKey、执行预览、diff 里的「与上一约束版本的结构化差异」）没有经过披露矩阵。07 §7.9 只列了原始字段，没有逐一给出派生字段的可见性。",
+      "provider 的推断信道被低估：proposals.list 会把 provider 已知价格的全部历史提案在每个 cv 下重新粗化标注（通过/阻断），由此可以夹出余量区间；catalog.publish 零模型调用，可以把 NO_FEASIBLE 当作 1 位预言机；X4 公开的请求目标角色集合还能区分是预算还是截止日阻断。§7.5 只承认「每个提案 1 位」，没有给出信息量预算，唯一的节流是每日 5 次发布。",
+      "传递性泄露没有进入威胁模型：只披露给 customer 的 headroom 会决定 customer 候选集，进而决定公开的 counter 价格，provider 由此得知；provider 写的目录标题进入 customer 代理上下文，可以注入诱导「选最贵的候选」来放大这一信道。§7.13 的非干扰定义是按单个状态定义的，捕获不到沿轨迹的泄露。",
+      "disclosure_changed 事件把「谁把哪个字段披露给谁」公开给全员，不在固有披露 ID-1…ID-7 中。历史事件读时渲染用的是当前披露状态还是历史状态（追溯披露或撤回）没有定义。",
+      "invites.accept（mutation）和 invites.peek（query）必须在 mutation/query 里算 SHA-256，这与 03/08 以「crypto.subtle 不确定」为由回避哈希相矛盾，而且 V-6 只验证 action 运行时，需要补待验证项或纯 JS SHA-256 退路。",
+      "运行时细节缺口：429 的 retry-after 没有传进 failTurn 参数，§10.4 承诺的退避无法实现；STOP_MAX_TOKENS 重试时 max_tokens 仍是 6000，Opus 5.5 medium 下 thinking 也计入这个额度，可能反复失败；operatorNotes 为空时必须省略中途 system 消息，未说明；resolveRound 判断「本轮全部评审 succeeded」时，同一角色有多行尝试应取最新一行，未写明；评审回合的候选集是否同样排除已知被阻断的条款，未写明。",
+      "R12 补充规则中，人工采纳的候选求值不通过时会插入一个公开提案，但 currentProposalId 是否切换到它、该提案的派生状态如何显示，都没有给出。",
+      "跨章不一致：07 §7.16 说过期回合不写房间事件，04 T5 和 03 的 eventPayloadV 却写 stale_result_discarded；07 §7.9 规定 provider.minChangeOrderCents 对 customer 永远不可见（✘），14 §14.2 却声明它可披露给 customer。",
+      "引擎/场景边界有渗漏：executeInTx 直接读 input.financeHard.capCents；commitments.snapshot 有 capCents/headroomAudience；X2 budgetPanelFor 写死 F→customer；引擎的 resolveRound 用场景概念 pricingKey 去重。没有 finance/预算角色的第二场景（例如没有预算方的双边场景）需要改引擎，与 17 §17.1 的「不改引擎」声明不符。",
+      "执行后范围模型缺失：没有「已执行条目」的概念，也没有在执行后从 customer 请求中移除它们或做冲销的规则，J9 的叠加修订无法正确表达。"
+     ],
+     "verdict": "这份候选的威胁模型驱动推导最彻底，五项最值得吸收：一表一受众加五条受控投影、按角色视图枚举候选和放宽选项、输出空间只有候选 ID 和枚举、澄清改为向人发披露请求，以及非干扰金丝雀测试。运行时部分（自建 scheduler 链、每次尝试一行、单层重试、create 后自己 safeParse、手工 enum schema、两组守卫）与 inputs/04/05 的平台事实基本吻合，引用的 SDK 与 Convex API（models.retrieve、SystemMessageParam、v.commitTs、db.system.get）都核对过确实存在。但我构造出了违反核心 1 的反例：deferredItemKeys 和 termsKey 把未披露的 requestedItemKeys 写进公开提案。另外还有两个高危问题：评审回合并行时，一方失败、另一方被判 stale 后再重试，run 会永久卡在 running；执行后修订会再次承诺必需条目 LOGIN，产生同范围的重复承诺。provider 侧的推断信道（历史提案重新标注、零成本发布目录、请求目标角色集合）也被低估为「每个提案 1 位」。建议把它作为隐私与协议章节的底稿，但必须先修好派生字段的披露投影、重试时连同并行评审回合一起重新调度（或者让 failed 期间完成的评审结果仍然计入），以及执行后已执行范围的建模，否则 invariants 不能及格。"
+    }
+   ]
+  },
+  {
+   "title": "产品体验与可扩展引擎优先",
+   "total": 45.7,
+   "avg": {
+    "completeness": 8.0,
+    "invariants": 4.0,
+    "security_privacy": 4.666666666666667,
+    "runtime_feasibility": 7.0,
+    "simplicity": 6.0,
+    "extensibility": 8.0,
+    "clarity": 8.0
+   },
+   "judges": [
+    {
+     "judge": "product_extensibility",
+     "scores": {
+      "completeness": 8,
+      "invariants": 4,
+      "security_privacy": 5,
+      "runtime_feasibility": 7,
+      "simplicity": 6,
+      "extensibility": 8,
+      "clarity": 8
+     },
+     "strongest_ideas": [
+      "06-rules-engine-part2.md §6.9–6.14 + 06-rules-engine-part3.md §6.15–6.17：插件只由声明和纯函数组成（ScenarioPlugin 的完整 TS 接口：roles/briefs/lists/derivedFacts/candidates/checks/tradeoffs/records/templates/agent/validators/fixtures）。设计用 event_budget 逐项检验这套接口，查出缺口后补上 format:integer/dates/custom 和 implicitInTerms，并把需要改引擎的需求（多币种、负金额、一席多人、跨房间预算）明确列为不支持",
+      "05-protocol.md §5.2–5.5 + 05-protocol-part2.md §5.7：模型只在本方作用域视图的候选键里排出 1–5 个，代码用完整视图选第一个可执行的，全部被挡时给一次 a2，再失败就转为发给本人的偏好请求。自建的 JSON Schema 保留候选键 enum，联合类型放在 move 属性里；completeTurn 内做四步校验（stop_reason → JSON → 严格 Zod → 语义）",
+      "06-rules-engine.md §6.4–6.5 + 07-permissions-privacy-part2.md §7.4：检查声明 inputs，按查看者对这些输入的可见性自动投影成 full 或 verdict_only，字段×角色矩阵因此可以机械生成；超出 $1 和超出 $1,000 的结论文案完全相同。引擎级来源检查 source_resolvable/current/unexpired 与 terms_consistent（用 toTerms 重算后逐字节比对）不依赖具体场景",
+      "09-constraint-changes.md §9.1–9.3：约束版本只经 bumpConstraints 一个入口改变，递增点列成完整清单；constraintRevisions.inForce 快照支持 replayRuleView 重放；约束变化时按'是否由目标席位按意图完成'把 open 请求关成 answered 或 superseded；跟进 mutation 调度执行，旧版本的跟进自动作废",
+      "08-approval-execution-part2.md §8.7–8.10：执行就在最后一个签核的 mutation 里，17 步时序表写明每步的读、写和失败结果。读取整个签核区间，让并发插入触发 OCC；状态守卫为主，operationKey=exec:{proposalId}:{cv} 为辅；不存在'签核已齐但未执行'的悬空状态，也就不需要重试执行的入口",
+      "03-schema-part3.md §3.14 + 08-approval-execution.md §8.5：decisions 只追加，含 withdraw 与 signoffKind（terms/budget），stale_approve/stale_reject 读时派生；完成判定按集合计算并要求不同用户，签核纯函数可以直接照抄实现",
+      "04-state-machines-part4.md §4.9：房间只存储 open/closed，phase 和 blockedReason 由纯函数 derivePhase 派生，并给出'每个阶段谁需要行动、界面主行动是什么'的对照表",
+      "01-product-part2/3/4.md：三方旅程逐步写到'看到什么 → 调用的函数 → 写入的表 → 失败码'，X1–X10 覆盖迟到结果、签核与降预算竞态、最后两人并发、拒绝循环、代理被关闭、无路可走等情形，X11 给出旅程到函数、表、事件的追溯表，可以直接当验收规格用",
+      "09-constraint-changes-part2.md §9.6 + 14-scenario-scope-change-part2.md §14.6：取舍请求按'单一角色的最小放宽'计算，选项是可执行的意图（patch_brief / edit_list），同时发给所有能行动的角色，谁先造成约束变化谁就关闭整组；每个选项里的数字只来自目标本人的数据或公开数据",
+      "07-permissions-privacy-part3.md §7.7 + 16-testing.md §16.3：代理上下文 AgentContextData 只经 getTurnInput 一个入口按显式白名单组装，插件 describe 只负责排版；fixture 变体 E 用 $5,017/$353 这类罕见数字和 CANARY 字符串做金丝雀扫描，同时覆盖查询负载、事件和真实请求体",
+      "03-schema.md §3.4 + 10-agent-runtime-part2.md §10.9：用 rooms.dayStamp 加每小时 cron，规避 query 中 Date.now() 被结果缓存冻结的问题；时间型变化（报价过期）只阻断，不递增约束版本，执行时用实时日期兜底",
+      "18-decisions-open-questions-part3.md ADR-25 + ADR-22：clarify 一律变成发给被问方本人的 disclosure 请求，代理永远不替人披露；seed 和各变体都走真实写入路径，fixture 是被 seed 与测试共同 import 的 TS 常量（14 §14.11）"
+     ],
+     "fatal_flaws": [
+      "违反核心 1：可行性预言机零成本、不限频、不留痕迹，输入还能由查询方控制（12-api.md §12.5–12.6 的 impactDTO.feasibleAfter；07-permissions-privacy-part2.md §7.6；18 ADR-13）。lists.previewConfirm 和 briefs.previewConfirm 都会返回 feasibleAfter。反例取变体 B（14 §14.13：上限 $4,400，已承诺 $4,000）：此时 provider 本就被请求'加报价行'，它为 LOGIN 存一条草稿报价行 LOGIN_PROBE，价格 P，标准日 11-18，再调 lists.previewConfirm，feasibleAfter 为真当且仅当 P ≤ $400（$350 下限是它自己的）。约 16 次 query 就能二分出精确到美分的余量 $400.00，不产生事件、不 bump、不受任何限频。有可行候选时，provider 用 briefs.previewConfirm 补丁 minChangeValueCents=X，也能二分出'最高可行金额'。此外 lists.confirm 之后的 run_started / request_opened 构成另一个可见但不限次的预言机。这与 7.6 的'不在任何渠道泄露上限、已承诺、余量的数值'以及 finance 接受邀请时看到的'The provider never sees these numbers'直接矛盾；设计在 7.6 里把它当作'每次 1 位的已接受风险'，低估了量级",
+      "按现写法无法实现（07-permissions-privacy.md §7.3、07-permissions-privacy-part2.md §7.6、12-api-part2.md §12.8）：'被阻断的 proposeCandidate 每约束版本每席位 ≤ 10 次'是有界推断披露的上界之一，但 proposeCandidate 失败时抛 ConvexError(CANDIDATE_BLOCKED)。Convex mutation 抛错会把同一事务内的计数写入一并回滚，所以被阻断的尝试永远记不下来，上界形同虚设。要么改成返回 {status:'blocked'} 而不抛错，要么用 1.48 的子事务 ctx.runMutation 在外层先记数，设计都没有写"
+     ],
+     "missing": [
+      "'拒绝 → 取舍 → 放宽'没有闭环（09-constraint-changes-part2.md §9.5、14-scenario-scope-change-part3.md §14.13 第 6 步）：Maya 拒绝 LOGIN_LITE 后无解，转为取舍请求；finance 把上限调到 $4,750 → bump → afterConstraintChange 发现当前提案（被拒的 v2）在新约束下仍可执行，于是提前 return，只要求重签。Maya 的拒绝变成 stale_reject，finance 的放宽本想促成的候选从未被提出，Maya 只能再拒一次",
+      "请求被拒后没有后续触发（09-constraint-changes-part2.md §9.7 的触发表只有 share_fields）：提出方在第 1 轮就 clarify 而被拒，或提出方 a2 失败后的偏好请求选了 'None of these'，此时还没有当前提案，房间会落到 blocked/awaiting_trigger，直到有人手动 requestRun；lastRequestsDeclined 的计算方式也没有定义",
+      "报价过期没有'谁、下一步'（09 §9.10、10 §10.9）：SOURCE_EXPIRED 只让提案停在 blocked/proposal_blocked，不 bump、不自动开 run，也不向 provider 发续报价请求，违背 00 §0.3 原则 6",
+      "传递披露不在推断账本里：finance 只披露给 customer 的上限进入 customer 代理的作用域视图，而 customer 代理公开的 agent_stance counter 候选键（03 §3.20、05 §5.10）就是从这个视图算出来的，provider 都能看到；customer 也可以把 finance 的数字写进公开的范围项描述或 sharedNote，写入时没有披露闸门（inputs/05 C.3 已指出）。provider 看到的是具体的 BUDGET_EXCEEDED，而不是 inputs/05 C.4 建议的泛化 blocked",
+      "没有成员移除、换人和席位改派：任一必需签核人离开，房间就永久卡住，设计只在 17 里列为扩展点",
+      "没有吸收 inputs/05 的实测结论：仍把根级 anyOf 包装、crypto 与 returns 校验器等列为待验证；07 §7.1 写 proxy 对 API 请求返回 404，实测是 307；也没有采用 05 D 节统一的命名（reasonCode 小写点分、收件人字段 toRole），仍用 UPPER_SNAKE 和 targetRoleKey",
+      "跨章节小矛盾：3.10 和 I-7 规定 constraintRevisions 只经 bumpConstraints 写入，但 v0 由 rooms.create 直接插入，bumpConstraints 的 cause 联合里也没有 room_created",
+      "quickUpdate 和 requests.answer(patch_brief) 会'把草稿同步为新版本'，悄悄丢掉用户尚未确认的草稿改动",
+      "插件升级有窗口期（03 §3.24、15 §15.6）：部署后、upgradeScenario 运行前，按旧规则给出的签核可以在新规则下完成执行；旧房间的存量载荷也没有多版本兼容策略",
+      "任何约束 bump（包括无关的新报价行）都会清空同版本的排除集合，被人拒过的候选可以被代理再次提出；bump 之后 afterRejection 的意图如何延续没有说明",
+      "变体报价行（LOGIN_LITE）由 provider 单方声明 scopeItemKey=LOGIN 就能自动满足 customer 的必需项，没有'变体是否等价'的确认，只能靠条款签核兜底"
+     ],
+     "verdict": "在三方旅程和引擎/插件边界上，这份设计写得最具体。每一步都落到了函数、表、事件和失败码；插件接口用 event_budget 逐项检验过；约束版本、只追加签核、同事务执行、按查看者投影的读模型都可以直接照着实现，扩展性和清晰度都高。最严重的问题在隐私：previewConfirm 的 feasibleAfter 是一个不限频、不留痕迹、输入可控的可行性预言机，provider 在变体 B 下十几次查询就能二分出精确余量，直接违反核心 1，也推翻了设计自己在 7.6 的承诺。被阻断尝试的限频在抛错回滚语义下无法落地，customer 转出 finance 数据的传递披露路径也没有计入推断账本。旅程上有三处没有闭环：'拒绝→取舍→放宽'后不会重新协商；披露或偏好请求被拒后没有后续触发；报价过期后没有指定的行动人。建议最终设计吸收其 06、05、08、09、04.9 和 01 的追溯表，同时删除 feasibleAfter 或把它改为服务端限频、降低精度，把传递披露纳入有界推断，并补齐上述触发规则。"
+    },
+    {
+     "judge": "invariants",
+     "scores": {
+      "completeness": 8,
+      "invariants": 4,
+      "security_privacy": 5,
+      "runtime_feasibility": 7,
+      "simplicity": 6,
+      "extensibility": 8,
+      "clarity": 8
+     },
+     "strongest_ideas": [
+      "05-protocol.md §5.2/§5.7 + 18 ADR-10：提出方只在本方作用域视图的候选里排序 1–5 个，代码用完整视图选第一个可执行者，失败给一次 a2，再失败转 preference 请求。模型永远产出不了金额、日期或来源，一次调用就能完成排序加选择。",
+      "06-rules-engine.md §6.5 + 02 I-10/I-14：提案只在创建时全部检查通过才能插入；可执行性永远实时派生；引擎级 terms_consistent 用 toTerms(selectionOf(terms), view) 重算后逐字节比对，篡改金额、日期、来源或场景规则变化都会被拦下。",
+      "09-constraint-changes.md §9.2/§9.3 + 03 §3.10：bumpConstraints 是唯一入口，附逐操作递增表；constraintRevisions.inForce 快照当时生效的简报版本、清单项和 ledgerSeq，任一版本的规则视图都可重放（replayRuleView）。",
+      "03-schema-part3.md §3.14 + 08 §8.5：decisions 只追加（approve/reject/withdraw），SignoffState 派生为 pending/approved/rejected/stale_approve/stale_reject；签核绑定 proposalId+constraintsVersion，并要求客户端回传 expectedTermsKey；完成按集合判定且要求 userId 互不相同；读取整个提案的签核区间来触发 OCC。",
+      "08-approval-execution-part2.md §8.7：执行就在最后一个签核的同一 mutation 内，17 步时序写明每一步读什么、写什么、怎么失败；状态守卫为主、operationKey 为辅；执行本身递增约束版本并置 negotiationOpen=false，不存在全签未执行的悬空状态。",
+      "04-state-machines.md §4.1：G-SIGN、G-PERSIST、G-REQ、G-EVAL 四组守卫分开定义，并明确 G-SIGN 不要求 proposal.constraintsVersion 等于当前版本，同一提案可以重签而不复制（ADR-09）。",
+      "03-schema-part4.md §3.19 + 04 §4.10 + 14 §14.6：humanRequests 是一等实体，kind 分 tradeoff/preference/disclosure；取舍请求同时发给多人，用 groupKey 归组，约束变化时自动 answered 或 superseded；插件按单一角色的最小放宽生成选项，只给目标本人看。",
+      "18 ADR-25 + 05 §5.8：clarify 一律转成发给被问者本人的 disclosure 请求，回答就是修改披露设置。代理永远不能替人披露，同一约束版本内被拒的话题不再追问。",
+      "06 §6.4 + 07 §7.4：检查投影由 CheckSpec.inputs 自动推导（full 或 verdict_only）；无论超出多少，verdict_only 文案都完全相同；provider 窗口禁止出现批准后已承诺这类可反推的总数（F07.1）。",
+      "06-rules-engine-part3.md §6.15–6.17：插件 = 声明 + 纯函数，并真的用第二场景 event_budget 逐项检验，因此补上了 format integer/dates/custom 和 implicitInTerms，同时列出需要改引擎才能支持的需求清单。",
+      "04-state-machines-part4.md §4.9：derivePhase 是纯函数，phase 加 blockedReason，并附一张谁该行动、主行动是什么的表，使每个卡住状态都对应到具体的人。",
+      "03 §3.4 + 10 §10.9：用 dayStamp 绕开 query 中 Date.now() 被结果缓存冻结的问题；05 §5.4 自建保留 enum 的 JSON Schema，联合包在 move 属性内，避开 SDK 降级 enum 和根级 anyOf 的风险；ADR-21 允许人从候选浏览器直接提出方案，模型不可用时流程照样能走完。"
+     ],
+     "fatal_flaws": [
+      "【核心 1 反例，严重】12-api.md §12.5/§12.6、07-permissions-privacy-part2.md §7.6、14 §14.1 joinDisclosure：briefs.previewConfirm 和 lists.previewConfirm 都返回 impactDTO.feasibleAfter，两者都是 query，没有频率限制；lists.saveDraft 也没有频率限制，且草稿既不递增约束版本也不写事件。反例：provider 先 lists.saveDraft(quote, LOGIN, priceCents=X, standardDate=今天+1)，再 lists.previewConfirm({listKey:'quote', itemKeys:['LOGIN']}) 读 feasibleAfter；customer 已向全房间披露 LOGIN 为必需项，所以 feasibleAfter ⇔ committed+X ≤ cap。对 X 二分约 34 次即可得到精确到美分的余量（cap−committed）；再固定一个小的 X、对 standardDate 二分，就能得到 customer 私密的 hardDeadline。全程 finance 和 customer 毫无察觉，直接违背 7.6『上限、已承诺、余量、截止日期的数值不在任何渠道泄露』，也违背 finance 的披露基线『the provider never sees them』。7.6 的渠道清单根本没列 lists.previewConfirm；另外『每约束版本每席位 ≤ 10 次』之类的上界，provider 只要确认一次报价改动就能重置。",
+      "【核心 3 反例，按设计自己的定义】09-constraint-changes.md §9.1 第 4 条把插件规则版本 scenarioVersion 算作约束，03 §3.24 声称『人批准具体版本也覆盖规则本身的变化』。但 G-SIGN（04 §4.1）和执行 17 步（08 §8.7）都不比较 rooms.scenarioVersion 与已部署的 plugin.version，decisions 也不记录规则版本，upgradeScenario 是部署之后才手动运行的（15 §15.6 只暂停代理，不暂停人工签核）。反例：cv7 下 customer、provider 已在插件 v1 语义下签核；部署插件 v2（放宽某项检查或改变任务派生），在 upgradeScenario 运行之前 finance 批准 → 按 v2 规则执行，而计入的签核是在 v1 下给出的。executions.recordsVersion 仍写 'scope_change@1'（取自 room.scenarioVersion），记录实际由 v2 派生；replayRuleView 也用当前代码重放旧版本，审计链因此失真（核心 6）。",
+      "【领域模型漏洞：已执行范围未建模】01-product-part2.md C12、18 ADR-27、14 §14.4：执行只写 executions/commitments/tasks，范围项、报价行和 customer 的 requiredItemKeys 原样保留，系统里没有『已交付/已承诺项』的概念。反例：CO-1（LOGIN+REPORTS，+$750）执行后，按 C12 的旅程 customer 把 EXPORT 加为必需（LOGIN 仍是必需），required_items 检查会强制每个候选都重新包含 LOGIN → 新变更单再承诺一次 LOGIN $450，并生成重复任务 'Deliver SSO login revamp'。即使 customer 把 LOGIN 改成非必需，toTerms 也会把已交付的 LOGIN/REPORTS 写进 deferredItemKeys，并对全员显示为 'deferred'，属于不真实的状态（核心 8）。stub 按金额降序排序，会优先提出含已交付项的组合。",
+      "【来源核对漏洞，中等，削弱核心 4】03-schema-part5.md §3.23、14 §14.2：报价行只存 scopeItemKey，不绑定范围项版本；toTerms 的 refs 取的是提案创建时范围项的当前版本。反例：customer 把 LOGIN 范围项确认为 v2，并扩大了描述（加 MFA 与审计日志）→ 旧提案被 SOURCE_SUPERSEDED 阻断；但随后的新 run 用『LOGIN 范围 v2 + 按 v1 定价的报价 LOGIN v1 $450』生成提案，全部检查通过，界面显示 'Matches confirmed quote v1 ✓'。代码的来源核对没能发现价格对应的是旧的范围定义，只能指望 provider 本人在条款签核时自己注意到。"
+     ],
+     "missing": [
+      "预览类 query（briefs/lists.previewConfirm）和草稿写入没有频率限制，也没有粗化输出；7.6 的推断渠道清单不完整：漏了 lists.previewConfirm；漏了 customer 代理的公开 counter——它的候选键取自已含 finance 披露预算的作用域视图，等于把预算可行性转述给 provider；也漏了一点：provider 可以自行递增约束版本，从而重置所有『每约束版本』上限。",
+      "没有『已执行/已交付范围』的建模，也没有后续变更时的候选枚举规则；执行之后 deferredItemKeys 的语义没有定义。",
+      "报价行没有绑定范围项版本；范围项改版后，依赖它的报价行缺少『需要重新确认』的级联。",
+      "G-SIGN/G-EVAL 缺少 scenarioVersion 门控（例如升级未完成时返回 SCENARIO_UPGRADE_PENDING）；replayRuleView 不感知插件版本；upgradeScenario 写成单个 internalMutation 遍历所有 open 房间，可能超出事务上限，应改为分页或按房间调度。",
+      "afterRejection 在有 active run 时直接返回（04 §4.6 第 1 步），拒绝不会进入进行中 run 的 excludedCandidateKeys，run 可能以被拒提案结束为 proposal_ready，与 C10『排除后开新 run』的承诺不一致。",
+      "requests.answer 的 choose_candidate 没有 proposeCandidate 那样的『与当前提案候选相同 → 返回当前提案』去重，会生成条款完全相同的新版本并清掉已有签核，与 ADR-09 矛盾；finance 缺少 proposal.author 能力，却能经 preference 请求创建人提出的提案，与 ADR-21 矛盾。",
+      "跨章节小不一致：I-18 的落点漏了 proposals.proposeCandidate(alsoApprove)，它也写 decisions；01 X11 的事件 agent_proposed 在 03 的 eventDataV 中不存在；reserveCall 在 I-27 写作 internal mutation，在 12.15 写作 helper；rejectedCandidateKeys 需要按 (roomId, constraintsVersion) 查 reject 再关联提案，但没有对应索引。",
+      "briefs.quickUpdate『草稿同步为新版本』会静默覆盖用户未确认的草稿改动；撤回披露后，已进入他方代理历史上下文的事实如何处理没有说明。",
+      "滥用与骚扰防护缺失：lists.confirm、briefs.quickUpdate 没有频率限制，一方可以反复递增约束版本，让全部签核失效并不断触发预检（预检不调模型，所以调用额度限不住）。",
+      "合规删除与数据导出、通知只列为开放问题或扩展点，可以接受；thinkingTokens 是否在 API usage 中单独报告，没有标为待验证。"
+     ],
+     "verdict": "候选设计 /private/tmp/claude-501/-Users-zhennn-cal-hack-2026-main/8539c825-8b44-4f0c-8956-406ed3a7762f/scratchpad/design/candidates/product 共 46 个文件，我已全部读完。它覆盖 00–18 全部章节，02–10 和 14 具体到字段、迁移表、守卫、Zod schema 和分步时序；03 的字段、04 的状态、05 的消息、12 的函数绝大多数能对上，只有少数小错位（I-18 落点、agent_proposed、reserveCall）。插件边界、提出方排序 + 代码选择、只追加的签核、同事务执行、bumpConstraints + inForce 这些机制值得最终设计直接吸收。但我构造出了能违反核心的反例：provider 借助不限频的 previewConfirm/feasibleAfter 加报价草稿，可以二分出精确到美分的 finance 余量和 customer 的截止日（核心 1）；插件升级窗口里，旧规则下给出的签核会被新规则执行，按设计自己的约束定义违反核心 3。此外还有两处领域漏洞：执行后的后续变更会重复承诺已交付的范围项，报价不绑定范围项版本导致来源核对失效。因此 invariants 只给 4、security_privacy 给 5；补上预览限频或粗化、scenarioVersion 门控、已执行范围建模和报价→范围版本绑定之后，这份设计有条件成为最终设计的主干。"
+    },
+    {
+     "judge": "security_runtime",
+     "scores": {
+      "completeness": 8,
+      "invariants": 4,
+      "security_privacy": 4,
+      "runtime_feasibility": 7,
+      "simplicity": 6,
+      "extensibility": 8,
+      "clarity": 8
+     },
+     "strongest_ideas": [
+      "05-protocol.md 5.7 + 18 ADR-10：模型只在本方作用域视图的候选里排序（1–5 个），代码用完整视图选第一个可执行的候选，a1 失败后给一次 a2；提案只在全部检查通过时创建（I-14），金额、日期、来源一律由 toTerms 计算。模型没有任何发明金额的入口。",
+      "05-protocol.md 5.4：自己生成 JSON Schema，保留候选键 enum，联合放在 move 属性里而不是根上。这正好绕开 SDK 1.1.0 zodOutputFormat 丢 enum、以及根级 anyOf 不被接受的问题（与 inputs/05 A.1、A.2 一致）。另一个好做法是用 messages.create 加 stop_reason 分支再自己 safeParse，不用 parse()，这样失败时也能留住 usage。",
+      "04-state-machines.md 4.1：G-PERSIST（回合落库）和 G-SIGN（签核/执行）是两组分开的守卫，条件逐条列明。G-SIGN 不要求 proposal.constraintsVersion 等于当前版本，所以约束变化后可以对同一提案重签，不必复制提案（ADR-09）。",
+      "08-approval-execution.md 8.7：执行放在最后一次签核的同一个 mutation 里，按 17 步写成表，状态守卫是主防线、operationKey 是辅助防线。它明确论证了不存在\"签核已全部到齐但还没执行\"的悬空状态，因此不需要\"重试执行\"按钮。",
+      "09-constraint-changes.md 9.3 + 03-schema.md 3.10：bumpConstraints 是唯一入口，constraintRevisions.inForce 记录每个约束版本生效的全部来源，replayRuleView 可以重建任一版本的规则视图。此外插件规则升级也会递增约束版本（03 3.24），所以\"人批准具体版本\"连规则本身的变化也覆盖到了。",
+      "08-approval-execution.md 8.5 + 03-schema.md 3.14：decisions 只追加；每个席位的状态（pending/approved/rejected/stale_approve/stale_reject）是派生出来的；完成判定按集合计算并要求 userId 互不相同，不按计数。",
+      "06-rules-engine.md 6.4 + 07-permissions-privacy.md 7.4：每条检查都声明自己的 inputs，投影是 full 还是 verdict_only 由可见性自动推出，披露矩阵由代码生成。provider 那条\"不得出现批准后已承诺金额\"的文案陷阱也写明了。",
+      "07-permissions-privacy.md 7.7：getTurnInput 是代理上下文唯一的组装入口，AgentContextData 是逐字段显式填写的白名单，配合金丝雀单测（16 16.3），直接断言 provider 回合的请求体里不出现他方金丝雀值。",
+      "05-protocol.md 5.8 + 14-scenario-scope-change-part2.md 14.6 + 18 ADR-14/ADR-25：humanRequests 有三种请求（tradeoff/preference/disclosure）。取舍请求按\"单一角色最小放宽\"给出选项，同时发给多人，任何一方造成的约束变化关闭整组。clarify 只能由本人做出披露决定来回答，代理永远不替人披露。",
+      "03-schema.md 3.4 + 10-agent-runtime-part2.md 10.9：用 dayStamp 加每小时一次的 cron，避开响应式 query 里 Date.now() 被结果缓存冻结的问题；query 以 dayStamp 为今天，mutation 用实时日期兜底。",
+      "06-rules-engine-part3.md 6.15–6.16：用第二个场景 event_budget 逐项检验插件接口，并据此补上了 implicitInTerms 和 format 扩展；同时列出明确不支持、需要改引擎的需求（6.17）。",
+      "10-agent-runtime.md 10.5–10.7：重试只在一处计数（SDK 重试 1 次、应用层自动重试 1 次、人工重试有上限）；看门狗期限由最坏耗时推算；每个 run 的调用上限写成常量；外加卡住回合和孤儿 run 的扫描 cron（10.9）。"
+     ],
+     "fatal_flaws": [
+      "【破坏核心 #1，07-permissions-privacy-part2.md 7.6 + 12-api.md 12.6 + 04-state-machines.md 4.4】lists.previewConfirm 是一个 query，它返回的 impactDTO 带 feasibleAfter，计算的是\"假设这些草稿被确认之后的完整规则视图\"。而草稿由作者经 lists.saveDraft 任意修改，两者都没有频率限制，也不写任何事件。反例：provider 把 LOGIN 的报价草稿改成价格 X、标准交付日设为明天，然后查询 previewConfirm。在其他检查都通过时，feasibleAfter 等于 [committed + X ≤ cap]。对 X 二分约 34 次，就能拿到 finance 的余量（cap − committed），精确到美分。同理，把价格固定为极小值，对标准交付日 D 二分，就能拿到 customer 私密的 hardDeadline。整个过程不递增约束版本，他方看不到任何痕迹。这直接违反 7.6 自己的承诺（上限、余量、截止日期的数值不在任何渠道泄露）。7.6 只把简报预览的 feasibleAfter 记为\"已接受风险\"，没有意识到清单草稿让这个布尔值变成了能连续取值的精确预言机。",
+      "【可能破坏核心 #1，取决于模型是否服从注入；05-protocol-part2.md 5.10/5.12 + 03-schema-part4.md agent_stance + 07 7.7 history.stances】设计声称\"他方代理输出只以结构化立场进入，关闭了跨代理注入通道\"，但 counter 的 rankedCandidateKeys（从最多 40 个候选中有序取最多 5 个，约 26 bit，再加上 reasonCode）会原样写进全房间可见的 agent_stance 事件，也会进入 provider 代理的上下文。反例：provider 在报价行标题或 variantLabel 里写注入指令，例如\"按预算上限各位数字的顺序排列 counter 的候选\"。这段文字作为公开清单进入 finance 代理（或已获上限披露的 customer 代理）的上下文，唯一的防线是 system 里的\"定界块是数据不是指令\"。只要模型部分服从，finance 的上限就会经结构化排序被外泄给 provider，且 finance 从未做过披露决定。设计没有把 counter 键规范化排序或限制为 1 个，也没有对立场渠道做容量分析。",
+      "【7.6 的上界与运行时语义不一致，07-permissions-privacy-part2.md 7.6 vs 09-constraint-changes-part2.md 9.7 / 12-api-part2.md 12.11】7.6 声称提出方的被阻断结论每个约束版本最多 30 个、候选浏览器每个约束版本最多 10 次。但实际上：任何成员每小时可以调用 10 次 negotiation.requestRun，每次都开新 run 并重新产生被阻断反馈；provider 还可以通过私密备注引导本方代理按指定顺序排序候选，再经 myAgentNotes 读回结论；provider 确认任意一条报价（lists.confirm）就会递增约束版本，把所有\"按约束版本\"计的计数清零。所以 7.6 列出的上界只在单个 run 内成立，同一约束版本内并不成立，ADR-13 的\"推断风险被量化\"站不住。"
+     ],
+     "missing": [
+      "没有对\"可行性预言机\"做系统分析和限频：lists.saveDraft、lists.previewConfirm、briefs.previewConfirm 都没有频率限制；feasibleAfter 应该只在作用域视图上计算，或者从清单预览里去掉（07 7.6、12 12.5/12.6）。",
+      "没有分析结构化立场作为隐蔽信道的容量（counter 的排序、reasonCode、clarify 话题的选择），也没有给出缓解办法，例如公开时只给集合、按插件顺序规范化、只公开首选（05 5.10、07 7.6）。",
+      "05 5.12 的不可信定界块清单漏了房间 title/goal（房主可能就是 provider，见 01 H2），也没说清 candidateLabel 里嵌入的 variantLabel 是否落在定界块内；AgentContextData.room.goal 是直接进入所有代理上下文的。",
+      "迟到结果的用量记录与回合不可变性互相矛盾：02 2.4 把 turns 列为\"不可变、只追加\"，但 turns 实际会被改写状态、move、usage；T6 只定义了 running→stale，看门狗已经把回合判为 timed_out 之后到达的结果，其用量无处合法记录（04 4.8、10 10.6）。",
+      "每个回合的输出 schema 都随候选 enum 变化，每个真实房间、每个角色、每一轮都是一份新 schema，编译延迟会落在关键路径上；5.4 提出的\"用 fixture 预热\"对真实房间里用户自定义的 itemKey 无效。schema 变化是否影响提示缓存也没有标注\"待验证\"。",
+      "客户端直接调用的 action（invites.create、invites.accept、briefs.extractDraft）在内部 runQuery/runMutation 时，调用者身份是否会传过去，没有标\"待验证\"，也没有像被调度函数那样显式传 actorUserId（12 12.4、10 10.13）。",
+      "derivePhase 里的 callBudgetLeft 和\"每房间每日额度\"都要在 query 中按 Date.now 统计最近 24 小时，同样会碰到作者自己为 dayStamp 指出的 query 时间缓存问题，但没有给出处理办法（04 4.9、10 10.7）；每小时刷新 dayStamp 的 cron 在单个 mutation 里遍历所有 open 房间，没有分页（10 10.9）。",
+      "代理提出方在 round 1 再次 propose 与当前提案相同的候选时，会生成条款完全相同的新版本并让已有签核作废；proposeCandidate 有\"候选相同则返回当前提案\"的短路，completeTurn 这条路径没有（05 5.7 resolveProposeTurn）。",
+      "接口细节不一致：requestRun 遇到已有 run 时，12 写返回 already_running，04 R1 写公共入口抛 RUN_ACTIVE；proxy 对 API 请求的行为写成 404，而 inputs/05 B.9 实测是 307；reasonCode 用 UPPER_SNAKE、收件人字段叫 targetRoleKey、没有 escalate 动作，都与 inputs/05 D 建议的统一命名不同，也没有写 ADR 说明。",
+      "SDK maxRetries=1 遇到 429 时会遵守 retry-after，可能拖过 150 秒的看门狗期限，造成重复计费的 attempt；10 10.5 的最坏耗时推算没有考虑这一点。"
+     ],
+     "verdict": "这份候选设计的工程完成度很高：19 份文档齐全，02–10 和 14 都具体到字段、迁移、守卫和时序。运行时方案（自建 scheduler 链、看门狗、G-PERSIST 拒收迟到结果、执行放在最后签核的同一事务、自建 enum JSON Schema 并配合 create+safeParse）与 inputs/04、inputs/05 的平台事实基本吻合，不确定的地方也大多标了\\\"待验证\\\"。隐私的骨架同样扎实：服务端按查看者投影、getTurnInput 白名单、公共文本只由模板生成、金丝雀测试。但\\\"有界推断披露\\\"这一层有漏洞，不能直接照着实现：lists.previewConfirm 的 feasibleAfter 加上可以任意修改的报价草稿，构成一个无限频、无痕迹的精确预言机，provider 能二分出 finance 的余量和 customer 的硬截止日，这是核心 #1 的直接反例。另外，counter 的有序候选键是可以被注入驱动的隐蔽信道；7.6 的上界也会被 requestRun 和 provider 自己递增约束版本绕过。建议最终设计吸收它的引擎/插件边界、守卫分组、执行事务和 humanRequests 设计，同时重做推断披露：预览只在作用域视图上计算并限频，立场只公开规范化后的集合，所有探测渠道按\\\"每席位每时间窗\\\"而不是按约束版本计数。"
+    }
+   ]
+  },
+  {
+   "title": "运行时与可靠性优先",
+   "total": 45.3,
+   "avg": {
+    "completeness": 8.0,
+    "invariants": 4.0,
+    "security_privacy": 5.333333333333333,
+    "runtime_feasibility": 8.0,
+    "simplicity": 5.666666666666667,
+    "extensibility": 6.666666666666667,
+    "clarity": 7.666666666666667
+   },
+   "judges": [
+    {
+     "judge": "security_runtime",
+     "scores": {
+      "completeness": 8,
+      "invariants": 4,
+      "security_privacy": 5,
+      "runtime_feasibility": 8,
+      "simplicity": 6,
+      "extensibility": 7,
+      "clarity": 8
+     },
+     "strongest_ideas": [
+      "10-agent-runtime-part3.md：两阶段写回（recordAttemptResult 极小写入 → runAfter(0) 的 applyAttemptResult）。scheduleAttempt 在同一事务里登记 attempt、executeAttempt 和 attemptWatchdog；被调度函数只接收 attemptId，私密上下文不会落进 _scheduled_functions.args；apply 出现确定性异常时，watchdog 查 applyFnId 的系统表状态后判 APPLY_FAILED，不再重新调用模型。",
+      "10-agent-runtime-part4.md + ADR-03/ADR-18：SDK 设 maxRetries:0、timeout 60s，重试只在 attempt 层做；按 outcome 类别设上限（transport/rate_limit/server 各 2 次，invalid_output/refusal/truncation/timeout 各 1 次），读取 retry-after 退避；外加 turn/run/房间/部署每日四级调用预算、AGENTS_ENABLED 总开关和不自动半开的熔断。",
+      "10-agent-runtime-part5.md §10.14–10.18：用 messages.create 加自建 safeParse，先按 stop_reason 分支，classifyResponse/classifyError 都是不抛错的纯函数，无论成败都保留 usage/requestId。手写扁平根对象的 JSON Schema：可空字段用 anyOf+null，不用根级 anyOf，保留动态 enum（candidateKey、questionKey）；RQ-01 断言请求键只来自白名单。我已对照 SDK 1.1.0 核实 APIError.type/requestID、models.retrieve、SystemMessageParam、stop_details、billing_error 都存在，手写 schema 也没有 Convex 不允许的 $ 开头字段名。",
+      "06-rules-engine-part1.md §6.5 + ADR-05：代码先枚举候选，金额、日期、来源都由目录计算，模型只能从 candidateKey 中选；没有可行解时直接问人、不调模型。这样「模型不得发明金额」在结构上就成立。",
+      "04-state-machines-part2.md §4.6–4.7 + 08-approval-execution-part1.md §8.1–8.4：提案完全不可变，状态和可执行性都实时派生；decisions 只追加，绑定 (proposalId, constraintsVersion, termsKey)；decide 必须带 expectedConstraintsVersion/expectedTermsKey，不一致返回 STALE_VIEW；执行与最后一票在同一 mutation 内，以 by_proposalId 状态守卫为主、operationKey 为辅，G-E2 用重新汇总的台账复核。",
+      "09-constraint-changes-part1.md + 03-schema-part2.md §3.6：bumpConstraints 是唯一入口，是否递增由 ruleKey 自动判定（软偏好、备注、披露变化不递增）；constraintVersions 存指针快照，任何历史版本都能用 loadRuleInput 精确复现评估。",
+      "04-state-machines-part1.md T2/T12 + ADR-06：一个 run 只属于一个约束版本，约束变化在同一事务里取代旧 run 并新建 run；当前提案在新版本下仍可执行时，开一个零回合 run 只要求重新审批，不复制提案。",
+      "06-rules-engine-part1.md §6.5 + ADR-25：约束快照记录 executedItemKeys，修订已执行协议时只在剩余范围内枚举候选，结构上避免对同一条目重复承诺。",
+      "ADR-10 + 10-agent-runtime-part2.md F20/F21：评审回合失败 fail-open（记为 no_recommendation），提议回合失败 fail-closed 后可 resume 或 proposeManually，代理不可用时整条审批执行链仍能走通（R9）。",
+      "10-agent-runtime-part6.md §10.21 + 16-testing-part1.md：stub 走与 live 完全相同的 schedule→claim→record→apply→watchdog 链路；testFaultPlan 让 F01–F28 每种失败都能在 convex-test 里用假时钟确定性复现。",
+      "09-constraint-changes-part2.md §9.7：系统触发的 run 首个 attempt 防抖 3 秒，连续约束变化在 claim 前就被跳过，不产生费用。",
+      "03-schema-part3.md §3.12 + ADR-19：事件受众是判别联合，payload 只放受众内人人可见的数据，读取时由服务端按查看者渲染、不返回 payload 原文，commitTs 提供全序。",
+      "14-scenario-scope-change-part2.md §14.7 + 05-protocol-part2.md §5.8：planHumanRequests 分别关闭预算、截止日、必需项检查重新枚举，算出哪一种单一放宽能解除阻断，并行发给对应的人；assertRequestDrafts 按 paramAudience 校验参数受众，例如 minCapCents 只发给 finance。"
+     ],
+     "fatal_flaws": [
+      "违反核心 1（provider 可以拿到确切的预算余量）。涉及文件：06-rules-engine-part1.md §6.5、07-permissions-privacy-part1.md §7.3、07-permissions-privacy-part3.md T-08、12-api-part2.md §12.4、14-scenario-scope-change-part3.md §14.9。07 §7.3 和 ADR-11 规定，包括余量在内的全部预算数字 provider 永不可见；委托条款第 3 条也只承诺「可能暗示范围，但永远不透露数值本身」。但 rooms.workspace.candidates 和 provider 的代理上下文都包含完整候选集。反例就在设计自己的走查 §14.9 第 6 步：上限降到 $4,800 后，LOGIN+REPORTS@rush（$900）从候选集消失，LOGIN+REPORTS@standard（$800）仍在，provider 立刻得知余量在 [$800, $900) 之间。接着 provider 反复对 REPORTS 调用 catalog.confirmItem 改价，二分逼近余量。每次改价都会递增约束版本、取代 run，新的候选快照立刻可见；3 秒防抖内 attempt 被跳过，零模型调用，不受任何调用预算约束；设计中也没有任何目录改价限流。大约 7 次改价就能把余量精确到美元。改目录交付日期也能用同样方法二分出 customer 的私密截止日。inputs/05 C.4 明确建议 provider 只看到 blocked，并对提案频率限流，本设计反其道而行，却没有补偿措施。",
+      "违反核心 1（briefs.previewConstraintImpact 是无痕查询 oracle）。涉及文件：12-api-part2.md §12.3、09-constraint-changes-part1.md §9.5。这个 query 接受任意假设的 fields，返回确认后当前提案的新评估和剩余候选数，并且不写事件、不递增版本。反例：finance 按 ADR-11 和 PV-03 把 budgetCapCents 的受众设为 private 之后，customer 可以反复用不同的 requiredItemKeys/deadline 调这个查询，根据剩余候选数推出哪些金额组合在上限内，从而无声地逼近 finance 明确选择不披露的上限。这绕过了 finance 的显式披露决定，PV-* 测试也覆盖不到。"
+     ],
+     "missing": [
+      "没有任何滥用与探测限流：catalog.confirmItem/withdrawItem、runs.requestRenegotiation、跨 request_answered run 的 clarify 循环都只受房间调用预算约束。而防抖期内被跳过的 attempt 不计费，所以探测和刷失效审批（griefing）都是零成本。T-08 被写成「无测试可消除」，既没有量化，也没有缓解方案（例如对 provider 只展示当前提案是否可行、粗化候选披露、设探测预算）。",
+      "缺少写入时的披露闸门：inputs/05 C.3 #3 指出 customer 可以把自己看得到的 finance 上限写进全房间可见的自由文本。本设计里 requestedItems.title、rooms.goal/title、reasonNoteAudience=room 的拒绝备注、share_answer 的 note 都可能成为这条路径，写入时都不检查。C.3 #2 指出日期可以编码秘密，本设计也没有日期窗口语义校验（assertCalendarDate 只校验是不是真实日历日）。",
+      "不可信输入清单前后不一致：07 §7.5 把拒绝备注放进代理的 history，10 §10.16 却说 negotiation_history 不含自由文本，T-04 也只列了目录标题和 requestedItems 标题；room goal/title、目录 description、share_answer note 是否进入上下文、是否放进数据标签，都没有说清。威胁模型还低估了「注入指令让代理用公开的枚举输出（动作、candidateKey、reasonCode）编码私密信息」这条低带宽外泄通道。",
+      "fixture 金丝雀缺少 lint：inputs/05 C.3 #4 指出私密值与公开值相同时 canary 分辨不出，本设计没有规定校验私密数值与所有公开数值互不相同。",
+      "ledger.recordBaseline 每个房间只能调用一次，没有更正路径；基线一旦录错就无法如实修正，与核心 8 有张力。",
+      "运行时细节：claimAttempt 要读取部署计数的全部 8 个分片再写其中一个，并发 claim 照样 OCC 冲突，F26 和 ADR-18 声称分片避开了热点，这个推理不成立；watchdog 的 deadline 从调度时刻起算而不是从 claim 起算，调度器延迟时会出现误判超时，导致额外付费重试；events.list 先分页再在 JS 里按受众过滤，页大小不稳定，甚至可能出现空页，设计没有处理。",
+      "跨章节小矛盾：08 §8.6 和 AP-07 期望预算下调与批准并发时返回 STALE_VIEW，但按 decide 的守卫顺序 G-D4 先于 G-D5，实际返回的是 INVALID_STATE；rationale 上限一处写 600 字符（10 §10.15），另一处写 1,200 字符（05 §5.3、03）；收件人字段叫 targetRole，与 inputs/05 D 统一的 toRole 不一致。",
+      "数据保留只有运维的整房间删除；参与者层面的导出与删除、关闭房间后的保留期限都推给了 Q-07 和 Q-08，没有给出默认策略。"
+     ],
+     "verdict": "这份设计的运行时部分是几个候选里最扎实的。run/turn/attempt 三层、同事务登记的 watchdog、record→apply 两阶段写回、只有一层的重试和四级预算，以及 messages.create 加手写 JSON Schema 的模型调用规范，我都对照 inputs/04、05 和本地 SDK 1.1.0 与 Convex 源码核实过，基本都能照着实现，只剩分片计数、watchdog 起算点这类小问题。审批不可变、约束快照、执行幂等这几条核心在状态机和守卫层面也自洽。致命问题出在隐私：设计把完整的可行候选集公开给 provider，又不限制目录改价频率，provider 可以零成本二分出 07 §7.3 声称它永不可见的预算余量；briefs.previewConstraintImpact 还给了一个无痕 oracle，能绕过 finance 选择的 private 披露。这两条都是核心 1 的反例，所以 invariants 只能给 4。最终设计应吸收它的运行时和审批机制，同时重做候选的可见范围，例如对 provider 只给当前提案是否可行，并补上探测限流、写入时披露闸门和统一的不可信输入清单。"
+    },
+    {
+     "judge": "product_extensibility",
+     "scores": {
+      "completeness": 8,
+      "invariants": 4,
+      "security_privacy": 6,
+      "runtime_feasibility": 8,
+      "simplicity": 5,
+      "extensibility": 6,
+      "clarity": 7
+     },
+     "strongest_ideas": [
+      "06-rules-engine-part1.md §6.5、05-protocol-part1.md §5.1、10-agent-runtime-part5.md §10.15：代码先枚举全部可行候选（金额、日期、来源由目录计算），模型只输出 candidateKey，JSON Schema 里用本 run 候选做动态 enum；没有可行候选时不调模型、直接问人。这样核心 4 由结构保证，不靠事后比对。",
+      "10-agent-runtime-part1.md §10.3 与 part3 §10.6.1：run / turn / attempt 三层。attempt（modelCalls）同时是用量账本；turns.currentAttemptId 作租约；attempt 与它的 watchdog 在同一事务里登记，action 中断、部署打断后都会落到终态（R6）。",
+      "10-agent-runtime-part3.md §10.6.4–10.6.6、ADR-04：两阶段写回 record → apply，apply 有 G-A1…G-A6 守卫，迟到结果只记用量、标 stale；apply 出现确定性缺陷时由 watchdog 判 APPLY_FAILED，不会再付费调用模型。",
+      "10-agent-runtime-part4.md §10.7–10.9、ADR-03/18：SDK maxRetries:0，只在 attempt 层重试；按 outcome 分类的退避表能读 retry-after；turn / run / 房间 / 部署每日四级调用预算，加熔断与 AGENTS_ENABLED 总开关。",
+      "ADR-10 与 01-product.md §1.4：评审回合失败按 fail-open 记为 no_recommendation；提议回合失败按 fail-closed，人可以 resume 或 proposeManually。模型完全不可用时链路仍能从头走到执行（R9），这本身也是对'代理只建议'的结构性保证。",
+      "09-constraint-changes-part1.md §9.2–9.4、ADR-23：bumpConstraints 是唯一入口；是否递增由 ruleKey 自动判定（软偏好不递增）；constraintVersions 存指针快照，任一历史版本的评估都能用 loadRuleInput(vN) 精确复现。",
+      "04-state-machines-part1.md §4.2.3 T2、ADR-06/07：约束变化时取代旧 run 并新建 run；提案不复制，在新版本下重新评估，仍可执行就进入零回合的 reapproval run，否则重谈（T1）或问人（T3），全部在同一事务内完成。",
+      "08-approval-execution-part1.md §8.1–8.4、ADR-13/14：decisions 只追加，绑定 (proposalId, constraintsVersion, termsKey)，客户端回传 expectedConstraintsVersion / expectedTermsKey，不一致返回 STALE_VIEW；审批分 terms / budget 两类；executeIfReady 与最后一票在同一事务，G-E2 重新汇总台账并要求等于快照（ENGINE_LEDGER_DRIFT）。",
+      "04-state-machines-part2.md §4.10：审批 / 执行守卫（G-D / G-E）与运行时守卫（G-A / G-C）分开，两组只在 rooms.constraintsVersion / currentRunId 交汇，交汇点只由 bumpConstraints 与 startRunTx / supersedeRunTx 修改。",
+      "14-scenario-scope-change-part2.md §14.7、05-protocol-part2.md §5.8、ADR-15：取舍请求规划器每次只放宽一个约束（预算 / 截止日 / 必需项）来诊断阻断原因；请求并行发给能解除阻断的人，assertRequestDrafts 按受众检查参数；先发生的约束变化取代其余请求；全员 decline 时显式进入 negotiation_blocked，不伪造一致。",
+      "07-permissions-privacy-part2.md §7.5/§7.8、ADR-19、16-testing-part2.md §16.5：assembleAgentContext 是显式白名单的唯一入口；事件受众用判别联合，payload 只含受众内都能看的数据，在服务端读取时渲染；query 声明 returns；金丝雀串写进 fixture，用 PV / CTX 用例做全流程扫描。",
+      "10-agent-runtime-part6.md §10.21、16-testing-part1.md §16.3：testFaultPlan 故障注入，可在 convex-test 里确定性复现 F01–F28 的每种失败模式，每条都对应一个 RT 用例。"
+     ],
+     "fatal_flaws": [
+      "【活性破坏，引擎层，并推翻 05 §5.6 的'进入审批的提案一定可执行'】05-protocol-part2.md §5.5（第 1 轮候选等于房间当前提案的候选时不插入新版本）、10-agent-runtime-part3.md §10.6.5、04 T10（要求新候选 ≠ 当前候选），以及 12-api-part1.md 的 proposeManually（候选相同时返回当前提案），都按'候选相同'复用旧提案。termsKey（例 LOGIN+REPORTS|standard|2026-11-20|80000|RUSH:-）不含 catalogItemIds。反例：run 在 awaiting_approval，当前提案 P = LOGIN+REPORTS@standard；provider 只修改 REPORTS 的 description 并重新确认，产生新目录版本，cv+1。P 报 engine.source_superseded，startRunTx 走 T1；新候选 LOGIN+REPORTS@standard 的 key 和 termsKey 都与 P 相同，只是 catalogItemIds 不同。代理（stub 选排序第一）提出这个候选，系统复用了不可执行的 P。之后三方的 approve 全部报 NOT_EXECUTABLE；手动提案也只会返回 P；reject 会把这个本来有效的候选键排除掉；requestRenegotiation 会再次复用 P。J6 的降价恢复路径同样会命中：provider 按 q.cheaper_quote 降价后，同 key 的旧提案被复用。修法：复用条件改为 terms 完全相等（含 catalogItemIds），并且当前提案必须可执行。",
+      "【违反核心 1：可主动探测他方私密数值】07-permissions-privacy-part1.md §7.3 让全体可见候选集合；09 §9.4 规定每次目录变更都在同一事务里用新约束重建 run 的候选快照，系统触发 run 的首个 attempt 有 3 s 防抖，快速连续改价不花模型调用；12-api-part1.md 的 catalog.confirmItem 没有任何频率限制。反例：provider 反复确认 REPORTS 的新价格 X，观察 LOGIN+REPORTS@standard 是否还在候选里，二分若干次就能得到 finance 的 cap − committed 余量，精确到美元。用同样方法反复改 standardDeliveryDate，可以二分出 customer 默认 private 的 deadline。这直接推翻了 07 §7.6 委托条款第 3 条和 T-08 'never the values themselves' 的承诺，也推翻了 ADR-11 / §7.3 '余量等全部预算数字对 provider 不可见（不可选）'。inputs/05 C4 建议的'provider 只看 blocked + 限流'没有被采纳。",
+      "【活性缺口：人工请求悬空】04-state-machines-part2.md §4.8 H2 规定，edit_constraints 选项一回答，请求就变成 answered，但只'记录意向'。如果目标人放弃编辑，或者确认了规则值不变的新简报（ruleKey 不变就不递增），run 会停在 waiting_human：没有任何 open 请求，也不会触发 negotiation_blocked。此时 runs.start 只返回这个 run；requestRenegotiation 只允许 awaiting_approval 或已执行（05 §5.9）；no_feasible 时候选为空，也无法手动提案。反例：变体 C 中只有 finance 收到请求，finance 点了 edit_budget 后离开，房间就失去所有待办提示，只能等创建者关闭房间。"
+     ],
+     "missing": [
+      "引擎 / 场景边界说得比做到的干净。06 §6.2 的 RuleInput.briefs 硬编码了 customer / provider / finance；03 里 constraintVersions.scenarioState 是 scope_change.v1 字面量，proposals.terms 与 runs.candidates 直接用 scopeTermsV，catalogItems 写死 termKey 'RUSH'；engine.terms 检查（交付日、延后项）是场景语义；executeIfReady 的 G-E2 读的是场景表 commitments；approvalKind 'budget' 和 budgetProjection 进了引擎接口；writeExecution 需要 MutationCtx，与 11 §11.2 '场景是纯 TS' 矛盾。因此 17 §17.2 说第二场景'引擎不改'不成立，至少要改 schema 联合、RuleInput 和执行台账。",
+      "06 §6.5 的候选枚举没有排除空集：当 required − executedItemKeys 为空时（第一次执行之后，或 14.7 规划器把必需项视为非必需来枚举时），S=∅ 会产生 itemKeys=[]、amount 0、deliveryDate 取空集最大值的候选，没有任何规定处理它。",
+      "rejection 的排除只在当前 cv 内有效（04 §4.2.3 第 5 步）。被拒提案在一次无关的约束递增后（例如 provider 撤回一个与它无关的条目），会在第 4 步被 T2 原样放回重新审批，拒绝人还要再拒一次。",
+      "share_answer 开新 run 时 cv 不变，每个新 run 又能采纳 1 次 clarify。clarify → 回答 → 新 run 的循环在同一 cv 下没有上限，只有房间 150 次调用预算挡着。另外，对必需项回答 q.defer_item 的 defer_ok 不会改变任何规则，同一个问题可能被反复问。",
+      "审批、人工请求、waiting_human 都没有期限、提醒或升级；v1 也没有通知，推迟到 17 的 outbox。多方异步协作时，'谁在等谁'只能靠打开页面才知道。",
+      "人类评审方无法结构化地指向自己更想要的候选：拒绝只带理由码，只有 provider 能手动提案，customer 的偏好只能通过代理 counter 间接表达。",
+      "concludeRound C2 在两个评审都是 no_recommendation 时，outcome 也记为 converged。缺少对应的公开文案约束，可能暗示'代理已达成一致'（核心 8）。",
+      "隐私方面还有几处残留：budget 默认对 customer 披露，属于默认勾选、需要主动取消，而不是由 finance 主动选择（Q-11 未决）；他方 attempt 的 token 数对全体可见，可能泄露私密备注的长度；14.7 中给 customer 的 earliestFeasibleDate、给 finance 的 minCapCents 是在对方约束仍生效的情况下算出的，会交叉泄露对方的约束范围。",
+      "跨章节不一致：rationale 上限在 10 §10.15 是 600 字符，在 05 §5.4 / 03 是 1,200；resume 次数在 04 T7 是 resumeCount < 2，在 12 是 ≤ 2；10 §10.15 的提议方 clarify 示例把只能发给 provider 本人的 q.price_flex 放进枚举（必然报 SEM_SELF_TARGET），又漏掉了 q.budget_flex。",
+      "rooms.workspace 的顶层 candidates 在没有活跃 run 时从哪里来（run 快照还是实时枚举）没有写明；events.list 先分页再按受众过滤，可能出现短页或空页，也没有处理。",
+      "过度设计：ADR-27 为满足黑客松 G2 保留了 finance 的模型回合，而 stub 版 finance 永远 recommend_accept；部署级用量计数做了 8 个分片；简报抽取模块被列入 v1 范围；8 类重试的分类计数与总上限 3 次相互重叠。",
+      "参与者移除 / 替换、房间重新打开、一个角色多人都推迟了。跨组织邀请的安全性完全依赖链接的传递渠道，没有邮箱绑定或二次确认。"
+     ],
+     "verdict": "这是目前运行时与可靠性规格最扎实的一份。attempt 与 watchdog 同事务登记、record → apply 两阶段、单层重试加四级预算、熔断后退化为人工手动提案，几乎每一条都对上了 inputs/04、05 的实测语义，19 个文件深度足够，大部分可以直接照着实现。产品闭环基本成立：建房、简报、目录、协商、审批、预算下调、问人、拒绝、故障恢复都有完整走查。但'按候选复用当前提案'是一个引擎级活性缺陷：provider 只改一处目录描述就能让房间卡在一个不可批准的提案上，J6 降价恢复路径也会命中。'候选集合对全体可见 + 目录改价不限流'让 provider 能把 finance 余量和 customer 截止日精确二分出来，违反核心 1 和设计自己的委托条款，所以 invariants 只能给 4。引擎 / 场景边界宣称能'只写插件'，实际上 schema、RuleInput、执行台账都绑在 scope_change 上。最终设计应吸收它的运行时、约束版本、审批执行与请求规划部分，同时修正复用条件，把 provider 的可行性视图收窄为 blocked 结论并加限流，并把场景类型从引擎表里抽出去。"
+    },
+    {
+     "judge": "invariants",
+     "scores": {
+      "completeness": 8,
+      "invariants": 4,
+      "security_privacy": 5,
+      "runtime_feasibility": 8,
+      "simplicity": 6,
+      "extensibility": 7,
+      "clarity": 8
+     },
+     "strongest_ideas": [
+      "10-agent-runtime-part3.md §10.6.1–10.6.6 + ADR-02：run / turn / attempt 三层，modelCalls 同时是用量账本；turns.currentAttemptId 作租约；scheduleAttempt 在同一事务里登记 executeAttempt 与 attemptWatchdog（R6/I19），mutation 回滚时两个调度一起消失，不会留下孤儿调度",
+      "10-agent-runtime-part3.md §10.6.4–10.6.5 + ADR-04：两阶段写回 record → apply。apply 有确定性缺陷时不会重新调用模型（F14）；watchdog 读 _scheduled_functions 中的 applyFnId 判定 APPLY_FAILED；迟到结果只补记 usage（lateResult）",
+      "10-agent-runtime-part4.md §10.7–10.9 + ADR-03/ADR-18：只有 attempt 一层重试（SDK maxRetries:0），按类别查表重试并读取 retry-after；四级调用预算，房间级用 usageCounters 的终身计数，不随 run 归零，部署级分 8 片；熔断不做自动半开，只能人工重置",
+      "06-rules-engine-part1.md §6.5 + 05-protocol-part1.md §5.3 + 10-agent-runtime-part5.md §10.15：代码枚举可行候选，模型只能选 candidateKey；JSON Schema 手写，根为扁平对象，保留动态 enum；clarify 额度用完时从解码层删除这个动作；Zod 之后再做语义校验（SEM_*）",
+      "08-approval-execution-part1.md §8.3–8.4 + 04-state-machines-part2.md §4.10：decide → executeIfReady 在一个 mutation 内逐步执行；G-D（审批）与 G-A/G-C（回合）两组守卫互不读取对方；G-E2 重新汇总台账，并要求与约束快照相等（不等报 ENGINE_LEDGER_DRIFT）；operationKey 由服务端派生，executions.by_proposalId 作状态守卫",
+      "03-schema-part2.md §3.6 + 09-constraint-changes-part1.md §9.2–9.3 + ADR-23/ADR-25：constraintVersions 只存指针快照，任一版本的评估都能复现；是否 bump 由 ruleKey 比较自动决定，软约束不使审批失效；快照中的 executedItemKeys 防止对已执行条目重复承诺",
+      "04-state-machines-part2.md §4.6–4.7 + ADR-07/ADR-13：提案没有 status，current/executed/executable 全部派生；decisions 只追加，stale_approve / stale_reject 由约束版本派生；decide 必须回传 expectedConstraintsVersion 与 expectedTermsKey，不一致返回 STALE_VIEW",
+      "07-permissions-privacy-part2.md §7.5 + 05-protocol-part1.md §5.4：assembleAgentContext 用显式白名单，和 UI 共用 projectBriefFor；rationale 只给本方，从不进入他方代理上下文；对他方可见的文本只由模板生成；配 CTX-01 / PV-* 金丝雀测试",
+      "10-agent-runtime-part2.md F20/F21 + ADR-10：评审回合失败按 fail-open 记为 no_recommendation，提议回合失败 fail-closed 并可手动提案（R9）。这从结构上避开了其他候选里常见的并行评审死锁",
+      "10-agent-runtime-part6.md §10.21 + 16-testing-part1.md §16.3：stub 与 live 走同一条 schedule→claim→record→apply→watchdog 路径；testFaultPlan 让 F01–F28 每个失败模式都能在 convex-test 中确定性复现，并与 RT-* 用例一一对应",
+      "07-permissions-privacy-part2.md §7.8 + ADR-19：事件受众是判别联合，payload 只含受众内都能看的数据，读时在服务端渲染并按 commitTs 全序；带数值的细节另发 roles 受众事件（budget_cap_changed）",
+      "12-api-part2.md §12.4：rooms.workspace 是单一聚合投影 DTO，声明 returns；provider 的返回值里根本没有预算键，由 PV-01 断言兜底",
+      "14-scenario-scope-change-part2.md §14.8：fixture 规格是唯一数据源，种子走生产写入路径并逐次 bump；变体 A–E 覆盖重谈成功、无可行方案、低于已承诺额、两项都必需和 off-by-one 边界"
+     ],
+     "fatal_flaws": [
+      "【违反核心 1：私密的必需项被精确披露】文件：14-scenario-scope-change-part1.md §14.3（requiredItemKeys 可选受众含 private）、03-schema-part2.md §3.4、06-rules-engine-part1.md §6.5、07-permissions-privacy-part1.md §7.3、12-api-part2.md §12.4、14-scenario-scope-change-part2.md §14.7、04-state-machines-part2.md §4.11。反例：customer 确认 requiredItemKeys=[LOGIN]，受众选 private → runs.start → enumerateCandidates 产出的每个候选都包含 required；只加条目不会让金额更低、日期更早，所以只要有候选，「只含必需项」的组合就一定在其中（LOGIN@standard / LOGIN@rush）。runs.candidates、workspace.candidates 和 provider / finance 代理上下文都对全体可见，于是 provider 直接读出 required = {LOGIN}。此外，planHumanRequests 给 provider 的 q.cheaper_quote 参数就是 {itemKeys: required}；readiness.missing 的 catalog_covers_required 对全体展示。这与 07 §7.6 委托条款第 3 条『never the values themselves』和 06 §6.3 对 scope.required 参数的受众裁剪直接矛盾：owner 的显式 private 决定被系统推翻",
+      "【隐私：provider 零成本精确二分出预算余量】文件：06-rules-engine-part1.md §6.5、09-constraint-changes-part1.md §9.4、14-scenario-scope-change-part2.md §14.6（provider 看到 'Within / exceeds the finance limit'）、07-permissions-privacy-part3.md T-08、18-decisions-open-questions-part2.md ADR-18（明确不做速率限制）。反例：有活跃 run 时，provider 反复用 catalog.confirmItem 改 LOGIN 的价格。每次确认都同事务完成 bumpConstraints → supersedeRunTx → startRunTx，候选同步枚举并推送到 workspace；系统触发的 run 有 3 s 防抖，下一次编辑会在 claim 之前取代它，所以全程零模型调用，四级调用预算不计数。约 17 次编辑就能把余量（cap − committed，即买方保留价）精确到美分。inputs/05 C.4 建议的『provider 只看泛化 blocked + 频率限流』没有采纳。customer 也能通过 briefs.previewConstraintImpact 返回的『剩余候选数』静默探测：这是 query，无事件、无次数限制，即使 finance 把预算受众设为 private（PV-03 场景）也能探",
+      "【跨章节不一致导致活性死锁，并违反 05 §5.6 的承诺】文件：06-rules-engine-part1.md §6.5（candidateKey = 条目 + 交付方式，不含价格和来源版本）、05-protocol-part2.md §5.5（第 1 轮提出与房间当前提案同 key 的候选时复用旧提案，不插入新版本）、04-state-machines-part1.md T10 / 12-api-part1.md proposeManually（同候选被拒或返回当前提案）。反例（标准 fixture，stub 模式，确定性）：run#2 在 cv8 停在 awaiting_approval，当前提案 v3 = LOGIN+REPORTS@standard $800 → provider 确认 REPORTS v2 = $300 → cv9，v3 报 engine.source_superseded，不可执行 → T1 新建 run#3，排名第一的候选是同 key 的 LOGIN+REPORTS@standard，金额 $750 → stub 选中它，key 与 v3 相同，于是不插入新提案，run#3.currentProposalId 仍是 v3（旧价、旧来源）→ 评审都 recommend_accept → run 进入 awaiting_approval，但提案不可执行：每次 approve 都 NOT_EXECUTABLE；provider 手动提出同一候选被 T10 拦下；requestRenegotiation 会重复同一路径。唯一出路是有人 reject，而 reject 会在整个 cv9 下排除这个 $750 方案。安全性仍由 G-D6 / G-E2 守住，但 05 §5.6『进入人工审批的提案都由代码保证可执行』不成立，最优方案在该版本内永久不可达"
+     ],
+     "missing": [
+      "反探测措施缺失：catalog.confirmItem、briefs.confirm、runs.requestRenegotiation、previewConstraintImpact 都没有频率或次数上限（调用预算只计模型调用）；候选集、阻断文案、请求参数这类派生推断泄露也没有按受众降级（例如 provider 只看泛化 blocked）",
+      "派生值的披露闸门：assertRequestDrafts 只按参数键检查受众，不追溯派生来源。finance 收到的 minCapCents 由 customer 的私密 required / deadline 推出；customer 收到的 earliestFeasibleDate 与 q.relax_required 由 finance 的私密预算推出。assert 在 briefs.confirm 事务内失败时是整体回滚（finance 无法下调预算）还是丢弃该请求，没有定义",
+      "T2 零回合重新审批 run 的候选快照没有定义：04 §4.2.3 第 4 步在第 5 步枚举候选之前就返回，因此 reapproval run 里 canProposeManually、T10 能否使用不明",
+      "04 §4.7 决定表中 rejected→approve、rejected→withdraw 两行不可达：08 §8.3 第 11b 步规定 reject 立即 supersede run，之后 G-D4 必然失败。16 §16.9 的 DC-05「拒绝→撤回→批准三条都保留」因此无法执行。12 proposeManually「同候选返回当前提案」也与 04 T10 守卫矛盾",
+      "被拒提案可能复活：拒绝触发的 run 直接进入 waiting_human 且没有插入新提案时，rooms.currentProposalId 仍指向被拒提案；之后任何无关的 bump 都会经 T2 把它重新送去审批。同一约束版本下 requestRenegotiation 后若代理复用同一提案，旧审批是否继续有效也没有讨论",
+      "I20 / 03 §3.1 第 7 条与 changeOrders 冲突：changeOrders 是多角色可读文档，却存 committedBeforeCents / committedAfterCents / capCentsAtExecution（只靠投影隐藏）。07 T-04 称进入他方代理上下文的自由文本只有目录标题和 requestedItems 标题，但 07 §7.5 的 history 含公开的拒绝备注（≤500 字符），share_answer 也可能带 requests.answer 的 note，注入面没有覆盖",
+      "边界：required − executedItemKeys = ∅（或 requiredItemKeys 为空）时，枚举的 S=∅ 会产生零条目、$0 的候选，deliveryDate = max(空集) 无定义；就绪检查只在全部执行完毕时报 nothing_left",
+      "核心 8 的数据级标注不完整：executions、tasks、decisions 没有 isSimulated；非 fixture 房间里由 stub 代理提案执行出的变更单，isSimulated 如何取值没有定义",
+      "活性与运维细节：apply 的 watchdog 只重新登记一次（+30 s），调度积压时会把合法输出判为 APPLY_FAILED；目标角色选了 edit_constraints 意向却迟迟不改时，run 无限期停在 waiting_human，没有超时或提醒；15 §15.6（purgeRoom 只接受 simulated 房间）与 07 §7.11（真实房间走书面流程删除）口径不一；rationale 上限在 10 §10.15 写 600、在 05 / 03 写 1,200，不一致"
+     ],
+     "verdict": "这是候选中运行时与可靠性设计最扎实的一份：已通读 19 章全部 57 个文件，并按 inputs/01–06 核对。run/turn/attempt、同事务 watchdog、record→apply、单层重试与四级预算、评审 fail-open / 提议 fail-closed 加手动路径，都基于 inputs/05 的实测语义，可以直接实现；审批执行的守卫分组、G-E2 台账复核、约束快照指针与 executedItemKeys 也避开了其他候选常见的重复承诺和并行评审死锁。不过我构造出了能违反核心 1 的反例：customer 把 requiredItemKeys 设为 private 后，公开的候选集（必然含「只有必需项」的组合）和 provider 收到的请求参数都会精确暴露这个值，委托条款里「绝不暴露数值本身」的承诺因此不成立；再加上没有限流，provider 改目录价格可以零成本精确二分出买方余量。另有一个跨章节不一致：candidateKey 不含价格和来源版本，05 §5.5 的同 key 复用规则会让不可执行的旧提案进入审批并卡死该约束版本。因此 invariants 给 4。吸收进最终设计时，应把运行时（10）、审批执行（08）、约束快照（09）作为底稿，同时修正候选集与请求规划的披露闸门、增加反探测限流，并把候选身份改为按 termsKey 比较。"
+    }
+   ]
+  }
+ ]
+}

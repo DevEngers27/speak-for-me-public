@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "paths": { "@core/*": ["../core/*"] }
+  },
+  "include": ["./**/*", "../core/**/*"],
+  "exclude": ["./_generated"]
+}

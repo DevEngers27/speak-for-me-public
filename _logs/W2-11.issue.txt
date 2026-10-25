@@ -1,0 +1,1 @@
+n7 is design-as-is (06 §11.3 #4). Zero-disclosure customer options remain answerable and expose only customer-view values. Synthetic D15 blocked-form canaries remain because no scope_change v1 path emits blocked. No W2-11 backend blocker remains.

@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "deployment": "benevolent-jackal-41",
+  "roomId": "m177v7fjwd2dgzaah2rdvb46p18gy5wv",
+  "startedAt": "2026-10-25T13:38:49.763Z",
+  "pass": true,
+  "authEvidence": "Synthetic identities through logged-in Convex CLI admin impersonation; NOT Clerk/browser login evidence.",
+  "outcome": "Human resolves real agent disagreement by selecting existing $800 essentials proposal; not autonomous model agreement.",
+  "stages": [
+    {
+      "stage": "prior_approvals_invalid",
+      "at": "2026-10-25T13:38:54.170Z",
+      "oldProposalVersion": 1,
+      "staleApprovalCount": 2,
+      "constraintsVersion": 2
+    },
+    {
+      "stage": "authorized_human_choice",
+      "at": "2026-10-25T13:39:10.363Z",
+      "requestId": "k579ypg3qp7xkphn61bgwjreb18gzffe",
+      "optionKey": "A",
+      "amountCents": 80000,
+      "itemKeys": [
+        "audit_log_export",
+        "sso_login"
+      ],
+      "deliveryDate": "2026-11-08",
+      "reusedLiveModelProposal": true,
+      "newModelRunStarted": false
+    },
+    {
+      "stage": "finance_before_final_approval",
+      "at": "2026-10-25T13:39:14.189Z",
+      "proposalVersion": 2,
+      "amountCents": 80000,
+      "humanApprovals": 2,
+      "executionPresent": false,
+      "financeOnlyBudget": {
+        "capCents": 480000,
+        "committedCents": 400000,
+        "totalAfterCents": 480000
+      }
+    },
+    {
+      "stage": "automatic_execution",
+      "at": "2026-10-25T13:39:34.537Z",
+      "executionId": "k175gqrkzxwf23y1jhzzcs94f58gymy8",
+      "proposalVersion": 2,
+      "amountCents": 80000,
+      "signatureRoles": [
+        "customer",
+        "provider",
+        "finance"
+      ],
+      "executionCount": 1,
+      "ledgerCommitCount": 1,
+      "changeOrderCount": 1,
+      "executedEventCount": 1,
+      "taskCount": 2,
+      "concurrentFinalApprovalIdempotent": true,
+      "invariantFindings": 0,
+      "privateProjection": "passed"
+    },
+    {
+      "stage": "public_result",
+      "at": "2026-10-25T13:39:35.588Z",
+      "changeOrderNumber": 1,
+      "amountCents": 80000,
+      "deliveryDate": "2026-11-08",
+      "lines": [
+        {
+          "itemKey": "audit_log_export",
+          "kind": "item",
+          "priceCents": 30000,
+          "title": "Audit log export"
+        },
+        {
+          "itemKey": "sso_login",
+          "kind": "item",
+          "priceCents": 50000,
+          "title": "SSO login (SAML)"
+        }
+      ],
+      "tasks": [
+        {
+          "title": "Build audit log CSV export",
+          "assigneeRole": "provider",
+          "dueDate": "2026-11-08",
+          "status": "open"
+        },
+        {
+          "title": "Implement SAML SSO login",
+          "assigneeRole": "provider",
+          "dueDate": "2026-11-08",
+          "status": "open"
+        }
+      ],
+      "privateFinanceChainOmitted": true
+    },
+    {
+      "stage": "follow_up",
+      "at": "2026-10-25T13:39:39.034Z",
+      "roomId": "m178gscabp777x3s6xbpwmhpy98gy1h6",
+      "previousRoomId": "m177v7fjwd2dgzaah2rdvb46p18gy5wv",
+      "createdOnce": true,
+      "status": "setup",
+      "baselineSuggestionCents": 480000,
+      "baselineRecorded": false,
+      "requiresFinanceConfirmation": true
+    }
+  ],
+  "errorCode": null,
+  "finishedAt": "2026-10-25T13:39:39.034Z"
+}

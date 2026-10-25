@@ -1,0 +1,9 @@
+{
+  "project_id": "appgprj_6adda37c25c08191bd66caf863e5c968",
+  "access_mode": "public",
+  "revision": 2,
+  "updated_at": "2026-10-25T14:35:34.881484+00:00",
+  "authorization": "User explicitly requested public website while preserving room login and membership protection.",
+  "applicationAuthorizationChanged": false,
+  "repositoryVisibilityChanged": false
+}

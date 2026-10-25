@@ -1,0 +1,10 @@
+{
+  "startedAt": "2026-10-25T06:54:02.550Z",
+  "finishedAt": "2026-10-25T06:54:02.887Z",
+  "states": [
+    "success",
+    "failed"
+  ],
+  "pass": true,
+  "scope": "scheduled action success/failure terminal states; does not measure mutation retry count"
+}

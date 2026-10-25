@@ -1,0 +1,101 @@
+[
+ {
+  "id": "names-17",
+  "severity": "medium",
+  "section": "07-permissions-privacy-part3.md",
+  "description": "invites 表的字段名和状态值在 07、03/12、04 三处各不相同，席位已占的错误码也不统一。07 §7.25 却声称与 03 §3.6、12 §12.4 一致。",
+  "evidence": "07 §7.6：\"invites（kind: 'email'…）\"、\"同角色 pending 邀请置 revoked\"、accept 时要求\"邀请 pending\"。03 §3.5：`mode: v.union(v.literal(\"email\"), v.literal(\"link\"))`、`status: open | accepted | superseded`；12 §12.7 同 03。04 §4.9 invite 行写\"派生 open / accepted / expired\"。错误码：03 §3.5 与 §3.13.1 写 `invite.role_taken`（02 part5 同），07 §7.7 与 12 §12.4 写 `invite.seat_taken`。",
+  "suggested_fix": "以 03 与 12 为准：07 §7.6 的 `kind` 改 `mode`，`pending` 改 `open`，`revoked` 改 `superseded`。04 §4.9 的 invite 行改为\"存储 open → accepted | superseded；过期在 accept 时比较、不写状态\"。03 §3.5、§3.13.1 与 02 part5 的 `invite.role_taken` 改为 `invite.seat_taken`（12 是码表归属章）。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-34",
+  "severity": "medium",
+  "section": "07-permissions-privacy-part4.md",
+  "description": "07 把金丝雀变体的披露设定当成主 fixture 的设定写，与 14 和 05 的主 fixture 冲突：主 fixture 中 customer 把截止日同时披露给 provider 与 finance，只有 canary 变体对 provider 隐藏截止日。这一设定决定 provider 的候选集和走查调用次数。",
+  "evidence": "07 §7.8.4 \"fixture 设定（D27）\"列：customer `deadline` 为\"仅 finance（provider 侧金丝雀）\"。14 S-D6 与 §9.2：`disclosures: { requiredItemKeys: ['provider','finance'], deadline: ['provider','finance'], preferredItemKeys: ['provider'] }`，canary 变体才\"截止日不向 provider 披露\"；05 §5.15 也写\"把 requiredItemKeys 与 deadline 披露给 provider 与 finance\"。07 该表还写 preferredItemKeys 主 fixture 为\"无\"，14 为披露给 provider。",
+  "suggested_fix": "07 §7.8.4 的末列拆成\"主 fixture\"与\"canary 变体\"两列：主 fixture 中 deadline 披露给 provider 与 finance、preferredItemKeys 披露给 provider；canary 变体中 deadline 只披露给 finance。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-36",
+  "severity": "low",
+  "section": "07-permissions-privacy-part5.md",
+  "description": "07 字段 × 角色矩阵中有几行引用了 03 中不存在或已改名的字段，有几处事件名、参数名、函数参数名也与 03、06、12 不符。按 TC-PRIV-10 \"DISCLOSURE 必须覆盖 schema 每个叶子路径\"做对账，这些行会报错。",
+  "evidence": "§7.9.1 有 `users.email`，03 §3.5 明写 users \"不存邮箱\"。§7.9.5 写 `constraintRevisions.constraintsVersion`，03 的字段是 `version` / `previousVersion`。§7.9.3 写 `approvals._creationTime`，03 为 `decidedAt`。§7.9.4 写 provider 把 needs_input 投影为 `waiting`，canon D12 ⑦ 为 `run_waiting`。DX-2 的事件名 `catalog_confirmed` 应为 `catalog_item_confirmed`。§7.17 写\"executed 对 finance 经 restrictedRef → ledgerEntries\"，03 与 08 为 `room_executed` → executions。§7.11 的 item.required_missing 参数写 `missingItemKeys`，06 §6.2 为 `itemKeys`、`reason`。§7.6 rooms.create 的参数写 `creatorRole`，12 §12.6 为 `myRole`。DX-8 的 endedReason 写 `canceled`，03 为 `canceled_by_creator` / `room_closed` 等。",
+  "suggested_fix": "按 03、06、12 逐条修正 07 §7.6、§7.8.6、§7.9、§7.11、§7.17：删去 users.email 行（邮箱只在 identity claim 中）；constraintsVersion 改 version；_creationTime 改 decidedAt；waiting 改 run_waiting；catalog_confirmed 改 catalog_item_confirmed；executed 改 room_executed → executions；missingItemKeys 改 itemKeys、reason；creatorRole 改 myRole；DX-8 改用 03 的 endedReason 枚举。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "completeness-09",
+  "severity": "high",
+  "section": "16-testing-part4.md TC-EXE-10（对照 08-approval-execution-part2.md A12、08-part7 K27、09-constraint-changes-part3.md §9.6.7、12-api.md B8）",
+  "description": "16 把一条与 08/09 规定相反的行为写成了必过用例：审批时用'权威 today'重算而拒绝；08/09 的定稿是规则一律读 rooms.localDate，cron 未跑时照常执行。按 16 实现会让 08 的 K27 场景（午夜后点批准）无出口。",
+  "evidence": "16 TC-EXE-10：'假时钟越过交付日但未运行 rollLocalDate：approve 在 mutation 内用权威 today 重算 → approval.not_executable 不写行；随后 rollLocalDate → constraints.bump(cause: clock)'。08 A12：'规则检查一律以 room.localDate 为 today…所以审批时的结论与审批人屏幕上的结论来自同一个日期'；08 K27：'cron 尚未推进 localDate…规则读 room.localDate（仍为前一日）…正常执行'；08 §8.12 否决'approve 用 Date.now() 推出的真实日期判规则'；09 §9.6.7：'规则在 query 与 mutation 中一律读 room.localDate'；12 B8：'规则一律读 rooms.localDate'。",
+  "suggested_fix": "TC-EXE-10 改为与 08 I16 一致：'cron 未跑时 approve 以 room.localDate 判定并执行；另一用例先跑 rollLocalDate 使结论翻转 → cv+1，之后旧 cv 的 approve → approval.stale'；§16.11 映射 CE-071 的描述同步。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-20",
+  "severity": "medium",
+  "section": "11-architecture-part3.md §11.10 / part4 §11.14（对照 07-permissions-privacy-part3.md §7.5.2、13-frontend.md FE-D14/§13.2、18-part5 ADR-D19、12-api-part2.md health.ping）",
+  "description": "auth.protect() 的放置位置与匿名/健康端点在 11 与 07/13/18 之间矛盾：11 采用 proxy 对 /rooms(.*) 调 auth.protect 并明确否决 layout 写法，07/13/18 写只在 (app)/layout.tsx 调一次；anonQuery 白名单 07 写 app.publicConfig、11/12 写 health.ping；13/16 断言 Next 的 /api/health 返回 401，而 11 说 v1 无业务 Route Handler。",
+  "evidence": "11 §11.10：'已配置时进入 clerkMiddleware，对 /rooms(.*) 调 auth.protect()（skeleton 实测）'；11 §11.14：'auth.protect() 只放在 (app)/layout.tsx（techstack D23）→ 采用 skeleton 实测的 proxy 写法'。07 §7.5.2：'auth.protect() 只在 (app)/layout.tsx 调一次'；13 FE-D14 同；18 ADR-D19 '…'。07 §7.5.3：'anonQuery…v1 白名单只允许 app.publicConfig'；11 §11.6/12 §12.5：'仅 health.ping'。13 §13.2 与 16 TC-AUTH-11：'无会话 fetch(/api/health) → 401 JSON'；11 §11.10：'v1 不提供业务 Route Handler'。",
+  "suggested_fix": "统一为 11 的 proxy 写法（并在 (app)/layout 保留一次 auth.protect 作客户端导航兜底），07 §7.5.2 与 13 FE-D14 改写；anonQuery 白名单统一为 health.ping；11 §11.10 补一句'唯一 Route Handler 是 /api/health，自己返回 401'。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-23",
+  "severity": "medium",
+  "section": "00-overview.md §0.3、§0.9（对照 16-testing-part8.md §16.11、00-invariants-part7…11）",
+  "description": "00 的'八条核心 → 测试编号'表按已被 16 放弃的旧电池编号（CE-001…118）引用，而 16 最终采用了 00-invariants 的 CE-001…170（+171–175）；00 §0.9 对两套编号的裁决方向写反，表中的 CE 引用全部失效。",
+  "evidence": "00 §0.3：'反例电池用 16 §16.11 的 CE 编号（沿用原电池 CE-001…108 并按 canon part5 修订、新增 CE-109…118：CE-009 改为…CE-084/085 改为…）'，核心 1 列 'CE-001…020、CE-106'，核心 5 列 'CE-060…079（RD：061、062…）'；00 §0.9 第 3 条：'本章 §0.3 暂以 16 为准'。16 §16.11：'电池正文见 00-invariants-part7..11.md（canon 对齐重写版，CE-001…CE-170）；本章新增 CE-171…CE-175'，映射表按 170 编号。",
+  "suggested_fix": "重写 00 §0.3 的测试编号列为 00-invariants/16 的编号（核心 1 → CE-001…035、165、166；核心 5 → CE-095…120、169 等），删除'新增 CE-109…118 / CE-009 改为…'一段，§0.9 第 3 条改为已统一。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-31",
+  "severity": "low",
+  "section": "13-frontend-part6.md §13.16 / 16-testing-part4.md TC-EXE-01（对照 08-approval-execution-part5.md §8.5.2、12-api-part4.md §12.15）",
+  "description": "返回值判别字段与 DTO 字段名在测试章与定稿章不一致，按 16 写断言会失败。",
+  "evidence": "16 TC-EXE-01：'第二次返回 { kind: \"executed\", alreadyExecuted: true }'；08 §8.5.2 与 12 §12.15：approvalRecordResultV 用 status 判别：'{ status: \"executed\", executionId, alreadyExecuted }'。16 §16.4.3 seedRoom 确认顺序 customer → finance → provider（provider 触发开房），14 §9.2 confirmOrder ['provider', 'customer', 'finance']（finance 触发），影响 room_opened 的 actorUserId 与 golden 事件序列。",
+  "suggested_fix": "16 TC-EXE-01 改为 status: 'executed'；16 §16.4.3 的确认顺序改为读取 fixture.confirmOrder。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "privacy-01",
+  "severity": "blocker",
+  "section": "07-permissions-privacy-part6.md",
+  "description": "DX-2 的预检 1 bit 信道没有被挡住，只是被限速，且限速不足以保护核心 1。provider 可以给目录批量改价（catalog.confirm 一批算一次节流），触发 bump 后看新 run 的预检结果：进入 negotiating 时自己的 propose 回合会开始；needs_input 时只看到 run_waiting。这样每次改价得到一次全局可行性判定，候选金额又由 provider 自己定，所以能二分出 finance 的余量。整个过程不花 provider 一次模型调用，finance 也从未做过任何披露决定。07 自己算出约 2.3 小时就能精确到 1 美元，12 却称这是'压到不可用的速度'；唯一的补救是用户决策 N-29（每日上限），至今悬而未决。反方向同样成立：finance 用 setCap 探测，约 1 小时（5 个条目约 5 bit）就能反推出 customer 未向其披露的必需项集合。（对 canon 的异议：D12 ⑥ 每小时 6 次只能减速，并没有像 D12 自称的那样'堵住零成本预言机'。）",
+  "evidence": "07 §7.13：'$0–$10,000 区间、$1 分辨率二分余量约需 14 bit；仅靠 DX-2，provider 需要 ≥ 约 2.3 小时连续、全员可见的改价'；12 §12.12 末段：'每小时 ≤ 6 次把二分探测压到不可用的速度'；12 §12.12：catalog.confirm '节流 constraint_writes（一批计一次）'；04 §4.2 注：buyerFeasible '对 provider 泄露的至多是 run 在跑 / 在等 1 bit'；18 N-29：'是否在每小时 6 次之外再加每房间每日上限……用户决策'。",
+  "suggested_fix": "07 §7.13 和 12 §12.2 第 7 条增加一个与 ⑥ 并列的约束桶 `price_writes`：房间 open 期间，改变 priceCents/leadDays/新增/retire 的 catalog.confirm 每房间每 24 小时 ≤ 3 次，每个 open run 内同一 itemKey 改价 ≤ 1 次；setCap 与 customer 硬字段变更共用一个每房间每 24 小时 ≤ 6 次的桶（计数源仍是命令事件，与 03 §3.11.3 同法）。07 §7.21 R-1 改写为总量上界（例如每房间每天 ≤ 9 bit），12 §12.12 删除'不可用的速度'。16 新增 TC-AUTH-13：第 4 次价格类目录确认返回 `run.rate_limited`，第 7 次 setCap 同样被拒。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-02",
+  "severity": "high",
+  "section": "07-permissions-privacy-part4.md",
+  "description": "约束变更由谁发起被泄露给了 provider。D14、DX-5 和 09 都规定 provider 只能看到 'Constraints changed'，连谁改的都不该知道。但 brief_confirmed{role, version} 事件和 rooms.view.members[].briefVersion 对全员可见（DX-7）。结果是：finance 的简报版本号加一和 cv 加一出现在同一提交里，就说明 finance 改了上限，因为它唯一的硬字段是 capCents；customer 的情况同理。raise_cap 的回答还会同时写出 human_request_answered（provider 看到'resumed'）和 brief_confirmed(finance)，provider 由此知道 finance 通过人工请求提高了上限。再配合 DX-2，provider 可以推断出变化方向。07 内部 DX-5 与 DX-7 互相矛盾。",
+  "evidence": "07 DX-5：'变更角色只给 customer / finance，provider 只见 Constraints changed'；DX-7：'简报确认状态与版本号……room'；03 §3.11.1：`brief_confirmed` payload `role、version`，'他人只见 confirmed v{n}'；03 §3.11.3：'raise_cap 回答同时写 human_request_answered 与 brief_confirmed'；12 §12.17 roomViewV：`members: [{ role, …, briefConfirmed, briefVersion }]`；09 part2：'provider 连是谁改的都看不到'；13 §13.6：'Customer and Provider will see: Finance updated a budget constraint.'",
+  "suggested_fix": "07 DX-7 的受众改为 buyer。在 provider 的投影里：房间 open 之后，members[].briefVersion 对非本人角色一律为 null，只保留 briefConfirmed:boolean；brief_confirmed 和 human_request_answered 在 03 §3.11.1 增加 provider 变体——非本人且房间已 open 时不渲染，或并入同一提交的 'Constraints changed (vN)'；13 §13.6 文案改成 'Provider will see: Constraints changed'。16 新增元形态用例 TC-PRIV-21：分别由 finance setCap、customer 改截止日、answer(raise_cap) 引起 bump，provider 的 rooms.view 和 timeline 规范化后逐字节相同。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-05",
+  "severity": "high",
+  "section": "07-permissions-privacy-part4.md",
+  "description": "07 的显式解密清单 DX-1…DX-10 不完整，而按 07 自己的规则，'不在清单里的派生值一律继承最严格输入的类'，因此下列由他方私密约束决定的结论按规则都不该外泄：① customer 从 turns.result 的 counterForwarded 得到的 1 bit（05 声称它已在清单里，实际没有）；② humanRequests.answer(choose_candidate) 返回 regenerated 还是 applied，即全局复核是否通过（12 Q4 把裁决交给 07，07 没有收录）；③ provider 收到的 'countered' 反馈和被强制纳入快照的 counter 候选，等于告诉 provider 一个它没提过的候选能通过全量检查。此外 DX-9 把 counter 写成'公开提案、≤1 bit'，与 05 的'counter 不直接成为提案'矛盾。TC-PRIV-05 的前置条件 declassified() 按 DX-1…DX-10 定义，这些信道要么让测试失败，要么被临时放进白名单而无人评审。",
+  "evidence": "05 §5.8.4：'customer 由此得到 1 bit，属 07 显式解密清单中的可行性 1 bit'；07 §7.8.6 DX-1…DX-10 中没有 counter 转发和 choose_candidate 复核；12 §12.14 返回 `outcome: regenerated`；12 Q4：'choose_candidate 全视图复核失败会向 customer 暴露……需要谁确认：07'；07 DX-9：'customer 的 counter 提案……room（提案公开）……≤ 1 bit / counter'；05 §5.3.1 counter：'不直接成为提案'；16 §16.7.5：'前置：DX-1…DX-10 对 role 公开的值相同'。",
+  "suggested_fix": "07 §7.8.6 新增三项：DX-11 counter 转发结局（给 customer 的是转发与否，给 provider 的是 'countered' 加候选；每次 counter ≤1 bit 全局可行性，每 run ≤4 次）；DX-12 choose_candidate 复核结局（给 customer，每次回答 ≤1 bit，受 D12 ⑥ 约束）；DX-13 provider 对被转发候选的 fit 隐含。DX-9 改写为'counter 不是提案，只经 DX-11 外显'。16 §16.7.5 的 declassified() 同步纳入 DX-11…13，并加一条元断言：declassified 的键集合 == DECLASSIFIED 常量。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-10",
+  "severity": "medium",
+  "section": "07-permissions-privacy-part8.md",
+  "description": "公开函数的调用图里有 opsLog，而 logLines 会下发到调用者的浏览器，同时三份白名单互不一致，也没有机械手段保证。07 E1 规定 opsLog 只能出现在 internal 函数（unhandled 分支除外），但 08 在 approvals.record 的 S11 和 rooms.view 的空槽位处、12 在 approval.not_executable 与 humanRequests.answer 中、03 在 appendSharedFact 中都要求 opsLog。15 改口为'公共函数内只允许 {fn, code, errorClass}'，可是 SafeValue 允许任意 number，07 的 SafeLogFields 又含 count/ms，opsLog 本身无法知道自己处在公开上下文中。16 S6 断言'公共函数执行期间 console spy 不得被调用'，这与上述必需日志直接冲突，TC-INJ-03 走到 approval.not_executable 时 S6 必然变红。",
+  "evidence": "08 §8.5.3 S11：'+ opsLog(approval.not_executable, { severity: critical })'；08 §8.6.6：'vacant / self_conflict……投影为 pending 并 opsLog'（在 rooms.view 中）；12 §12.4：approval.not_executable '同时 opsLog'；07 §7.19.2 E1：'其余 opsLog 只允许出现在 internal 函数'；15 §15.6.2：`SafeValue = IdString | SafeEnum | number | boolean` 以及'公共函数内……只允许 { fn, code, errorClass }'；16 §16.7.3 S6。",
+  "suggested_fix": "11 和 15 拆成两个 logger：`opsLog` 要求 InternalCtx 品牌参数，只有 internal/action 构造器能取得；`publicOpsLog(code: PublicOpsCode)` 只接受 `{ fn, code, errorClass }`，code 取自闭集，不收数值。ESLint 禁止从公开构造器可达的模块 import opsLog。08、12、03 中公开路径上的日志一律改用 publicOpsLog。三份 SafeLogFields 合并为 15 一处。16 S6 改为'公共函数执行期间 console 只允许出现 publicOpsLog 格式且键集合恰为 {fn, code, errorClass} 的行'。",
+  "reviewer": "隐私预言机与泄露路径"
+ }
+]

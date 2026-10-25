@@ -1,0 +1,5 @@
+{
+  "pass": true,
+  "expectedCode": "auth.unauthenticated",
+  "observedCode": "auth.unauthenticated"
+}

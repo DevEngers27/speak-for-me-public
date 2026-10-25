@@ -1,0 +1,121 @@
+{
+  "reviewer": "grok",
+  "lens": "wave0-batch",
+  "overall": "分层、锁定版本和无密钥 CI 可运行，pnpm test 通过（53 个 Vitest 文件入收集，159 passed、253 todo）。金额、日期、canonicalJson、键和 D27 主数字与 §14 一致。模型网关的截断重试和双层 HTTP 重试、drainScheduled 默认 runAllTimers、scope_change 与 scope-change 分裂，以及公共模板仍能插自由字符串并回显原值，会被后续波次当成契约；33 个电池文件全是 it.todo，绿色不能证明反例。",
+  "issues": [
+    {
+      "id": "W0R-01",
+      "severity": "high",
+      "section": "model-gateway",
+      "description": "convex/lib/modelGateway.ts:2407。D09 要求 stop_reason 为 max_tokens 时记 output.truncated 并重试一次。callModel 记录 usage 后直接返回，retryable 为 false，循环不会发起第二次 attempt。refusal 与 model_context_window_exceeded 不重试，与 D09 一致。",
+      "evidence": "if (stopReason === 'max_tokens') { return Object.freeze({ ok: false, kind: 'output.truncated', reasonCode: 'output.truncated', retryable: false, ... }); }  测试 convex/lib/modelGateway.test.ts:314：expect(result.retryable).toBe(false)。",
+      "suggested_fix": "截断时在同一次 callModel 内再发一次请求；第二次仍是 max_tokens 才返回 output.truncated。测试改为断言发生了第二次调用，并且第一次的 usage 与 requestId 已在 attemptLogs 中。"
+    },
+    {
+      "id": "W0R-02",
+      "severity": "high",
+      "section": "model-gateway",
+      "description": "convex/lib/modelGateway.ts:41、:80、:1322、:2291。CALL_DEADLINE_MS 448000 的注释只覆盖一层 SDK 重试（2*220s+8s）。DEFAULT_MAX_RETRIES 与 SDK_MAX_RETRIES 都是 1，anthropicTransport 和 callModel 各重试一次。可重试集合含 429、408、409、5xx、529、超时和连接错误，宽于 D09 的 429 与连接错误。SDK timeout 按单次请求计，一次 send 可达 440s，再加网关一轮可接近 880s，晚于 WATCHDOG_FIRST_MS 275000，也超过 Convex action 600s。callModel 没有把总截止做成 AbortSignal。",
+      "evidence": "export const SDK_MAX_RETRIES = 1; export const DEFAULT_MAX_RETRIES = SDK_MAX_RETRIES; anthropicTransport 传入 maxRetries: sdkMaxRetries；const canRetry = classified.retryable && attemptIdx < maxRetries。createFetchStreamClient（:1508）未使用 streamOpts.timeout。",
+      "suggested_fix": "只保留一层重试，范围限于 429 与连接错误。max_tokens 的重试单独计数。send 之前用 AbortSignal 合并剩余预算与调用方 signal，截止早于 275s 看门狗，并按真实尝试次数重算 CALL_DEADLINE_MS。"
+    },
+    {
+      "id": "W0R-03",
+      "severity": "high",
+      "section": "scheduler",
+      "description": "convex/test/helpers.ts:360。TD-05 要求 drainDue 只推进当前到期任务，并禁止在看门狗链路上使用 runAllTimers 与 finishAllScheduledFunctions(vi.runAllTimers)。仓库没有 drainDue。交付的 drainScheduled 默认把 clock.runAllTimers() 传给 finishAllScheduledFunctions。advanceScheduledBy 的逐步推进是单独的 API。",
+      "evidence": "await t.finishAllScheduledFunctions(resolved.advanceTimers ?? (() => clock.runAllTimers()), resolved.maxIterations ?? 100);",
+      "suggested_fix": "默认循环 advanceTimersByTime(0) 与 finishInProgressScheduledFunctions，直到没有到期任务；失败任务继续抛错。看门狗只调用 advanceScheduledTo(scheduledTime)。函数改名为 drainDue。"
+    },
+    {
+      "id": "W0R-04",
+      "severity": "high",
+      "section": "fixtures",
+      "description": "core/scenarios/scope-change/fixtures/main.ts:29、core/scenarios/scope-change/index.ts:4、convex/lib/fixtureSchema.ts:162、core/engine/plugin.ts:12。§14 与 D27 的场景键是 scope_change，目录名是 scope-change。fixture 写 scenarioKey: \"scope_change\"。defineScenario、ScenarioFixtureShape 和 health.ping 使用 ^[a-z][a-z0-9-]*$，该正则拒绝下划线，插件 id 因此是 scope-change。loadFixture 还要求 schemaVersion、members、constraintSets、steps，D27 的 ScopeChangeFixture 没有这些字段。没有测试把 main 送进 loadFixture。",
+      "evidence": "scenarioKey: \"scope_change\"; defineScenario({ id: \"scope-change\" }); scenarioKey: z.string().regex(/^[a-z][a-z0-9-]*$/); health.test.ts 期望 scenarios: [\"scope-change\"]。",
+      "suggested_fix": "运行时键统一为 scope_change，目录名保持 scope-change。用一个 SCENARIO_KEY 常量同时约束插件、fixture、health.ping 和 schema。增加 loadFixture 或适配器必须接受 main 的测试。"
+    },
+    {
+      "id": "W0R-05",
+      "severity": "high",
+      "section": "public-text",
+      "description": "core/engine/publicText.ts:1239 与 :427。D13 禁止公共模板参数出现自由 string。definePublicTemplate 只拒绝 kind === 'text'。slot.token 的 kind 是 token，只要正则以 ^ 和 $ 锚定就会通过，渲染时原样返回该字符串，不经过 wrapUntrusted。内置 PUBLIC_TEMPLATES 使用 ITEM_KEY_RE，样例目前安全；门禁挡不住下一次宽正则。",
+      "evidence": "if ((specCandidate.kind as string) === 'text') throw new TemplateRenderError('DISALLOWED_PUBLIC_SLOT_KIND', ...); slot.token 的 render 在匹配成功后 return value。",
+      "suggested_fix": "公共槽只保留 enum、金额、日期、整数、ItemKey 和 Fragment。token 若保留，正则必须来自闭集，输出再转义。目录标题不要作为裸插值进入模板。"
+    },
+    {
+      "id": "W0R-06",
+      "severity": "high",
+      "section": "public-text",
+      "description": "core/engine/publicText.ts:122、:132、:181。publicCents、isoDate 和 failSlot 把被拒原值写进 Error.message。money.ts 明确不回显金额。withSanitizedErrors 尚未包住调用点，这条消息会成为 D16 要挡住的内容。MAX_SAFE_CENTS 是 Number.MAX_SAFE_INTEGER，canon 上限是 1e11。isCalendarDate 只接受 1900–2100，dates.ts 接受 0000-01-01..9999-12-31。formatUsdCents 对未校验的负数不会先拒绝。",
+      "evidence": "throw new RangeError(`PublicCents must be a safe non-negative integer, got ${String(value)}`); if (year < 1900 || year > 2100) return false; export const MAX_SAFE_CENTS = Number.MAX_SAFE_INTEGER;",
+      "suggested_fix": "公共金额调用 assertCents，日期调用 dates.ts 的 parseIsoDate。失败消息只保留槽名和错误码，删除 publicText.ts 里的第二套历法。"
+    },
+    {
+      "id": "W0R-07",
+      "severity": "medium",
+      "section": "model-gateway",
+      "description": "convex/lib/modelGateway.ts:36、:468、:577、:733、:1549。顶层白名单拒绝 thinking、采样参数、tools、tool_choice、stop_sequences 和 assistant prefill。协商请求没有钉死 effort: 'medium'：EFFORT_LEVELS 含 low|medium|high|max，extraBody 可在校验前替换 output_config。max_tokens 允许 1..16000。system 数组只检查 cache_control。messages 上 role/content 以外的字段会留下。createFetchStreamClient 把响应体放进 GatewayAPIError.message（HTTP status 加 rawText）。classifyError 的 detail 未抄 message，异常对象本身仍带可能回显请求的原文。",
+      "evidence": "effort: input.effort ?? NEGOTIATION_EFFORT; ...(input.extraBody ?? {}); throw new GatewayAPIError(res.status, parsedErr, `HTTP ${res.status}: ${rawText}`, headerMap);",
+      "suggested_fix": "assertWhitelisted 要求 effort === 'medium' 且 max_tokens === 16000。序列化前把 system 与 messages 收成文本块加允许的 cache_control。HTTP 错误只保留状态码和安全的 type 标记。"
+    },
+    {
+      "id": "W0R-08",
+      "severity": "medium",
+      "section": "canon-names",
+      "description": "convex/lib/modelGateway.ts:1771、:2055；core/engine/publicText.ts:1468。TD-03 的接缝是 callNegotiationModel，路径在 convex/agents 或 convex/model/agents。现导出是 convex/lib/modelGateway.ts 的 callModel 与 callStructured。attempt 状态使用 succeeded 与 aborted，另有 model.* 原因码，不在 §1.3 与 §1.5。PUBLIC_TEMPLATES 使用 draft、pending_review、countered、accepted、approved、declined，§1.3 的提案状态是 active、executed、superseded、rejected、stale，审批决定是 approve、reject、withdraw。",
+      "evidence": "export type AttemptStatus = 'succeeded' | 'refused' | 'invalid_output' | 'error' | 'aborted'; export async function callModel; const PROPOSAL_STATUS_ENUM = { draft: 'draft', pending_review: 'pending review', countered: 'countered', accepted: 'accepted' };",
+      "suggested_fix": "对外导出 callNegotiationModel，路径与 TD-03 一致；succeeded 改为 completed。样例枚举改为 §1.3 的存储状态。传输层码不要冒充 reasonCode。"
+    },
+    {
+      "id": "W0R-09",
+      "severity": "medium",
+      "section": "tests",
+      "description": "tests/battery 下 33 个文件只有 it.todo，Vitest 将它们记为 skipped（253 todo），这些用例不能失败。reconcileBattery（tests/battery/index.ts:2657）只检查 CE.covers 指向已知 INV、空 covers，以及 allowlist 之外的 INV 至少被点名，再把 it.todo 标题与注册表对齐。INV.covers 是自身 id，不参与覆盖计算。tests/scenario/arithmetic.test.ts:67 与 :101 断言 Math.max(14, 11) - 4 和 480000 - 480000，不调用产品代码。同文件对目录求和与 D27 边界的检查是有效的。",
+      "evidence": "it.todo(\"INV-02 ...\"); expect(Math.max(14, 11) - 4).toBe(10); expect(480_000 - 480_000).toBe(0); pnpm test 摘要：Test Files 18 passed | 33 skipped (51)，Tests 159 passed | 253 todo。",
+      "suggested_fix": "删除自比字面量。按章把 it.todo 换成会失败的断言。在此之前把 todo 数视为未覆盖，而不是通过。"
+    },
+    {
+      "id": "W0R-10",
+      "severity": "medium",
+      "section": "tooling",
+      "description": "vitest.config.ts:27、package.json:19、tests/vitest.config.ts:2。pnpm test 收集了全部 53 个 Vitest 文件：core 8、convex 3、tests 40、scripts 1、e2e harness 1。find 的第 54 个是 e2e/smoke/smoke.spec.ts，只由 Playwright smoke project 运行。51 个文件中 18 passed、33 skipped。TD-01 的 evals 与 web/jsdom project 不存在。real-deploy 与 battery e2e spec 挂在 node 的 core project 上，一旦写成真实探针就会让无密钥的 pnpm test 访问网络。test:watch 是裸 vitest，不包含 foundation、scripts、e2e harness。tests/vitest.config.ts 无扩展名导入 ../vitest.config，本次运行已出现 Vite native config loader 警告。",
+      "evidence": "include: [\"core/**/*.test.ts\", \"tests/battery/real-deploy/**/*.test.ts\", \"tests/battery/e2e/**/*.spec.ts\", ...]; \"test:watch\": \"vitest\"; import skeleton from '../vitest.config';",
+      "suggested_fix": "把 real-deploy 与 Playwright spec 移出默认 project。让 test:watch 与 test 使用同一组 config。给该 import 补上 .ts 扩展名。"
+    },
+    {
+      "id": "W0R-11",
+      "severity": "medium",
+      "section": "tooling",
+      "description": "convex/_generated/api.d.ts:20、convex/engine/health.ts:2、core/engine/index.ts:5、eslint.config.mjs:16。架构要求测试工具不要放在 convex/ 内，否则会进入函数模块图。codegen 已 import test/helpers.js 并列入 ApiFromModules。test.setup 的 glob 排除双扩展名文件，helpers.ts 仍在图内。eslint 未禁止原始 query/mutation/action。health.ping 与 whoami 直接从 _generated/server 导入 query，没有 withSanitizedErrors。index.ts 只导出插件与 ENGINE_VERSION，errors.ts 深路径导入 dates 与 money，§11.3 的唯一出口没有 lint。",
+      "evidence": "import type * as test_helpers from \"../test/helpers.js\"; import { query } from \"../_generated/server\"; export const ENGINE_VERSION = \"0.0.0\"; export { defineScenario };",
+      "suggested_fix": "把测试 helper 移出 convex/ 并重新 codegen，确认 api.d.ts 不再引用 test/helpers。增加对原始 query 导入的 restricted-import。桶文件导出纯函数，或改文档承认深路径。"
+    },
+    {
+      "id": "W0R-12",
+      "severity": "medium",
+      "section": "projection",
+      "description": "core/engine/projection.ts:45、:169、:590；convex/lib/fixtureSchema.ts:91。markProjected 只冻结对象并加入 projectedObjects，copyListedKeys 见到该集合就整对象嵌入，不再按键裁剪。wrapUntrusted 默认 maxChars 为 2000，换行保留为 \\n。D13 的目录 title 上限是 80 码点且匹配 ^[^<>\\r\\n]+$，并必须在定界块内。fixtureSchema 的 CatalogItem.title 使用最长 200 的 Label，角括号和换行可以通过。",
+      "evidence": "if (projectedObjects.has(value)) return value; maxChars: 2_000; title: Label;",
+      "suggested_fix": "markProjected 只接受 pickExact 或 projectForRole 的产出。标题使用单独的 wrapCatalogTitle：码点不超过 80，拒绝 CR/LF 与角括号，再包进 untrusted_data。"
+    },
+    {
+      "id": "W0R-13",
+      "severity": "low",
+      "section": "hygiene",
+      "description": "README.md:33、scripts/cooldown-exceptions.json:3。README 将 core/scenarios/scope-change 写成 Placeholder scenario plugin，该目录已包含 D27 目录、变体和金丝雀。冷却例外的 expires 全部是 2026-10-31，policy:check 在该日之后会让整份清单同时失效。",
+      "evidence": "core/scenarios/scope-change/  Placeholder scenario plugin; { \"package\": \"@clerk/nextjs@7.9.20\", \"expires\": \"2026-10-31\" }",
+      "suggested_fix": "README 改为场景 fixture 与插件壳已在、规则引擎尚未接入。例外按包写到期日，并在 policy:check 说明里写明到期后运行 --generate。"
+    }
+  ],
+  "strengths": [
+    "money.ts 用 bigint 做乘、比例和最大余数分配，assertCents 上限为 1e11，错误不回显金额，测试会重校验被擦掉的品牌并覆盖 half-even。",
+    "dates.ts 不构造 Date、不用 Intl；锚点 2026-11-02 加 18 天得到 2026-11-20。",
+    "canonicalJson 按 UTF-16 码元排序，拒绝 NaN、稀疏数组、循环和非普通对象，符合 D25 的 termsKey。",
+    "executionKey、taskKey、candidateKey 为明文分段，LOGIN+REPORTS@rush 不含哈希，执行键不含 constraintsVersion。",
+    "D27 主数字闭合：五项 140000、必需 80000、加 usage_dashboard 为 90000；上限 500000、基线 400000；480000 恰好放下必需项，479999 超出 1 分，470000 不可行，390000 为 budget.below_committed；金丝雀 481237 与派生分自洽。失效审批数为 2，与 §14 对 D27「3 条」的修正一致。",
+    "依赖经 catalog 精确锁定，minimumReleaseAge 为 10080，allowBuilds 只有 esbuild 与 unrs-resolver。CI 在无密钥下做 codegen 漂移、policy:check、lint、typecheck、test 和 build。",
+    "errors.ts 丢弃未标受众的参数，provider 拿不到 overByCents、headroomCents、deadline。seed 与 reset 需要 --yes，破坏性操作拒绝 prod 并核对部署名。",
+    "check-boundaries 拒绝 12 条故意的引擎纯度违规；core/engine 没有 zod、convex 或 Date 导入。"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "paths": { "~/*": ["./apps/web/src/*"], "@pkg/*": ["./packages/*"] }
+  },
+  "include": ["apps/**/*", "packages/**/*"],
+  "exclude": ["backend"]
+}

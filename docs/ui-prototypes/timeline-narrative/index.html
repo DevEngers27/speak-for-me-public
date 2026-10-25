@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Speak for Me Timeline</title>
+<!-- 原型：时间线叙事优先。纯静态，双击即可打开，不联网加载任何资源。 -->
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/timeline.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#/rooms"><span class="brand-mark" aria-hidden="true"></span>Speak for Me</a>
+  <nav class="topnav" aria-label="Primary">
+    <a href="#/rooms" data-nav="rooms">Rooms</a>
+  </nav>
+  <div class="role-switch" role="group" aria-label="Viewing as (prototype only)">
+    <span class="proto-tag" title="Real product uses sign-in. This switcher exists only in the prototype.">Prototype only · viewing as</span>
+    <button type="button" data-role="customer">Customer</button>
+    <button type="button" data-role="provider">Provider</button>
+    <button type="button" data-role="finance">Finance</button>
+  </div>
+</header>
+<div class="sim-banner" role="note">Simulated data. Every person, company, quote and amount in this prototype is fictional and seeded.</div>
+<main id="app" tabindex="-1"></main>
+<div id="live" class="sr-only" aria-live="polite"></div>
+<aside id="proto-panel" class="proto-panel" aria-label="Prototype controls"></aside>
+<script src="js/data.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/flows.js"></script>
+<script src="js/describe-helpers.js"></script>
+<script src="js/describe.js"></script>
+<script src="js/view-room.js"></script>
+<script src="js/view-aside.js"></script>
+<script src="js/view-pages.js"></script>
+<script src="js/view-records.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+:root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+body { margin: 0 auto; max-width: 960px; padding: 16px; }
+header { display: flex; justify-content: space-between; gap: 16px; }
+.banner { padding: 8px 12px; border: 1px solid currentColor; border-radius: 6px; }

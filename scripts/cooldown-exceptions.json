@@ -1,0 +1,226 @@
+[
+  {
+    "package": "@clerk/backend@3.26.2",
+    "expires": "2026-11-10"
+  },
+  {
+    "package": "@clerk/nextjs@7.9.20",
+    "expires": "2026-11-16"
+  },
+  {
+    "package": "@clerk/react@6.18.1",
+    "expires": "2026-11-08"
+  },
+  {
+    "package": "@clerk/shared@4.41.1",
+    "expires": "2026-11-16"
+  },
+  {
+    "package": "@next/env@16.4.3",
+    "expires": "2026-11-11"
+  },
+  {
+    "package": "@next/eslint-plugin-next@16.4.3",
+    "expires": "2026-11-14"
+  },
+  {
+    "package": "@next/swc-darwin-arm64@16.4.3",
+    "expires": "2026-11-21"
+  },
+  {
+    "package": "@next/swc-darwin-x64@16.4.3",
+    "expires": "2026-11-16"
+  },
+  {
+    "package": "@next/swc-linux-arm64-gnu@16.4.3",
+    "expires": "2026-11-11"
+  },
+  {
+    "package": "@next/swc-linux-arm64-musl@16.4.3",
+    "expires": "2026-11-10"
+  },
+  {
+    "package": "@next/swc-linux-x64-gnu@16.4.3",
+    "expires": "2026-11-21"
+  },
+  {
+    "package": "@next/swc-linux-x64-musl@16.4.3",
+    "expires": "2026-11-20"
+  },
+  {
+    "package": "@next/swc-win32-arm64-msvc@16.4.3",
+    "expires": "2026-11-12"
+  },
+  {
+    "package": "@next/swc-win32-x64-msvc@16.4.3",
+    "expires": "2026-11-07"
+  },
+  {
+    "package": "convex-test@0.0.65",
+    "expires": "2026-11-18"
+  },
+  {
+    "package": "eslint-config-next@16.4.3",
+    "expires": "2026-11-16"
+  },
+  {
+    "package": "next@16.4.3",
+    "expires": "2026-11-21"
+  },
+  {
+    "package": "@oxc-project/types@0.155.0",
+    "expires": "2026-11-19"
+  },
+  {
+    "package": "@rolldown/binding-android-arm-eabi@1.2.15",
+    "expires": "2026-11-20"
+  },
+  {
+    "package": "@rolldown/binding-android-arm64@1.2.15",
+    "expires": "2026-11-10"
+  },
+  {
+    "package": "@rolldown/binding-darwin-arm64@1.2.15",
+    "expires": "2026-11-08"
+  },
+  {
+    "package": "@rolldown/binding-darwin-x64@1.2.15",
+    "expires": "2026-11-18"
+  },
+  {
+    "package": "@rolldown/binding-freebsd-x64@1.2.15",
+    "expires": "2026-11-14"
+  },
+  {
+    "package": "@rolldown/binding-linux-arm-gnueabihf@1.2.15",
+    "expires": "2026-11-19"
+  },
+  {
+    "package": "@rolldown/binding-linux-arm64-gnu@1.2.15",
+    "expires": "2026-11-13"
+  },
+  {
+    "package": "@rolldown/binding-linux-arm64-musl@1.2.15",
+    "expires": "2026-11-12"
+  },
+  {
+    "package": "@rolldown/binding-linux-ppc64-gnu@1.2.15",
+    "expires": "2026-11-16"
+  },
+  {
+    "package": "@rolldown/binding-linux-s390x-gnu@1.2.15",
+    "expires": "2026-11-08"
+  },
+  {
+    "package": "@rolldown/binding-linux-x64-gnu@1.2.15",
+    "expires": "2026-11-08"
+  },
+  {
+    "package": "@rolldown/binding-linux-x64-musl@1.2.15",
+    "expires": "2026-11-07"
+  },
+  {
+    "package": "@rolldown/binding-openharmony-arm64@1.2.15",
+    "expires": "2026-11-08"
+  },
+  {
+    "package": "@rolldown/binding-win32-arm64-msvc@1.2.15",
+    "expires": "2026-11-14"
+  },
+  {
+    "package": "@rolldown/binding-win32-x64-msvc@1.2.15",
+    "expires": "2026-11-09"
+  },
+  {
+    "package": "@tanstack/query-core@5.104.5",
+    "expires": "2026-11-07"
+  },
+  {
+    "package": "@typescript-eslint/eslint-plugin@8.72.0",
+    "expires": "2026-11-19"
+  },
+  {
+    "package": "@typescript-eslint/parser@8.72.0",
+    "expires": "2026-11-07"
+  },
+  {
+    "package": "@typescript-eslint/project-service@8.72.0",
+    "expires": "2026-11-11"
+  },
+  {
+    "package": "@typescript-eslint/scope-manager@8.72.0",
+    "expires": "2026-11-08"
+  },
+  {
+    "package": "@typescript-eslint/tsconfig-utils@8.72.0",
+    "expires": "2026-11-11"
+  },
+  {
+    "package": "@typescript-eslint/type-utils@8.72.0",
+    "expires": "2026-11-20"
+  },
+  {
+    "package": "@typescript-eslint/types@8.72.0",
+    "expires": "2026-11-09"
+  },
+  {
+    "package": "@typescript-eslint/typescript-estree@8.72.0",
+    "expires": "2026-11-18"
+  },
+  {
+    "package": "@typescript-eslint/utils@8.72.0",
+    "expires": "2026-11-20"
+  },
+  {
+    "package": "@typescript-eslint/visitor-keys@8.72.0",
+    "expires": "2026-11-12"
+  },
+  {
+    "package": "baseline-browser-mapping@2.11.31",
+    "expires": "2026-11-21"
+  },
+  {
+    "package": "browserslist@4.29.4",
+    "expires": "2026-11-10"
+  },
+  {
+    "package": "caniuse-lite@1.0.30001819",
+    "expires": "2026-11-10"
+  },
+  {
+    "package": "convex@1.48.0",
+    "expires": "2026-11-07"
+  },
+  {
+    "package": "electron-to-chromium@1.5.463",
+    "expires": "2026-11-07"
+  },
+  {
+    "package": "ignore@7.0.13",
+    "expires": "2026-11-20"
+  },
+  {
+    "package": "napi-postinstall@0.3.7",
+    "expires": "2026-11-19"
+  },
+  {
+    "package": "node-releases@2.0.60",
+    "expires": "2026-11-17"
+  },
+  {
+    "package": "postcss@8.5.31",
+    "expires": "2026-11-15"
+  },
+  {
+    "package": "rolldown@1.2.15",
+    "expires": "2026-11-15"
+  },
+  {
+    "package": "typescript-eslint@8.72.0",
+    "expires": "2026-11-08"
+  },
+  {
+    "package": "vite@8.3.5",
+    "expires": "2026-11-13"
+  }
+]

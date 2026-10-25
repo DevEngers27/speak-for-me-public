@@ -1,0 +1,17 @@
+{
+  "operations": {
+    "seed": {
+      "function": "REPLACE_ME/module:seedExport",
+      "destructive": false,
+      "allowedDeploymentTypes": ["dev", "local", "preview"],
+      "description": "Append-only: creates new simulated data, never deletes."
+    },
+    "reset": {
+      "function": "REPLACE_ME/module:resetExport",
+      "destructive": true,
+      "allowedDeploymentTypes": ["dev", "local"],
+      "defaultArgs": {},
+      "description": "Destructive: requires --confirm-deployment <name>; prod is never allowed."
+    }
+  }
+}

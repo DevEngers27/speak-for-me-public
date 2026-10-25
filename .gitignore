@@ -1,0 +1,22 @@
+node_modules/
+.next/
+out/
+coverage/
+dist/
+.env*
+!.env.example
+*.tsbuildinfo
+.vercel/
+.convex/
+.pnpm-store/
+*.log
+.DS_Store
+.playwright/
+test-results/
+
+# Additional skeleton artifacts
+
+.npm-cache/
+
+.task-tmp/
+.sites-runtime/

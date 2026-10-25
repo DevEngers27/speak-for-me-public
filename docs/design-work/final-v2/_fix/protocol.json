@@ -1,0 +1,200 @@
+[
+ {
+  "id": "names-01",
+  "severity": "blocker",
+  "section": "05-protocol.md",
+  "description": "被规则阻断的 provider 候选要不要插入提案行，05 与 03/04/09/12/14 的写法相反。05 按\"插入后再检查\"写，03 的唯一插入 helper `insertProposal` 却先断言 `passesChecks`，不通过就抛 internal。照 05 实现，所有被阻断的回合都会以 internal 失败；提案版本号、`currentProposalId`、历史列表与 provider 的 fit 语义也会全部错位。",
+  "evidence": "05 P10：\"provider 的提案被 checkProposal 阻断时照常插入提案行（历史不可篡改）\"；§5.7.3 第 5–6 步先插入 `status: 'active'` 并设 `run.currentProposalId`，再算 fit；E2：\"提案照常插入（只追加），blocked\"；§5.15.1 由此得出 v2 $900 blocked、v3 $800。另一方：03 §3.9 \"被规则阻断的候选不插提案（turns.outcome.blockedCandidateKey）\"，§3.13.1 `insertProposal` 守卫\"候选在当前 RuleInput 下 passesChecks（调用方已判，这里断言，internal）\"；04 §4.3.4 \"不插入提案；turn 记 outcome: { blockedCandidateKey }\"；12 §12.18 \"全量 checkProposal 通过才 insertProposal\"；14 S8 \"不插提案、不消耗版本号\"，14 §15 Q5 也已点名这一冲突。",
+  "suggested_fix": "以 03/04 为准改写 05：P10 改为\"被阻断的候选不插提案，turn 记 `outcome.blockedCandidateKey`，不消耗版本号，provider 下一回合只得 `blocked`\"；§5.7.3 改为先 `checkProposal`，通过才 `insertProposal`；同步改 §5.8.2 S1、E2、§5.16 E19；§5.15.1 第 6–9 步改为\"O2 被阻断（无提案）→ 第 2 轮 v2 $800\"；§5.18 的\"v1–v3\"改为\"v1–v2\"。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-03",
+  "severity": "high",
+  "section": "10-agent-runtime-part2.md",
+  "description": "10 让 turn 从 running 回到 scheduled，并用 drainParked、deferredFnId、deferredUntil 表达等待。canon §1.3 的 turn 状态机没有 running → scheduled，04 也明确不需要这条迁移，用的是 waitingReason 与 beginFnId（turn 保持 running）。10 §10.24 却声称\"状态逐字采用\"，这句对照不属实。",
+  "evidence": "10 §10.4.5：\"不建 attempt：turn 保持 / 回到 `scheduled`，deferredUntil = …，deferredFnId = runAfter(…)\"；B3：\"回合留在 / 回到 scheduled，drainParked: true\"；§10.9 reconcile 有 `case 'scheduled': if (turn.deferredFnId …) … if (turn.drainParked …)`。04 §4.4：\"两次 attempt 之间 turn 保持 running，用 waitingReason: 'backoff' + beginFnId 表示等待；canon §1.3 没有 running → scheduled，本设计也不需要它\"。03 §3.8 turns 只有 `waitingReason`、`beginFnId` 两个字段；04 §4.15 Q8 已点名。",
+  "suggested_fix": "按 04 与 03 改写 10 的 §10.3、§10.4.5、§10.5.2 B3/B6、§10.9、§10.12.3：turn 不回退状态，等待时写 `waitingReason ∈ {backoff, spend_deferred, draining}` 并把 `beginFnId` 存为延迟调度的 id；删掉 `drainParked`、`deferredFnId`、`deferredUntil`。reconcile 的分支改为按 04 §4.3.5 判断 `waitingReason` 与 `beginFnId`。同时把 §10.24 中\"§1.3 状态逐字采用\"一行改为如实表述。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-04",
+  "severity": "high",
+  "section": "10-agent-runtime.md",
+  "description": "10 §10.3 列的\"运行时依赖字段\"与 03 定稿的 runs、turns、attempts、spendCounters、opsFlags、rawOutputs 字段大面积不一致，§10.5 至 §10.9 的代码也照这些字段名写。照 10 实现会写进 schema 里不存在的字段，validator 直接失败。",
+  "evidence": "runs：10 有 `extraRoundGranted`、`providerRejectLocked`、`startedByUserId`（可为 null）、`updatedAt` 和索引 `by_status_updatedAt`；03 对应的是 `roundsExtended`、`startedBy?` 和索引 `by_status`，没有 providerRejectLocked 与 updatedAt。turns：10 有 `deferredFnId`、`drainParked`、`failureCode`，03 是 `waitingReason`、`beginFnId`、`retryOfTurnId`。attempts：10 的 `dispatchFnId`、`stopDetailsCategory`、`priceTableVersion`、`lateResult`、`createdAt`、`reasonCode`+`errorCode`、`staleGuard`、`reservedDay`、`protocolVersion`、`retryNote`、`rationaleTruncated`，在 03 分别是 `actionFnId`、`stopCategory`、`priceTableAsOf`、`lateUsage`、`startedAt`，只有一个 `errorCode`，其余字段 03 没有（promptVersion 在 03 的 turns 上）。usageV：10 多了 `serviceTier`，`thinkingTokens` 可为 null。opsFlags：10 是 `key: 'draining', value, updatedAt`，并写 `opsFlags('modelVerifiedAt')`；03 是单行 `key: 'global', draining, changedAt, changedBy`。rawOutputs：10 为 ≤ 32 KB、保留 30 天；03 为 ≤ 64 KiB、prod 7 天，另有 `truncated` 与 `expiresAt`。",
+  "suggested_fix": "10 §10.3 不再自列字段，改为引用 03 §3.8 与 §3.12，并把 §10.5.2 B7、§10.6.2、§10.7、§10.8、§10.12 代码中的字段名换成 03 的名字（actionFnId、stopCategory、lateUsage、priceTableAsOf、startedAt、waitingReason、beginFnId、roundsExtended）。10 确实需要、03 没有的字段，在 03 §3.8 补登记并说明理由，例如 `reservedDay`、`retryNote`、`staleGuard`、`httpStatus`、`retryAfterMs`、`protocolVersion`、`rationaleTruncated`、`spendCounters.attempts`、`unknownCostAttempts`。`modelVerifiedAt` 不放进 opsFlags，改为 opsLog 或另建运维表。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-05",
+  "severity": "high",
+  "section": "10-agent-runtime-part2.md",
+  "description": "`attempts.origin` 的枚举值三处不同：03、12 用 turn_start、auto_retry、retry_turn；05、10 用 first、auto_retry、user_retry。这是 validator 的字面量，不统一就无法实现。",
+  "evidence": "03 §3.8 attempts：`origin: v.union(v.literal(\"turn_start\"), v.literal(\"auto_retry\"), v.literal(\"retry_turn\"))`；12 §12.18 originV \"以 03 §3.8 为准（turn_start / auto_retry / retry_turn；10 写作 first / user_retry，见 §12.25 Q11）\"，12 §12.13 也写 `beginAttempt(origin: retry_turn)`。10 §10.5.1 `origin: 'first' | 'auto_retry' | 'user_retry'`；10 §10.4.4 `beginAttempt(origin: 'user_retry')`；10 §10.9 `{ origin: 'first' … }`；05 §5.11.4 retry_turn 写 \"(origin: 'user_retry')\"。",
+  "suggested_fix": "以 03 为准：10 §10.3、§10.4.4、§10.5.1 BeginOpts、§10.9、§10.10 \"链\"的定义里的 `first` 改 `turn_start`、`user_retry` 改 `retry_turn`；05 §5.11.4 同步改。12 Q11 关闭。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-06",
+  "severity": "high",
+  "section": "05-protocol-part4.md",
+  "description": "表示\"每 run 可额外延长一轮\"的字段有三个名字，而且两种语义互斥：03/04/12 是 `roundsExtended` 加 `maxRounds++`，05/08/10 是 `extraRoundGranted` 加派生的 `effectiveMaxRounds = maxRounds + 1`，06 是 `keepAsIsUsed`。若两种同时实现，轮次上限会被算两遍或一次都不算。",
+  "evidence": "03 §3.8 runs：`maxRounds` 注释\"keep_as_is 延长一次时 +1\"，`roundsExtended: v.boolean()`；04 R14：\"延长一轮（maxRounds++、roundsExtended = true）\"；12 §12.14 写 `roundsExtended`。05 §5.8.1：\"effectiveMaxRounds = run.maxRounds + (run.extraRoundGranted ? 1 : 0)\"；05 §5.8.7 写 `runs.extraRoundGranted`；08 §8.5.4 \"默认 3，含 extraRoundGranted\"；10 §10.3 runs 写 `extraRoundGranted`。06 part7 RelaxCtx：`run: { …; keepAsIsUsed: boolean }`。",
+  "suggested_fix": "统一为 03 的 `roundsExtended`，语义是\"延长时 `maxRounds += 1`\"。05 §5.8.1、§5.8.3 不再派生 effectiveMaxRounds，`resolveRound` 的入参改为 `maxRounds`；同步改 05 §5.8.7、§5.11.4，08 §8.5.4，10 §10.3，06 part7 RelaxCtx 中的 `keepAsIsUsed`。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-13",
+  "severity": "medium",
+  "section": "05-protocol-part5.md",
+  "description": "05 与 14、08 的场景词表互相冲突（05 声明这些取值由 14 定稿）：clarify 话题表、reasonKey 枚举、stub 决策规则各不相同。05 自己的 schema 示例还与 05 §5.9.1 矛盾。",
+  "evidence": "话题表：05 §5.9.1 是 required_items / deadline / tradeoff_priority / budget_cap；14 §3 是 item_required / deadline_value / item_scope / budget_room，toRole 与可问角色也不同。05 §5.4.3 的示例写 \"clarify: topicKey enum [budget_cap, option_fits_constraints]\"，而 05 §5.9.1 说\"本设计对所有角色都不提供 option_fits_constraints\"。reasonKey：05 §5.4.1 是 customer scope_insufficient / delivery_too_late / price_poor_value / other，finance price_poor_value / other；14 §3 是 missing_required_item / after_deadline / preference_not_met / over_budget / price_too_high / terms_not_acceptable / needs_earlier_delivery / over_our_limit …；08 V5 与 §8.5.3 用的是 `scope_mismatch`。stub：05 §5.14 provider 选\"条目数最多 → 金额最高\"，拒绝理由用 scope_insufficient / price_poor_value；14 §6.3 S-D8 选\"愿望清单重合最多 → 金额最低\"，拒绝理由用 preference_not_met / over_budget。",
+  "suggested_fix": "以 14（场景插件定稿处）为准：05 §5.9.1 的话题表与 §5.4.1 的 reasonKeys 注释改为引用 14 §3 的取值；05 §5.4.3 示例删去 option_fits_constraints，topicKey 改为 [budget_room]；05 §5.14 的 StubDriver 规则改为引用 14 §6.3 `stubDecide`，或直接照抄。08 §8.5.3 与 V5 的 `scope_mismatch` 改为 14 表内的人类 reasonKey，例如 `scope_insufficient`。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-16",
+  "severity": "medium",
+  "section": "05-protocol-part3.md",
+  "description": "provider 候选快照的剔除范围偏离 canon D10，05 §5.20 却声称符合 D10。canon、03、07 只剔除\"本 run 已被阻断\"的候选；05 与 14 剔除\"本 run 已提出过的全部候选\"加上被人拒绝的候选，范围更大，而且没有登记为 canon 偏离。",
+  "evidence": "canon D10：\"provider 快照剔除本 run 内已被阻断的 candidateKey\"；03 §3.8 说本 run 已阻断的 candidateKey 集合由 turns 与 proposals 现算；07 §7.14.2：\"剔除本 run 已被阻断的 candidateKey\"。05 §5.7.2：\"excludedCandidateKeys(run) = 本 run 内已提出过的（含被阻断的）∪ 被人拒绝的\"；05 §5.6.2 的 action.repeats_blocked 条件同样写\"已阻断 / 已提出 / 被人拒绝\"；14 S8 写\"剔除本 run 已提出的 $900\"。05 §5.20 D10 一行写的是\"剔除已阻断\"。",
+  "suggested_fix": "二选一。若保留 05 的做法：把\"已提出 ∪ 被拒\"写进 canon_objections，并同步改 03 §3.8、07 §7.14.2 的措辞和 06 的 `excludedCandidateKeys` 定义，05 §5.20 如实写成\"偏离 D10：剔除已提出与被拒\"。若照 canon：05 §5.7.2 与 §5.6.2 改为\"本 run 已阻断 ∪ 被人拒绝（D02/A5）\"，14 S8 相应修改。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-19",
+  "severity": "medium",
+  "section": "10-agent-runtime-part3.md",
+  "description": "10 使用的 `run.endedReason`、事件名、运维函数名和模型调用接缝名都不在 03/12/canon 的规范清单里。",
+  "evidence": "10 §10.9：`supersedeAndRestart(…, { endedReason: 'constraints_drift' })`，03 的 endedReason 枚举没有 constraints_drift，04 §4.3.5 修复路径用的是 `disposeCurrentRun(…, 'constraints_changed')`。事件：10 写 `agent_turn_started`、`agents_deferred`、`agent_result_discarded`，03 §3.11.1 是 `turn_scheduled`、`turn_rejected_stale`，没有 deferred 事件。运维：10 写 `ops.sweepStuckRuns`（每 5 分钟）与 `ops.liveAttemptCount`，canon D17、03、04、12 用 `ops.livenessSweep` 与 `ops.activeAttemptCount`（04 写每 15 分钟，12 写每 5 分钟）；INV-70 另写 `runs.negotiatingWithoutAttempt`（每小时）。接缝：10 §10.14.1 与 §10.18.1 写 `callNegotiationModel`，并以它作为 vi.mock 目标；canon part7（16 的 must_absorb）、INV-42、11、12 §12.18 都写 `callModel`。",
+  "suggested_fix": "10 统一改用：`endedReason: 'constraints_changed'`（漂移修复经 04 的 `disposeCurrentRun` + `react`，并 `opsLog('constraints_drift')`）；事件 `turn_scheduled` / `turn_rejected_stale`；如需延期事件，先在 03 §3.11.1 登记 `agents_deferred`。运维函数名统一为 `ops.livenessSweep` 与 `ops.activeAttemptCount`，频率统一为每 5 分钟（同步改 04 §4.3.5 的\"15 分钟\"和 INV-70）。接缝函数名统一为 `callModel`（`callNegotiationModel` 可作为它的内部实现）。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-21",
+  "severity": "medium",
+  "section": "05-protocol-part6.md",
+  "description": "`encodeBlock` 在 05 与 07 中是两种互不兼容的转义方案：05 用 JSON 转义，07 用 HTML 实体。07 把唯一实现指派给 10，但 10 根本没有定义它。",
+  "evidence": "05 §5.13.2：\"encodeBlock(value) = JSON.stringify(value).replace(/</g, '\\\\u003c')…\"；07 §7.14.3：\"stableStringify 后把 &、<、> 替换为 &amp;、&lt;、&gt; …单一实现归 10（core/engine/encodeBlock.ts）\"；10 全文没有 encodeBlock。",
+  "suggested_fix": "选定一种转义并把实现放在 `core/engine/encodeBlock.ts`（推荐 05 的 < / > / &，块内仍是合法 JSON）。07 §7.14.3 改为引用 05 §5.13.2；10 §10.14 或 §10.18 登记该文件与 `wrapUntrusted` 的调用顺序。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-22",
+  "severity": "medium",
+  "section": "05-protocol-part5.md",
+  "description": "05 的 humanRequests 字段定义与回答守卫和 03/04/12 不一致：缺少 `blocked` 效果，回答陈旧请求时用的错误码也不同。00-invariants 又是另一套错误码。",
+  "evidence": "05 §5.11.1 requestEffectV 只有 8 种效果，没有 blocked；03 §3.9 写\"字段按 05 §5.11.1 定稿\"，却含 `v.object({ type: v.literal(\"blocked\") })`；12 §12.14 也含 blocked。05 §5.11.3：\"request.constraintsVersion === room.constraintsVersion（否则 version.stale_constraints）…状态不符 run.invalid_state\"。04 §4.8.2 与 12 §12.14 用 `auth.role_forbidden` / `already_answered` / `request.not_open` / `run.invalid_state` / `request.option_unknown`（07 §7.7 同）。INV-34 写\"否则 run.invalid_state\"。",
+  "suggested_fix": "05 §5.11.1 的 requestEffectV 加上 `{ type: 'blocked' }`，并注明\"不可回答，只作说明\"。05 §5.11.3 的守卫与错误码改为照抄 12 §12.14：删去 version.stale_constraints，旧请求因 bump 已是 superseded，返回 request.not_open。INV-34 的错误码同样按 12 改写。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-30",
+  "severity": "medium",
+  "section": "10-agent-runtime-part3.md",
+  "description": "10 的文件布局与 canon 函数路径不一致；10 还声称 rooms 只在少数时候被写，这与 03、12 的房间写锁 M-ROOM 冲突；另外 10 用到了 03 中不存在的 rooms 字段。",
+  "evidence": "10 §10.6 把注册函数放在 `convex/agents/runAttempt.ts`、`convex/agents/context.ts`、`convex/agents/watchdog.ts`，生成的路径是 `agents/runAttempt:runAttempt`，不是 canon §1.6 的 `agents.runAttempt`（12 §12.25 Q15）。10 §10.13 第 3 条：\"rooms 只在建 run、插提案、约束变更时写\"；03 SC-05、12 B13、11 §11.2 规定每个改变房间业务状态的 mutation 都经 openRoomTx 写 `rooms.writeSeq`，而且 RoomTx 在类型层强制房间作用域表（含 turns、attempts）的写入。10 §10.18.2 写 `rooms.testFaultPlan`，03 rooms 表没有这个字段。",
+  "suggested_fix": "10 按 12 Q15 与 11 §11.3 改布局：注册函数集中在 `convex/agents.ts`，实现放在 `convex/model/agents/`。§10.13 第 3 条改为\"按 M-ROOM，turns.complete / fail / watchdog / beginAttempt 都经 openRoomTx，同房间写入串行，冲突面是 rooms.writeSeq\"。故障计划改存独立的 dev-only 表，或在 03 rooms 中登记 `testFaultPlan?` 并说明只在非生产使用。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-32",
+  "severity": "medium",
+  "section": "05-protocol-part3.md",
+  "description": "05 在 turns.complete 内用 `todayInTimeZone(Date.now(), room.timeZone)` 物化交付日。03、04、08、09、12、14 规定规则检查与物化一律读 `room.localDate`，否则在本地午夜到 cron 推进之间，会出现与界面结论不一致的窗口（08 K27、09 §9.6.7 讨论过这一点）。",
+  "evidence": "05 §5.7.3 第 2 步：\"today = todayInTimeZone(Date.now(), room.timeZone)（mutation 权威计算，canon D22）\"。03 §3.9：\"deliveryDate = room.localDate + 有效工期\"；04 P1：\"deliveryDate = room.localDate + max(leadDays)\"；12 §12.2 第 8 条：\"规则检查与物化一律读 rooms.localDate（09 §9.6.7）\"；12 §12.18：\"交付日按 room.localDate 物化\"；14 §6.2 也用 localDate。",
+  "suggested_fix": "05 §5.7.3 第 2 步改为 `today = room.localDate`（09 §9.6.7），第 4 步\"回合跨过午夜\"的说明改为\"以 localDate 为准，cron 推进后才可能变化\"。canon D22 中\"mutation 用 todayInTimeZone 权威计算\"一句，请在 canon_objections 里澄清为\"只有推进 localDate 的 cron 用它\"（08 O5）。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "completeness-15",
+  "severity": "medium",
+  "section": "05-protocol-part5.md §5.9.1、05-part2 §5.4.1/§5.4.3（对照 14-scenario-scope-change.md §3、03-schema-part3.md customerSoftV、16-testing-part4.md TC-RUN-19、16-part7 E-CLARIFY）",
+  "description": "clarify 话题表与 reasonKey 表的取值在 05、14、16 三处不同，05 还引用了一个任何 schema 都没有的软字段 tradeoffPriority；16 的用例按 05 的键写，14 才是场景定稿。",
+  "evidence": "05 §5.9.1：topicKey required_items / deadline / tradeoff_priority（field 'tradeoffPriority（软字段枚举 scope_first / date_first / cost_first）'）/ budget_cap；14 §3：item_required / deadline_value / item_scope / budget_room。03 customerSoftV 只有 preferredItemKeys / preferredDate / notes，无 tradeoffPriority；14 S-D4 字段最小集亦无。05 §5.4.1 示例 reasonKeys 'scope_insufficient / delivery_too_late / price_poor_value / other'，14 §3 为 missing_required_item / after_deadline / preference_not_met / over_budget / price_too_high / terms_not_acceptable / scope_insufficient / needs_earlier_delivery / other / over_our_limit。16 TC-RUN-19 用 'topicKey: deadline'，E-CLARIFY 同。",
+  "suggested_fix": "05 §5.9.1 表改为引用 14 §3 的键（删除 tradeoff_priority 或在 03/14 增加该软字段并定义披露类）；05 §5.4.1/§5.4.3 示例改用 14 的 reasonKeys；16 TC-RUN-19/E-CLARIFY 改为 deadline_value。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-19",
+  "severity": "medium",
+  "section": "05-protocol-part6.md §5.13.1/§5.13.2 与 07-permissions-privacy-part7.md §7.14.3（对照 10-agent-runtime、11-architecture.md §11.3）",
+  "description": "代理上下文的分块布局与定界转义，05 与 07 各写一套且互不相同；07 说 encodeBlock 的单一实现归 10，但 10 全章没有 encodeBlock，11 把 wrapUntrusted 放在 core/engine/projection/。实现 renderPrompt 时没有唯一规范，金丝雀测试也不知按哪种转义扫描。",
+  "evidence": "05 §5.13.2：'encodeBlock(value) = JSON.stringify(value).replace(/</g, \"\\\\u003c\").replace(/>/g, \"\\\\u003e\").replace(/&/g, \"\\\\u0026\")'；块结构 A（principal）/ B（room_state+candidates+untrusted_data+shared_facts+clarify_answers）。07 §7.14.3：'所有块经 encodeBlock(value)：stableStringify 后把 &、<、> 替换为 &amp;、&lt;、&gt;…单一实现归 10（core/engine/encodeBlock.ts）'；块结构三个 user 块（principal_brief / room_state / turn）。10 全文无 encodeBlock、wrapUntrusted 定义；11 §11.3 把 wrapUntrusted 放在 core/engine/projection/。",
+  "suggested_fix": "以 05 §5.13 为提示词布局唯一规范，07 §7.14.3 改为引用 05 并删除自己的布局表；转义统一为 JSON \\\\uXXXX（与 JSON 编码一致），05 §5.13.2 注明实现位于 core/engine/projection/encodeBlock.ts（11 §11.3 增列）；16 TC-INJ-01 按同一转义断言。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "invariants-02",
+  "severity": "high",
+  "section": "10-agent-runtime-part3.md",
+  "description": "G3 守卫可能卡死。10 规定 G1–G3 不符时只把 attempt 标 stale，回合保持 running；reconcile 的 running 分支遇到终态 attempt 时调用 applyRetryDecision，而 decideRetry 对 stale 的规定是\"只 runs.reconcile\"，结果是空操作或互相递归。04 里 A1 在回合快照不符时\"否则 reconcile\"，reconcile 最后一步又调 beginAttemptTx，同样可能无限递归；04 的 G3 行写的是\"同上\"，没有说清回合是否置 stale。触发条件是回合快照与房间 cv 不一致、但 run 的 cv 与房间一致（G3 本来就是为这种纵深场景设的）。此时提交事务回滚、看门狗也失败，attempt 永远停在 running，巡检判为\"有在途\"而跳过，run 永久停在 negotiating。",
+  "evidence": "10 §10.7.2 第 3 步：\"G1 … G2 … G3 … | attempt → `stale`（…`staleGuard`）、usage 照记、结算；事件 …；`runs.reconcile(run._id)`\"（没有回合 → stale）；§10.9：\"case 'running': … if (a.status === 'running') return 'in_flight'; return applyRetryDecision(ctx, turn, a);\"；§10.10.2：\"`stale`（任何守卫） | — | — | 只 `runs.reconcile`\"；04 §4.5.1 A1：\"`turn.constraintsVersion === room.constraintsVersion`（否则 reconcile）\"；04 §4.3.5 末行 `return beginAttemptTx(ctx, turn, { why })`；04 §4.5.2 的 G3 行只写\"同上\"。",
+  "suggested_fix": "(1) 10 §10.7.2 第 3 步与 04 §4.5.2：G2、G3 失败且 attempt 所属回合非终态时，同事务 `setStatus(turn, running|scheduled → stale)`，并把 G3 行写明，不再用\"同上\"。(2) 10 §10.9 与 04 §4.3.5：`turn.status === 'running'` 且当前 attempt 为 `stale` 时，按 stale 回合处理，走 `replaceTurnTx`。(3) decideRetry 为 stale 增加结果 `{ kind: 'replace_turn' }`。(4) 04 §4.5.1 A1 与 10 B2：回合快照不符时只把回合置 stale 并返回 `stale`，beginAttemptTx 内禁止再调 reconcile，由外层调用者调用一次。(5) 增加 SM-05b / RT-08b：只有回合 cv 漂移、run cv 一致时，断言建出替代回合、无递归、run 不停在 negotiating。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-03",
+  "severity": "high",
+  "section": "05-protocol.md",
+  "description": "被规则阻断的 provider 候选要不要插入提案行，05 与 03/04/06/08/09/14 互相矛盾。05 规定照常插入，按 P1 它会成为 active 的 currentProposalId。这会破坏 INV-SM-05/06（active 提案在插入时都通过检查），会让 R2 / rounds_exhausted 拿一个从未被评估过、当时被阻断的提案去沿用或送审，也会让版本号与全部走查（v2 被阻断 / v3 $800 对比 v2 $800）以及 16 的期望错位。",
+  "evidence": "05 P10：\"provider 的提案被 `checkProposal` 阻断时照常插入提案行（历史不可篡改）\"；05 E2：\"提案照常插入（只追加），blocked\"；05 §5.15.1 第 6 步：\"stub 选 O2 → v2 $900 → blocked\"；而 04 §4.3.4：\"**不插入提案**；turn 记 `outcome: { blockedCandidateKey }`\"；03 part7：\"**被规则阻断的候选不插提案**\"；06 §15 Q6 与 14 part7 第 5 条都写了\"合稿时需统一 05 的编号\"。",
+  "suggested_fix": "按 03/04 统一，改写 05：P10 改为\"阻断的候选不插提案、不消耗版本号，`turns.outcome.blockedCandidateKey` 记录，历史由 turns 承担\"，并把\"阻断的提案不入库（历史缺口）\"从否决栏删去；E2 同步修改；§5.6.1 第 15 步与 §5.7.3 第 5–6 步改为\"`checkProposal` 通过才 `insertProposal`\"；§5.15.1 第 6–9 步改为 v2 = $800（第 2 轮），删掉\"版本号是 v3\"的说明。00-invariants INV-55 补一句\"被规则阻断的候选不插提案\"。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-07",
+  "severity": "high",
+  "section": "10-agent-runtime-part2.md",
+  "description": "回合等待与退避的机制、字段，10 与 03/04 不一致。04/03 让回合在两次 attempt 之间保持 running，用 `waitingReason` 加 `beginFnId`，退避靠调度一次 `turns.beginAttempt`。10 则立即建 attempt、延迟派发，用 `deferredFnId` / `drainParked`，并要求回合\"保持 / 回到 scheduled\"——这是 canon §1.3 与 04 迁移表都不存在的 running → scheduled，setStatus 会抛 internal：重试回合遇到日美元上限或排空时，整个 turns.fail 回滚，最后由看门狗兜底成 agent_failed。10 的 reconcile 读的字段在 03 中不存在。另外 `extraRoundGranted`（05/10）、`roundsExtended`（03/04）、`keepAsIsUsed`（06/12）三名并存；`providerRejectLocked` 在 03 没有落点；节流计数 10 写 `.take(7)` 原始事件，03 写按 distinct commitTs 计数且过滤类型——按 10 实现，一次 setCap 产生的 5 条事件就会耗掉大半配额。",
+  "evidence": "04 §4.4：\"两次 attempt 之间 turn 保持 `running`，用 `waitingReason: \\\"backoff\\\"` + `beginFnId` … canon §1.3 没有 `running → scheduled`\"；10 §10.4.5：\"turn 保持 / 回到 `scheduled`，… `deferredFnId = runAfter(…, turns.beginAttempt, …)`\"；10 B3：\"回合留在 / 回到 `scheduled`，`drainParked: true`\"；10 §10.9：`turn.deferredFnId && await isPending(...)`、`turn.drainParked`；03 part5 的 turns 只有 `waitingReason` / `beginFnId`；10 §10.12.1：\"按 `events.by_room_actor` … `.take(7)` 计数\"，对比 03 §3.11.3：\"按 **distinct `commitTs`** 计数\"；04 §4.15 Q8 已列出这些分歧。",
+  "suggested_fix": "以 03/04 为准改写 10：§10.3 的字段改为 `waitingReason` / `beginFnId` / `outcome` / `retryOfTurnId` / `roundsExtended`；§10.4.5 与 B3 / B6 不改回合状态（scheduled 留在 scheduled，running 留在 running，只写 `waitingReason`）；§10.9 的 reconcile 替换为 04 §4.3.5 的分支；自动重试的退避在 04 与 10 之间二选一，写进 04 §4.5.1；§10.12.1 的节流计数引用 03 §3.11.3；05/06/12 的 `extraRoundGranted` / `keepAsIsUsed` 改名为 `roundsExtended`；03 §3.8 的\"不存的计数\"列出 `providerRejectLocked` 的派生方式（本 run 是否已有 provider 的 agent_escalated 请求以 keep_as_is 被回答）；统一 `actionFnId` / `dispatchFnId`。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-11",
+  "severity": "medium",
+  "section": "05-protocol-part3.md",
+  "description": "提案物化时\"今天\"取自哪里不一致：05 用 todayInTimeZone(Date.now())，04/06/08/09/12 用 room.localDate。另外 09 接受午夜后最多约 1 小时的滞后，这段时间插入的提案按前一天物化交付日：交付日比 provider 确认的工期早一天，`by_deadline` 可能误判通过；cron 推进后比较的是 in_past 结论，不会翻转，所以这份短了一天工期的条款会被批准并执行。",
+  "evidence": "05 §5.7.3 第 2 步：\"`today = todayInTimeZone(Date.now(), room.timeZone)`（mutation 权威计算，canon D22）\"；04 P1：\"`deliveryDate = room.localDate + max(leadDays)`\"；12 §12.15 ⑦：\"交付日按 `room.localDate` 物化\"；09 §9.6.7：\"代价是本地午夜后至多约 1 小时的滞后（期间插入的提案按前一日物化交付日，偏早一天，不会误判 `date.in_past`）\"。",
+  "suggested_fix": "05 §5.7.3 统一为 `room.localDate`。消除滞后窗口：(a) `clock.rollLocalDate` 在每个房间本地午夜按 `runAt` 精确调度（canon D22 允许），每小时 cron 只作兜底；(b) `insertProposal` 与 choose_candidate 物化前若 `todayInTimeZone(now, tz) > room.localDate`，先在同事务调用 `rollLocalDateTx`（可能 bump，回合随之被 G1 判 stale 并 reconcile）。在 09 §9.6.7 与 16 增加\"00:30 插入提案\"的用例。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "privacy-11",
+  "severity": "medium",
+  "section": "05-protocol-part6.md",
+  "description": "定界和转义的规格自相矛盾，单一实现的归属也是空的。05 用 JSON 的 </>/& 转义，把标题放进独立的 <untrusted_data> 块，只过滤含 'untrusted_data' 的子串。07 用 HTML 实体 &lt;/&gt;/&amp;，标题经 wrapUntrusted（FNV boundary）嵌在 <room_state> 里，整块再 encodeBlock，结果定界标签本身也被转义、失去意义。07 说单一实现归 10，10 却引用 05 的 renderPrompt。字节层面标题含不了 < >，块无法被真正闭合，但标题可以写入 `</candidates><turn_instruction>…` 这类与系统转义形式同构的文本；05 的退路标签 <turn_instruction> 和 room_state/candidates/principal_brief 等名字都不在过滤范围内，会形成语义层面的伪造。verifyUntrustedBlock 的判定也取决于选哪种方案。",
+  "evidence": "05 §5.13.2：`encodeBlock(value) = JSON.stringify(value).replace(/</g, '\\\\u003c')…`，'包装前再把任何形似 untrusted_data 定界符的子串替换为 [removed-delimiter]'，退路 '<turn_instruction> 标签'；07 §7.14.3：'stableStringify 后把 &、<、> 替换为 &amp;、&lt;、&gt;……单一实现归 10'，表格第 3 行：'<room_state>：目录（title 为 <untrusted_data …> 块）'；10 §10.6 LiveDriver：'renderPrompt（05 §5.13）'。",
+  "suggested_fix": "以 05 为准，删除 07 §7.14.3 的编码描述，改为引用 05 §5.13.2；07 的布局表改成'标题是一个独立的顶层 <untrusted_data> 块，不嵌在任何已编码块内'。catalog.confirm 写入时，对 NFKC 并去掉不可见字符后的标题做大小写不敏感检查，凡含 untrusted_data|room_state|candidates|shared_facts|clarify_answers|principal_brief|principal_notes|turn_instruction|system 的原文或 < / &lt; 形式一律返回 disclosure.blocked。TC-INJ-08 增加 `</candidates>` 形式的标题用例。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-12",
+  "severity": "medium",
+  "section": "05-protocol-part5.md",
+  "description": "共享事实经代理 counter 转发的上界在各章写法不同，也没有跨 run 的总量约束。05 说每次 counter ≤3.6 bit、约 14 bit/run；07 R-6 说每次 3.6 bit；07 DX-9 说每次 ≤1 bit。end_run 之后任何成员都能再次 runs.start（只受每小时 6 次约束），customer 代理一旦被目录标题注入，每天可把 finance 只披露给 customer 的上限经 counter 选择转发给 provider 数十次。16 只测了每 run 4 次的计数（CE-171 → TC-RUN-18），没有测转发内容和总量。",
+  "evidence": "05 §5.12：'counter 是 ≤12 选 1（≤ 3.6 bit），每 run ≤ 4 次……泄露上界约 14 bit / run'；07 R-6：'每次 ≤ log₂(12) ≈ 3.6 bit'；07 DX-9：'≤ 1 bit / counter（传递性）'；05 §5.11.4 end_run：'任何人可再 runs.start（cause restart）'；16 §16.11.3 CE-171 → TC-RUN-18。",
+  "suggested_fix": "07 DX-9 和 R-1 统一为 '≤ log₂(n) bit/counter、每 run ≤ 4 次、每房间每天 ≤ K 个 run'，并在 12 §12.13 为 runs.start（含 react 自动开局）增加每房间每 24 小时的 run 数上限（例如 6）。05 §5.12 引用该数值。16 新增 L1 用例：被转发 counter 进入 provider 上下文的只有 optionKey/candidateKey；同一房间 24 小时内第 7 个 run 被拒。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-13",
+  "severity": "low",
+  "section": "05-protocol-part2.md",
+  "description": "clarify 话题表存在两套，05 的示例 schema 还给 customer 列出了 `option_fits_constraints`，与 05 §5.9.1 '所有角色都不提供'相矛盾。照示例实现，customer 就有了逐候选的预算探针。14 的话题键（item_required/deadline_value/item_scope/budget_room，部分由代码代答）与 05（required_items/deadline/tradeoff_priority/budget_cap，v1 全部问人）也不一致。TC-PRIV-20 只检查 provider 的 schema。",
+  "evidence": "05 §5.4.3 示例：'clarify: toRole enum [finance], topicKey enum [budget_cap, option_fits_constraints]'；05 §5.9.1：'本设计对所有角色都不提供'；14 §3 话题表的'可代答的来源'列；16 TC-PRIV-20：'provider schema 无 option_fits_constraints'。",
+  "suggested_fix": "删除 05 §5.4.3 示例中的 option_fits_constraints；话题表以 14 为唯一来源，05 §5.9.1 改为引用 14。代码代答只允许读查看者已获披露的事实。TC-PRIV-20 改为遍历全部 ≤152 个 schema 变体，断言任何角色的 topicKey 枚举都不含 fit 类话题。",
+  "reviewer": "隐私预言机与泄露路径"
+ },
+ {
+  "id": "privacy-17",
+  "severity": "low",
+  "section": "05-protocol.md",
+  "description": "被规则阻断的 provider 候选是否插入提案，05 与 03/04/06/14 的说法相反，两种做法给买方的信息量不同。按 05，被阻断的 vN 带完整条款和金额对全员可见，customer 得到一个已知金额点上的掩码失败，精确到阈值；按 03/06，customer 只能从时间线看到'有一个选项被阻断'，不知道金额。DX-1 没有说明适用哪种，16 的非干扰前置条件随之不确定。",
+  "evidence": "05 P10：'provider 的提案被 checkProposal 阻断时照常插入提案行'；05 §5.15.1 第 6 步：'v2 $900 → blocked'；06 §9.2 turns.complete：'不通过 → 不插提案、不消耗版本号'；03 §3.9：'被规则阻断的候选不插提案'；14 S8：'买方时间线 Provider agent's option was blocked by the checks.'；07 DX-1：'当前提案 fit……room'。",
+  "suggested_fix": "以 03/04/06 为准，修改 05 P10、§5.15 的版本编号和 E2。07 DX-1 补充：被阻断的候选不成为提案，买方只得到'本轮有一个 provider 选项被阻断'，不含条款与金额，provider 只得到 blocked。16 的 declassified() 按此定义。",
+  "reviewer": "隐私预言机与泄露路径"
+ }
+]

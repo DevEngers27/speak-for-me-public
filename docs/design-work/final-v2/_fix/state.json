@@ -1,0 +1,146 @@
+[
+ {
+  "id": "names-02",
+  "severity": "high",
+  "section": "04-state-machines-part2.md",
+  "description": "run 的 attempt 上限或美元上限触发后开哪种人工请求，各章写法不同：04、00-invariants 写 `agent_failed`（只有 end_run），05、10 写 `rounds_exhausted`（cause 为 call_limit）。12 Q12 仍未定。两种写法的请求 kind、收件人、选项与 questionKey 都不同，状态机、表驱动测试和界面文案都得二选一。",
+  "evidence": "04 R6：\"run 调用 / 美元上限 → agent_failed（只含 end_run）\"；04 U5、SM-21 同此。INV-72 ②：\"超限不调度、转 needs_input(agent_failed)\"；CE-135 同此。05 §5.8.5 把\"run 的 attempt 上限或美元上限用尽（cause: 'call_limit' | 'spend_limit'）\"列入轮次用尽；05 §5.11.2 写\"failureCode = run.call_limit 的除外，走 §5.8.5\"。10 B4 写\"needs_input + rounds_exhausted 请求（questionKey 带 call_limit）\"，F16、RT-05 同此。12 §12.25 Q12：\"本章不定\"。",
+  "suggested_fix": "统一为 05/10 的写法：上限触发时开 customer 的 `rounds_exhausted` 请求，questionKey 用 `request.rounds_exhausted.call_limit` / `.spend_limit`，选项为 choose_candidate + end_run，不提供 keep_as_is。据此改 04 R6、U4、U5、SM-21、4.8.3 兜底段，00-invariants INV-72 ②、CE-135，12 §12.18 与 Q12。如果反过来采用 04 的写法，就同步改 05 §5.8.5、§5.11.2 与 10 B4、B5、F16、F17、RT-05。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-15",
+  "severity": "medium",
+  "section": "04-state-machines-part2.md",
+  "description": "04 R10 规定人拒绝后，新一轮 provider 回合的反馈包含 reasonKey；05 §5.8.6/§5.12 与 08 A5/A13 都规定任何他方代理都拿不到 reasonKey。08 O14 已点名，04 尚未改。",
+  "evidence": "04 R10：\"新建 provider propose turn（反馈 = 被拒版本 + reasonKey，…）\"。05 §5.8.6：\"provider 只见 'v3 rejected'…不含 reasonKey\"；08 A13：\"任何他方代理都拿不到人拒绝的 reasonKey\"；08 §8.13 O14：\"建议回改 04 R10\"。",
+  "suggested_fix": "04 R10 的同事务副作用改为\"新建 provider propose turn（反馈只有 'v{n} rejected'，买方代理另得拒绝者角色；不含 reasonKey 与 note；被拒 candidateKey 进入本 run 阻断集）\"。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-27",
+  "severity": "medium",
+  "section": "09-constraint-changes-part4.md",
+  "description": "09 主走查第 9 步让 customer 看到 `budget.over`（不带参数）。按 07 §7.11 的掩码规则和 14 §8.4，customer 只共享了 capCents、拿不到已承诺额时，应看到折叠后的 `private.constraint_unmet`。",
+  "evidence": "09 §9.8.2 第 9 步：\"customer：v1 Blocked budget.over（无 overByCents：customer 不知已承诺额）\"。07 §7.11 示例：\"customer（fixture 只获共享 capCents，算不出 headroom）见 private.constraint_unmet\"；14 §8.4：budget.over 对 customer 写\"开 headroomCents：… 否则折叠为 private.constraint_unmet\"；14 S7：customer 的 v1 卡显示 \"A constraint private to another participant is not met.\"",
+  "suggested_fix": "09 §9.8.2 第 9 步改为\"customer：v1 Blocked，检查清单只有 `private.constraint_unmet`（budget.over 的输入含 finance 未共享的已承诺额）\"。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-31",
+  "severity": "medium",
+  "section": "09-constraint-changes-part3.md",
+  "description": "09 用的写入 helper 名、事件写入签名和 catalog.confirm 参数名与 03、12 不一致；09 §9.14 Q9 还在引用 12 的旧形状。",
+  "evidence": "09 §9.6.1、9.6.6、9.8.2 写 `appendBriefVersion`，03 §3.13.1 与 12 §12.8 写 `insertBriefVersion`。09 §9.4 `bump` 直接调 `ctx.db.insert(\"constraintRevisions\")`、`ctx.db.patch`，并写 `events.append(ctx, room._id, payload, { restrictedRef })`；03 §3.3.2 规定门面外禁止 patch，事件经 `appendEvents(tx, evs[])`。09 §9.6.3 的参数是 `items: {…}[]`，12 §12.12 是 `rows`；09 Q9 说\"12 §12.12 写的是单条 item\"，但 12 现稿已是批量 rows。09 §9.6.2 写\"requiredItemKeys ≤ 20 项\"，03、12、14 都是 ≤ 12。",
+  "suggested_fix": "09 把 appendBriefVersion 统一改为 insertBriefVersion；§9.4 的代码改为经 RoomTx（`tx.insert` / `tx.patch`）与 `appendEvents(tx, [{ payload, restrictedRef }])`；§9.6.3 参数改名 `rows`，删去 Q9 的过时陈述；§9.6.2 的上限改为 ≤ 12。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "names-35",
+  "severity": "medium",
+  "section": "04-state-machines-part5.md",
+  "description": "04 §4.10 的派生阶段名与 01、13 不一致，04 却声称\"阶段名与 01 part4 X6、13 的 derivedPhaseV 一致\"。",
+  "evidence": "04 §4.10 `Phase = \"setup_members\" | \"setup_inputs\" | \"negotiating\" | \"needs_input\" | \"awaiting_approval\" | \"no_agreement\" | \"canceled\" | \"executed\" | \"closed\"`（9 个）。01 part4 第 36 行：\"04 定义：setup{gaps} / negotiating / needs_input{you, waitingOn?} / awaiting_approval{pendingRoles} / stopped{reason} / executed / closed\"；13 part3、part4 同样用 `setup{gaps}` 与 `stopped{reason: canceled | ended_no_agreement}`。",
+  "suggested_fix": "二者择一并改齐：要么 04 §4.10 改为 `setup{gaps}` 与 `stopped{reason}` 的 7 阶段形状（setup_members / setup_inputs 用 gaps 区分，no_agreement / canceled 合并为 stopped），要么 01 part4 与 13 改用 04 的 9 个名字。改完后 04 §4.10 的一致性声明才属实。",
+  "reviewer": "命名与字段跨章一致性"
+ },
+ {
+  "id": "completeness-03",
+  "severity": "high",
+  "section": "04-state-machines-part2.md R6、part3 U5（对照 05-protocol-part4.md §5.8.5、05-part5 §5.11.2、10-agent-runtime-part2.md B4/B5、12-api-part8.md Q12）",
+  "description": "每 run attempt 上限或美元上限命中后开哪种人工请求、发给谁，04 与 05/10 相反；12 明确表示'本章不定'。实现 beginAttempt 的 limit 分支时没有唯一答案，而两种选择的收件人与选项完全不同。",
+  "evidence": "04 R6：'run 调用 / 美元上限 → agent_failed（只含 end_run）'；04 U5：'首个 attempt 前就撞到 run 上限；同事务 R6（agent_failed，选项只有 end_run）'。05 §5.8.5：'run 的 attempt 上限或美元上限用尽（10，cause: call_limit | spend_limit）'进入轮次用尽 → 'kind: rounds_exhausted 请求给 customer'；05 §5.11.2：'agent_failed…failureCode = run.call_limit 的除外，走 §5.8.5'。10 B4：'回合 → failed（failureCode: run.call_limit），05 §5.8.5 → needs_input + rounds_exhausted 请求'。12 §12.25 Q12：'本章不定，按 04 与 10 统一后的结果'。",
+  "suggested_fix": "统一为 05/10 的 rounds_exhausted（customer 可用 choose_candidate 自救，agent_failed 的 retry_turn 在上限下本就不可用）：04 R6 的'run 调用 / 美元上限 → agent_failed（只含 end_run）'改为'→ rounds_exhausted（toRole customer；questionKey 带 call_limit/spend_limit；不提供 keep_as_is）'，U5 同步；06 §11.2 agent_failed 行加'不含上限触发'；12 §12.18 beginAttempt 的 limit 说明与 TC-RUN-15 按此断言。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-08",
+  "severity": "high",
+  "section": "06-rules-engine-part8.md §12.1（对照 04-state-machines.md §4.2.1、05-protocol-part5.md §5.9.1/§5.10/§5.11.2、07-permissions-privacy-part6.md §7.11、13-frontend-part6.md §13.15、16-testing-part7.md）",
+  "description": "插件接口被钉死为'恰好 15 个成员'并在注册表断言，但 04/05/07/13/16 调用了不在接口里的场景钩子或字段，实现第二场景契约测试时注册表会拒绝或代码引用不存在的成员。",
+  "evidence": "06 §12.1 'ScenarioPlugin 恰好 15 个成员'、§12.2 '15 个成员齐全'。04 §4.2.1：'其余由场景 scenario.readiness(ruleInput) 声明'（无 readiness 成员）；05 §5.11.2：'其余由 scenario.rankForOwner(customerView) 排序'（无 rankForOwner）；05 §5.10：'场景 tradeoffOwner（首个场景 customer）'（无此字段）；07 §7.11：'查看者角色 ∈ scenario.fitOnlyRoles'（06 用 roles[].side）；05 §5.9.1 ClarifyTopic 含 askers/ownerRole/field/answer/questionTemplateKey，06 ProtocolDecl.topics 只有 { topicKey, toRole, askableBy }；13/techstack D24 的场景纯函数 diffTerms、16 §16.10.1 的 evalCases 也不在成员表。",
+  "suggested_fix": "06 §12.1 改为'≤ 18 个成员'并显式加入 readiness(input)、rankForOwner(role, view)、protocol.tradeoffOwner、protocol.topics[].{field, answer, questionTemplateKey}；fitOnlyRoles 由 roles[].side === 'seller' 派生并在 07 §7.11 改写；diffTerms 与 evalCases 标为'场景目录内的非插件导出'；§12.2 的成员数断言随之更新。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-13",
+  "severity": "medium",
+  "section": "06-rules-engine-part2.md §5.3 末段（对照 09-constraint-changes.md §9.1.1、03-schema-part4.md §3.7 constraintRevisions、09-part5 Q10）",
+  "description": "硬投影是否持久化，06 与 09/03 相反；09 已指出 06 需改写但 06 未改。持久化投影串会把 finance 私密的 capCents 写进他方可达的行。",
+  "evidence": "06 §5.3：'写入口先写数据，再对写入后的全局输入算 hardProjection，与上一个约束版本存下的投影串比较（字段归 03/09，例如 constraintRevisions 行）'。09 §9.1.1：'投影只在事务内存中求值（before / after），从不持久化：它含 finance 私密的 capCents；存哈希也不行'；03 §3.7：'投影不持久化'；09 Q10：'06 需改写该句'。",
+  "suggested_fix": "06 §5.3 末段改为'withConstraintChange 在同一事务内对写前、写后的全局 RuleInput 各算一次 hardProjection 并比较（09 §9.4），不持久化任何投影串'。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-21",
+  "severity": "medium",
+  "section": "04-state-machines-part3.md §4.3.6、12-api-part2.md rooms.close、01-product-part4.md X6/X7、17-roadmap.md E10",
+  "description": "没有定义成员身份消失（Clerk 账号删除/封禁/离职）时的行为：creator 独占 rooms.close / runs.cancel / requestRenegotiation，席位不可转移，审批不过期；creator 消失的房间永远停在 open/setup，任一审批人消失的 pending_approval 永远等不到最后一票。这是任务要求检查的'最后一个审批人退出'边界。",
+  "evidence": "04 §4.3.6：rooms.close / runs.requestRenegotiation / runs.cancel 调用者均为'creator'；12 §12.6 rooms.close 'creatorOnly'；07 §7.6：'v1 席位一旦绑定不可解绑或更换，错人占席的处置是 creator 关闭房间、重新建房'；canon U7 审批不过期；01 X7：'v1 不支持换人与解绑（关房重建）'；17 E10 只把换人列为扩展，没有 v1 的兜底。",
+  "suggested_fix": "01 X6 与 04 §4.3.6 增加兜底：允许任一成员在当前 run 非终态且 N 天无写入后 rooms.close（或 ops 的 internal rooms.forceClose + assertTier 并写事件 room_closed{by: 'ops'}）；12 登记该函数；17 E10 写明触发条件；00-invariants 加一条活性 INV：任何房间都存在至少一个非 creator 可达的终结路径。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-22",
+  "severity": "low",
+  "section": "04-state-machines.md M6、12-api-part2.md rooms.close、15-operations-part4.md §15.9、18-part5 ADR-D18",
+  "description": "executed 房间没有任何归档/关闭路径（executed 与 closed 都是终态且互不可达），但多处声称 rooms.close 是生产唯一清理；已执行房间会永久留在收件箱 Done 区且 provider 的 open 任务无人能清。",
+  "evidence": "04 M6：'executed / closed → 任何：禁止'；04 §4.2 '执行后 rooms.close…(executed → run.invalid_state)'；12 rooms.close 守卫：'openRoomTx(allow: [\"setup\", \"open\"])（executed → run.invalid_state）'；15 §15.9：'生产：没有 seed，没有 reset；rooms.close 归档是唯一清理'；13 §13.3 Done 分区条件 'phase executed（且我无未完成任务）'。",
+  "suggested_fix": "要么在 04 增加 M7 'executed → closed（creator，任务全部 done 或显式确认）'并在 12/13 开放入口，要么把 15/18 中'rooms.close 是唯一清理'改为'open/setup 房间的唯一清理；executed 房间保持只读'并在 13 加归档筛选。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-27",
+  "severity": "low",
+  "section": "04-state-machines-part2.md R6/§4.3.4（对照 05-protocol.md §5.3.3、05-part3 §5.7.2、05-part4 §5.8.5）",
+  "description": "05 规定 provider 快照在剔除后为空时不创建 provider 回合、直接走轮次用尽，但 04 的 R6 守卫清单与 advanceRun 结果映射都没有这一项，也没说由谁写 run_needs_input。",
+  "evidence": "05 §5.3.3：'provider 回合在创建前保证 snapshotSize ≥ 1 且 proposeCountInRun < 4；否则不创建回合，直接走轮次用尽（§5.8.5）'；05 §5.7.2：'provider 视图在剔除后为空 → 不创建 provider 回合'。04 R6 守卫列举 clarify/escalate/轮次用尽/4 次/重试耗尽/上限，无'快照为空'；04 §4.3.4 映射表无该行。",
+  "suggested_fix": "04 R6 守卫增加'createTurnTx 为 proposer 枚举得空快照 → rounds_exhausted'，§4.3.4 增加一行'下一轮 provider 快照为空 → R6（不建 turn）'。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-28",
+  "severity": "low",
+  "section": "04-state-machines-part3.md §4.3.5、10-agent-runtime.md R16、12-api-part7.md、15-operations-part2.md §15.5 步 2",
+  "description": "活性巡检的名字与频率三处不同，15 的排空等待上限引用了 10 中不存在的常量。",
+  "evidence": "04 §4.3.5：'ops.livenessSweep（10 / 12：cron 每 15 分钟…）'；10 R16：'每 5 分钟的 ops.sweepStuckRuns'；12 §12.20 与 15 §15.8：'ops.livenessSweep 每 5 分钟'。15 §15.5 步 2：'等待上限 = WATCHDOG_DELAY_MS（10 从 SDK 时间预算推导）+ 60 秒'，10 §10.11 只定义 WATCHDOG_FIRST_MS (275 s)、WATCHDOG_REARM_MS、WATCHDOG_FINAL_MS (935 s)、ACTION_WALL_MAX_MS (488 s)。",
+  "suggested_fix": "04 改为 5 分钟；10 改名 ops.livenessSweep / ops.activeAttemptCount；15 §15.5 改为'等待上限 = ACTION_WALL_MAX_MS + 60 秒'。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "completeness-29",
+  "severity": "medium",
+  "section": "04-state-machines-part2.md R2 / 09-constraint-changes-part4.md V9（canon D06 字面）",
+  "description": "按 D06 字面实现，被取代 run 处于 negotiating/needs_input 时的 active 提案（评估尚未完成，甚至 customer 代理还没评估）也可经预检直接进入 pending_approval；04/09 都只把它列为待裁决问题却已按字面写进迁移表与走查。这需要在实现 startRunTx 前拍板。",
+  "evidence": "04 R2 守卫：'被同一事务取代的旧 run 的 currentProposalId = P，P 在本事务内刚由 active 变 stale'，无 run 状态限制；04 Q1：'canon D06 字面让…negotiating / needs_input 中也可经 R2 直接进入 pending_approval，跳过尚未完成的代理评估…本章按字面实现'；09 V9：'run#3 直接 pending_approval 沿用 v2（未完成的代理评估被跳过，见 04 Q1）'；18 N-27 未裁决。",
+  "suggested_fix": "canon D06 收窄为'仅当被取代 run 处于 pending_approval（或 needs_input 且 kind = rounds_exhausted 且提案仍通过）时沿用'；04 startRunTx 的 R2 条件加 cur.status === 'pending_approval'；09 V9 改为新 run 重新评估 v2（provider 快照 mustInclude 该 candidateKey）。",
+  "reviewer": "完整性批评"
+ },
+ {
+  "id": "invariants-05",
+  "severity": "high",
+  "section": "04-state-machines-part2.md",
+  "description": "每 run 的 attempt 或美元上限用尽后开哪种请求，各章三种说法：04 是给失败方的 agent_failed、只有 end_run；05/10 是给 customer 的 rounds_exhausted（cause 为 call_limit）；00-invariants 是给当前回合角色的 agent_failed。12 Q12 仍悬而未决。迁移表、请求生成、测试期望（SM-21、RT-05、CE-135、TC-RUN-15）因此不可能同时成立。",
+  "evidence": "04 R6：\"run 调用 / 美元上限 → `agent_failed`（只含 `end_run`）\"；04 U5：\"选项只有 `end_run`\"；04 §4.8.3：\"run 上限触发时只有 `end_run`\"；05 §5.8.5：\"run 的 attempt 上限或美元上限用尽（10，`cause: 'call_limit' | 'spend_limit'`）\"进入 rounds_exhausted；10 B4：\"05 §5.8.5 → `needs_input` + `rounds_exhausted` 请求（`questionKey` 带 `call_limit`）\"；INV-72 ②：\"超限不调度、转 `needs_input(agent_failed)`\"；CE-135：\"run → `needs_input(agent_failed)` 给当前回合角色\"；12 Q12。",
+  "suggested_fix": "统一采用 05/10：给 customer 开 rounds_exhausted 请求，选项为 choose_candidate（在自身视图内，零模型调用即可送审）和 end_run，不提供 keep_as_is。改写 04 的 R6 / U5、§4.8.3、SM-21，00-invariants 的 INV-72 ② 与 CE-135，以及 12 Q12；并在 05 §5.11.2 的 agent_failed 行保留\"call_limit 除外\"的说明。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "invariants-08",
+  "severity": "high",
+  "section": "04-state-machines-part2.md",
+  "description": "无人可放松时的兜底请求，06 与 04/05 冲突。06 给 customer 发带 `disclose` 选项的 infeasible 请求，回答后重跑预检，好让 finance 看到冲突并收到 raise_cap；04/05 只给 end_run。按 06 实现时，04 的 R14 把 disclose 定义为\"为发问方新建同轮同 kind 的 turn\"，而 infeasible 请求没有发问方、run 也没有回合，回答没有合法迁移（会报 internal 或建出空回合）。按 04 实现时，本可由 finance 抬上限解决的房间被直接引向 ended_no_agreement，违背核心 8\"缺信息时向人请求\"。",
+  "evidence": "06 §11.2：\"都不满足 → 回退到 `relaxationOrder[0]` 的角色 | … 回退时为该角色尚未向其他放松角色披露的硬字段各一个 `disclose`，末尾 `end_run`\"；06 §11.4：\"`disclose` … 写披露（不 bump）→ 重跑预检 → 新请求或进入协商\"；06 §15 Q9：\"回退分支 `disclose` 回答后 run 保持 `needs_input` 并开新请求（04/05 需要这条迁移）\"；04 R14：\"`disclose`：写 `sharedFacts`，为发问方新建同轮同 kind 的 turn\"；04 §4.8.3：\"向 customer 发 `kind: infeasible` 请求…选项只有 `end_run`\"；05 §5.11.2：\"都没有 → customer，只给 `end_run`\"；T06-U33。",
+  "suggested_fix": "采用 06，并在 04 新增迁移 R20：`needs_input → needs_input / negotiating`（回答 infeasible 请求的 disclose）。同事务内：写 `sharedFacts`，旧请求置 `answered`，用同一 `buyerFeasible` 与 `buildHumanRequests` 重跑预检；全局仍无解则 `openHumanRequestTx` 生成新的 infeasible 请求（此时 finance 可得 raise_cap）；预检有解则 R1 式建 provider 回合。同步改 04 §4.8.3、05 §5.11.2 的兜底选项与 §5.11.4 的 disclose 行，以及 INV-73。canon D15 的\"disclose → negotiating\"需要据此细化（canon 意见）。",
+  "reviewer": "不变量与反例电池"
+ },
+ {
+  "id": "privacy-16",
+  "severity": "low",
+  "section": "09-constraint-changes-part4.md",
+  "description": "掩码规则在走查和前端说明里写错。09 的主线走查让只获得 capCents 的 customer 看到 `budget.over` 原码（只是不带 overByCents），与 06 B2 的 requires 和 07/14 的写法（应折叠为 private.constraint_unmet）冲突。13 写'owner:\"other\" 只可能是 private.constraint_unmet'，这与 finance 精确看到 customer 已披露检查的情况冲突，实现者可能因此回退到'按 code 判所有者'。",
+  "evidence": "09 §9.8 第 9 步：'customer：v1 Blocked budget.over（无 overByCents：customer 不知已承诺额）'；06 §6.3 表：customer 只开 capCents 时看到 'private.constraint_unmet（预算检查的所有者是 finance，customer 缺 committed / headroom，无法解密）'；13 §13.8.2 ChecksList：'owner: \"other\" 只可能是 private.constraint_unmet'。",
+  "suggested_fix": "09 第 9 步改为 customer 看到 'A constraint private to another participant is not met'。13 §13.8.2 改为：owner:\"other\" 的条目可以是已获全部输入披露的精确码（如 finance 看到的 date.after_deadline），也可以是 private.constraint_unmet。T06-U29 增加'只开 capCents 时码被替换'的断言。",
+  "reviewer": "隐私预言机与泄露路径"
+ }
+]

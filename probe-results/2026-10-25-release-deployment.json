@@ -1,0 +1,36 @@
+{
+  "project_id": "appgprj_6adda37c25c08191bd66caf863e5c968",
+  "deployment_id": "appgdep_6ade0d9043ec8191a51508344b520ac3",
+  "version_id": "appgprj_6adda37c25c08191bd66caf863e5c968~appgver_1aa128f2f3bc8191b2abe06e51c63a4d",
+  "status": "succeeded",
+  "url": "https://speak-for-me-calhacks.lgc783656618.chatgpt.site",
+  "source_commit": "0da066b4b99451e5d0fae0f2a9a0b497e3c53d4c",
+  "deployed_at": "2026-10-25T14:09:28.050356+00:00",
+  "audience": "public",
+  "backend": "https://benevolent-jackal-41.convex.cloud",
+  "browser_verified": [
+    "Correct canonical homepage",
+    "rooms route requires sign-in",
+    "Clerk development sign-in renders",
+    "One actual Clerk account signed in through existing Google session",
+    "Decision inbox loads",
+    "Provider test room created via UI",
+    "Provider brief and synthetic private notes saved; page reload preserved confirmed v1 and exact text"
+  ],
+  "browser_not_verified": [
+    "Three distinct authenticated accounts",
+    "Other role editors and realtime synchronization across browsers"
+  ],
+  "previous_deployments": [
+    {
+      "deployment_id": "appgdep_6ade0988d9bc8191ac7ef1c8ce622e34",
+      "version_id": "appgprj_6adda37c25c08191bd66caf863e5c968~appgver_f1fa3cf3c1d881918799b21bf6aea12a",
+      "source_commit": "7d431f6125de1c7778595bffd74be91d9631aa52",
+      "deployed_at": "2026-10-25T13:52:16.468744+00:00"
+    }
+  ],
+  "github_app_commit": "3dca2b279e84b105eea94044cd6bbf246c86a57d",
+  "audienceAtDeployment": "owner-private",
+  "accessUpdatedAt": "2026-10-25T14:35:34.881484+00:00",
+  "accessRevision": 2
+}

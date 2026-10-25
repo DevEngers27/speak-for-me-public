@@ -1,0 +1,60 @@
+{
+  "name": "speak-for-me",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=24.19.0 <25",
+    "pnpm": ">=11.25.0 <12"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint --max-warnings=0 .",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p convex/tsconfig.json && tsc --noEmit -p tests/tsconfig.json && tsc --noEmit -p scripts/tsconfig.json && tsc --noEmit -p e2e/tsconfig.json",
+    "test": "vitest run --config tests/vitest.config.ts && pnpm test:boundaries && vitest run --config scripts/vitest.config.ts && vitest run --config e2e/vitest.config.ts",
+    "ops": "node scripts/convex-ops.mjs",
+    "test:watch": "vitest --config tests/watch.config.ts",
+    "check": "pnpm lint && pnpm typecheck && pnpm test",
+    "convex:dev": "convex dev",
+    "convex:deploy": "convex deploy",
+    "env:check": "node --env-file-if-exists=.env.local scripts/check-env.mjs",
+    "codegen": "convex codegen --system-udfs --typecheck disable",
+    "test:boundaries": "node scripts/check-boundaries.mjs",
+    "policy:check": "node scripts/check-dependency-policy.mjs",
+    "cloud:build": "vite build --config cloud/vite.config.ts",
+    "cloud:dev": "vite --config cloud/vite.config.ts",
+    "cloud:typecheck": "tsc --noEmit -p cloud/tsconfig.json",
+    "test:build-artifacts": "node --experimental-strip-types tests/ui/verify-build-artifacts.ts .next/static",
+    "test:cloud-artifacts": "node --experimental-strip-types tests/ui/verify-build-artifacts.ts dist/assets"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "catalog:",
+    "@clerk/react": "6.18.1",
+    "convex": "catalog:",
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "server-only": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@clerk/testing": "2.2.45",
+    "@edge-runtime/vm": "catalog:",
+    "@playwright/test": "1.64.0",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "convex-test": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-next": "catalog:",
+    "jsdom": "30.1.2",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}

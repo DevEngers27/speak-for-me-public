@@ -1,0 +1,517 @@
+{
+  "customer": {
+    "room": {
+      "budget": {
+        "capCents": null,
+        "committedCents": null,
+        "headroomCents": null,
+        "visibility": "customer"
+      },
+      "catalog": [
+        {
+          "itemKey": "sso_login",
+          "kind": "item",
+          "leadDays": 3,
+          "priceCents": 80000,
+          "revision": 1,
+          "title": "SSO login (SAML)"
+        }
+      ],
+      "currentProposal": null,
+      "execution": null,
+      "followUpOf": null,
+      "header": {
+        "constraintsVersion": 1,
+        "isCreator": true,
+        "phase": {
+          "phase": "needs_input",
+          "you": true
+        },
+        "proposalVersion": null,
+        "provenanceBadge": "live",
+        "roomId": "rooms_1",
+        "scenarioKey": "scope_change",
+        "status": "open",
+        "title": "Scheduler test",
+        "viewingAs": "customer"
+      },
+      "members": [
+        {
+          "briefConfirmed": true,
+          "briefVersion": 1,
+          "displayName": "customer",
+          "isMe": true,
+          "joinedVia": "creator",
+          "role": "customer"
+        },
+        {
+          "briefConfirmed": true,
+          "briefVersion": 1,
+          "displayName": "finance",
+          "isMe": false,
+          "joinedVia": "invite",
+          "role": "finance"
+        },
+        {
+          "briefConfirmed": true,
+          "briefVersion": 1,
+          "displayName": "provider",
+          "isMe": false,
+          "joinedVia": "invite",
+          "role": "provider"
+        }
+      ],
+      "openRequest": {
+        "expiresAt": 1794398400001,
+        "kind": "clarify",
+        "mine": true,
+        "options": [
+          {
+            "answerable": true,
+            "disclose": {
+              "field": "deadline",
+              "toRoles": [
+                "provider"
+              ]
+            },
+            "effectView": {},
+            "optionKey": "A",
+            "shown": {},
+            "text": "Share this field",
+            "type": "disclose"
+          },
+          {
+            "answerable": true,
+            "effectView": {},
+            "optionKey": "B",
+            "shown": {},
+            "text": "Keep the current constraints",
+            "type": "keep_as_is"
+          },
+          {
+            "answerable": true,
+            "effectView": {},
+            "optionKey": "C",
+            "shown": {},
+            "text": "End this run",
+            "type": "end_run"
+          }
+        ],
+        "requestId": "humanRequests_1"
+      },
+      "proposalHistory": [],
+      "run": {
+        "activeRole": "customer",
+        "agentMode": "live",
+        "attemptStatus": null,
+        "cause": "room_opened",
+        "endedReason": null,
+        "maxRounds": 3,
+        "roundNo": 1,
+        "runId": "runs_1",
+        "runNo": 1,
+        "staleDiscarded": 0,
+        "status": "needs_input",
+        "turnStatus": null,
+        "waiting": null
+      },
+      "seats": [
+        {
+          "inviteExpiresAt": null,
+          "inviteMode": null,
+          "invitedEmail": null,
+          "role": "customer",
+          "state": "filled"
+        },
+        {
+          "inviteExpiresAt": null,
+          "inviteMode": null,
+          "invitedEmail": null,
+          "role": "provider",
+          "state": "filled"
+        },
+        {
+          "inviteExpiresAt": null,
+          "inviteMode": null,
+          "invitedEmail": null,
+          "role": "finance",
+          "state": "filled"
+        }
+      ],
+      "sharedFacts": [],
+      "todos": [
+        {
+          "kind": "answer_request",
+          "priority": 0,
+          "refs": {
+            "requestId": "humanRequests_1",
+            "runId": "runs_1"
+          }
+        }
+      ]
+    },
+    "brief": {
+      "finance": null,
+      "latest": {
+        "confirmedAt": 1793793600001,
+        "disclosures": {
+          "deadline": [],
+          "preferredItemKeys": [],
+          "requiredItemKeys": []
+        },
+        "hardFields": {
+          "deadline": "2026-11-24",
+          "requiredItemKeys": [
+            "sso_login"
+          ],
+          "schemaKey": "scope_change.customer.v1"
+        },
+        "softFields": {
+          "notes": "PRIVATE-CUSTOMER",
+          "preferredItemKeys": [],
+          "schemaKey": "scope_change.customer.v1"
+        },
+        "source": "form",
+        "version": 1
+      },
+      "othersSee": [
+        {
+          "fields": [],
+          "role": "provider"
+        },
+        {
+          "fields": [],
+          "role": "finance"
+        }
+      ],
+      "role": "customer",
+      "versions": [
+        {
+          "changedHardFields": [
+            "deadline",
+            "requiredItemKeys"
+          ],
+          "confirmedAt": 1793793600001,
+          "notes": "PRIVATE-CUSTOMER",
+          "source": "form",
+          "version": 1
+        }
+      ]
+    },
+    "request": {
+      "answerOptionKey": null,
+      "closedAtConstraintsVersion": null,
+      "closedReason": null,
+      "expiresAt": 1794398400001,
+      "kind": "clarify",
+      "mine": true,
+      "options": [
+        {
+          "answerable": true,
+          "disclose": {
+            "field": "deadline",
+            "toRoles": [
+              "provider"
+            ]
+          },
+          "effectView": {},
+          "optionKey": "A",
+          "shown": {},
+          "text": "Share this field",
+          "type": "disclose"
+        },
+        {
+          "answerable": true,
+          "effectView": {},
+          "optionKey": "B",
+          "shown": {},
+          "text": "Keep the current constraints",
+          "type": "keep_as_is"
+        },
+        {
+          "answerable": true,
+          "effectView": {},
+          "optionKey": "C",
+          "shown": {},
+          "text": "End this run",
+          "type": "end_run"
+        }
+      ],
+      "requestId": "humanRequests_1",
+      "status": "open"
+    }
+  },
+  "provider": {
+    "room": {
+      "budget": {
+        "visibility": "none"
+      },
+      "catalog": [
+        {
+          "itemKey": "sso_login",
+          "kind": "item",
+          "leadDays": 3,
+          "priceCents": 80000,
+          "revision": 1,
+          "title": "SSO login (SAML)"
+        }
+      ],
+      "currentProposal": null,
+      "execution": null,
+      "followUpOf": null,
+      "header": {
+        "constraintsVersion": 1,
+        "isCreator": false,
+        "phase": {
+          "phase": "needs_input",
+          "you": false
+        },
+        "proposalVersion": null,
+        "provenanceBadge": "live",
+        "roomId": "rooms_1",
+        "scenarioKey": "scope_change",
+        "status": "open",
+        "title": "Scheduler test",
+        "viewingAs": "provider"
+      },
+      "members": [
+        {
+          "briefConfirmed": true,
+          "briefVersion": null,
+          "displayName": "customer",
+          "isMe": false,
+          "joinedVia": "creator",
+          "role": "customer"
+        },
+        {
+          "briefConfirmed": true,
+          "briefVersion": null,
+          "displayName": "finance",
+          "isMe": false,
+          "joinedVia": "invite",
+          "role": "finance"
+        },
+        {
+          "briefConfirmed": true,
+          "briefVersion": 1,
+          "displayName": "provider",
+          "isMe": true,
+          "joinedVia": "invite",
+          "role": "provider"
+        }
+      ],
+      "openRequest": {
+        "kind": "run_waiting",
+        "mine": false
+      },
+      "proposalHistory": [],
+      "run": {
+        "activeRole": null,
+        "agentMode": "live",
+        "attemptStatus": null,
+        "cause": "room_opened",
+        "endedReason": null,
+        "maxRounds": 3,
+        "roundNo": 1,
+        "runId": "runs_1",
+        "runNo": 1,
+        "staleDiscarded": 0,
+        "status": "run_waiting",
+        "turnStatus": null,
+        "waiting": null
+      },
+      "seats": null,
+      "sharedFacts": [],
+      "todos": []
+    },
+    "brief": {
+      "finance": null,
+      "latest": {
+        "confirmedAt": 1793793600001,
+        "disclosures": {},
+        "hardFields": {
+          "schemaKey": "scope_change.provider.v1"
+        },
+        "softFields": {
+          "notes": "PRIVATE-PROVIDER",
+          "schemaKey": "scope_change.provider.v1"
+        },
+        "source": "form",
+        "version": 1
+      },
+      "othersSee": [
+        {
+          "fields": [],
+          "role": "customer"
+        },
+        {
+          "fields": [],
+          "role": "finance"
+        }
+      ],
+      "role": "provider",
+      "versions": [
+        {
+          "changedHardFields": [],
+          "confirmedAt": 1793793600001,
+          "notes": "PRIVATE-PROVIDER",
+          "source": "form",
+          "version": 1
+        }
+      ]
+    },
+    "request": {
+      "kind": "run_waiting",
+      "mine": false
+    }
+  },
+  "finance": {
+    "room": {
+      "budget": {
+        "baselineRecorded": true,
+        "baselineSuggestionCents": null,
+        "capCents": 200000,
+        "committedCents": 100000,
+        "headroomCents": 100000,
+        "overByCents": null,
+        "proposalCents": null,
+        "status": "no_proposal",
+        "totalAfterCents": null,
+        "visibility": "finance"
+      },
+      "catalog": [
+        {
+          "itemKey": "sso_login",
+          "kind": "item",
+          "leadDays": 3,
+          "priceCents": 80000,
+          "revision": 1,
+          "title": "SSO login (SAML)"
+        }
+      ],
+      "currentProposal": null,
+      "execution": null,
+      "followUpOf": null,
+      "header": {
+        "constraintsVersion": 1,
+        "isCreator": false,
+        "phase": {
+          "phase": "needs_input",
+          "waitingOn": "customer",
+          "you": false
+        },
+        "proposalVersion": null,
+        "provenanceBadge": "live",
+        "roomId": "rooms_1",
+        "scenarioKey": "scope_change",
+        "status": "open",
+        "title": "Scheduler test",
+        "viewingAs": "finance"
+      },
+      "members": [
+        {
+          "briefConfirmed": true,
+          "briefVersion": 1,
+          "displayName": "customer",
+          "isMe": false,
+          "joinedVia": "creator",
+          "role": "customer"
+        },
+        {
+          "briefConfirmed": true,
+          "briefVersion": 1,
+          "displayName": "finance",
+          "isMe": true,
+          "joinedVia": "invite",
+          "role": "finance"
+        },
+        {
+          "briefConfirmed": true,
+          "briefVersion": 1,
+          "displayName": "provider",
+          "isMe": false,
+          "joinedVia": "invite",
+          "role": "provider"
+        }
+      ],
+      "openRequest": {
+        "kind": "clarify",
+        "mine": false,
+        "waitingOnRole": "customer"
+      },
+      "proposalHistory": [],
+      "run": {
+        "activeRole": null,
+        "agentMode": "live",
+        "attemptStatus": null,
+        "cause": "room_opened",
+        "endedReason": null,
+        "maxRounds": 3,
+        "roundNo": 1,
+        "runId": "runs_1",
+        "runNo": 1,
+        "staleDiscarded": 0,
+        "status": "needs_input",
+        "turnStatus": null,
+        "waiting": null
+      },
+      "seats": null,
+      "sharedFacts": [],
+      "todos": []
+    },
+    "brief": {
+      "finance": {
+        "baselineRecorded": true,
+        "baselineSuggestionCents": null,
+        "committedCents": 100000
+      },
+      "latest": {
+        "confirmedAt": 1793793600001,
+        "disclosures": {
+          "capCents": [],
+          "committedCents": [],
+          "headroomCents": []
+        },
+        "hardFields": {
+          "capCents": 200000,
+          "schemaKey": "scope_change.finance.v1"
+        },
+        "softFields": {
+          "notes": "PRIVATE-FINANCE",
+          "schemaKey": "scope_change.finance.v1"
+        },
+        "source": "form",
+        "version": 1
+      },
+      "othersSee": [
+        {
+          "fields": [],
+          "role": "customer"
+        },
+        {
+          "fields": [],
+          "role": "provider"
+        }
+      ],
+      "role": "finance",
+      "versions": [
+        {
+          "changedHardFields": [
+            "capCents"
+          ],
+          "confirmedAt": 1793793600001,
+          "notes": "PRIVATE-FINANCE",
+          "source": "form",
+          "version": 1
+        }
+      ]
+    },
+    "request": {
+      "kind": "clarify",
+      "mine": false,
+      "requestId": "humanRequests_1",
+      "status": "open",
+      "waitingOnRole": "customer"
+    }
+  }
+}

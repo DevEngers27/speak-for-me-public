@@ -1,0 +1,8 @@
+node_modules/
+test-results/
+playwright-report/
+blob-report/
+.browsers/
+# Never commit auth state or env files; the harness keeps storage state in memory only.
+playwright/.auth/
+.env*
